@@ -1,0 +1,168 @@
+# ENAHO Analyzer - Requirements Unificado
+# =======================================
+# Librería para análisis de microdatos del INEI (Perú)
+# Versión: 3.0.0
+
+# ===================================
+# DEPENDENCIAS BÁSICAS (OBLIGATORIAS)
+# ===================================
+
+# Manipulación de datos
+pandas>=1.3.0,<3.0.0
+numpy>=1.20.0,<2.0.0
+
+# HTTP requests y descargas
+requests>=2.25.0,<3.0.0
+urllib3>=1.26.0,<3.0.0
+
+# Barras de progreso
+tqdm>=4.60.0,<5.0.0
+
+# Validación de rutas (Python < 3.4)
+pathlib2>=2.3.0;python_version<"3.4"
+
+# ========================================
+# DEPENDENCIAS OPCIONALES (RECOMENDADAS)
+# ========================================
+
+# Lectura de archivos estadísticos DTA/SAV
+# Comentar esta línea si no necesitas leer archivos Stata/SPSS
+pyreadstat>=1.1.0,<2.0.0
+
+# Procesamiento paralelo y big data
+# Comentar si no trabajas con archivos muy grandes
+dask[complete]>=2021.0.0,<2024.0.0
+
+# ===========================
+# VISUALIZACIÓN Y GRÁFICOS
+# ===========================
+
+# Gráficos básicos
+matplotlib>=3.3.0,<4.0.0
+seaborn>=0.11.0,<1.0.0
+
+# Gráficos interactivos
+plotly>=5.0.0,<6.0.0
+
+# ===============================
+# ANÁLISIS ESTADÍSTICO AVANZADO
+# ===============================
+
+# Funciones estadísticas
+scipy>=1.7.0,<2.0.0
+
+# Machine Learning (para imputación avanzada)
+scikit-learn>=1.0.0,<2.0.0
+
+# Análisis específico de valores nulos
+missingno>=0.5.0,<1.0.0
+
+# Estadísticas para encuestas
+statsmodels>=0.12.0,<1.0.0
+
+# ========================
+# EXPORTACIÓN DE ARCHIVOS
+# ========================
+
+# Excel
+openpyxl>=3.0.0,<4.0.0
+xlsxwriter>=3.0.0,<4.0.0
+
+# =============================
+# GIS Y ANÁLISIS GEOGRÁFICO
+# =============================
+# Comentar esta sección si no usas análisis geográfico
+
+# Datos geoespaciales
+geopandas>=0.10.0,<1.0.0
+fiona>=1.8.0,<2.0.0
+shapely>=1.8.0,<3.0.0
+
+# Mapas y visualización geo
+contextily>=1.2.0,<2.0.0
+folium>=0.12.0,<1.0.0
+
+# =====================================
+# NOTEBOOKS Y DESARROLLO (OPCIONAL)
+# =====================================
+# Comentar si no usas Jupyter
+
+# Jupyter ecosystem
+jupyter>=1.0.0,<2.0.0
+jupyterlab>=3.0.0,<5.0.0
+notebook>=6.4.0,<8.0.0
+ipywidgets>=7.6.0,<9.0.0
+
+# =================================
+# TESTING Y CALIDAD (DESARROLLO)
+# =================================
+# Solo para desarrollo - comentar en producción
+
+# Testing framework
+pytest>=6.0.0,<8.0.0
+pytest-cov>=2.10.0,<5.0.0
+pytest-mock>=3.6.0,<4.0.0
+
+# Code quality
+black>=21.0.0,<24.0.0
+flake8>=3.9.0,<7.0.0
+isort>=5.9.0,<6.0.0
+
+# =======================================
+# ANÁLISIS ESPECIALIZADO (INVESTIGACIÓN)
+# =======================================
+# Para análisis avanzados de encuestas sociales
+
+# Análisis de desigualdad
+# inequality>=1.0.0,<2.0.0  # Descomentar si necesitas
+
+# Análisis espacial avanzado
+# pysal>=2.4.0,<3.0.0  # Descomentar si necesitas
+
+# Machine Learning avanzado
+# xgboost>=1.5.0,<3.0.0  # Descomentar si necesitas
+# lightgbm>=3.3.0,<5.0.0  # Descomentar si necesitas
+
+# Análisis de redes
+# networkx>=2.6.0,<4.0.0  # Descomentar si necesitas
+
+# Procesamiento de texto
+# nltk>=3.6.0,<4.0.0  # Descomentar si necesitas
+# spacy>=3.4.0,<4.0.0  # Descomentar si necesitas
+
+# ==============================
+# PROFILING Y DEBUGGING (DEV)
+# ==============================
+# Solo para desarrollo avanzado
+
+# memory-profiler>=0.60.0,<1.0.0  # Descomentar si necesitas
+# line-profiler>=3.3.0,<5.0.0  # Descomentar si necesitas
+
+# ===========================
+# NOTAS DE INSTALACIÓN
+# ===========================
+#
+# INSTALACIÓN BÁSICA (solo lectura CSV/Parquet):
+#   pip install pandas numpy requests tqdm matplotlib seaborn
+#
+# INSTALACIÓN ESTÁNDAR (incluye DTA/SAV):
+#   pip install -r requirements.txt
+#   (pero comenta las líneas de GIS, notebooks y testing)
+#
+# INSTALACIÓN COMPLETA:
+#   pip install -r requirements.txt
+#   (descomenta todo lo que necesites)
+#
+# INSTALACIÓN POR PARTES:
+#   1. Instala básico primero
+#   2. Luego agrega pyreadstat si necesitas DTA/SAV
+#   3. Agrega dask si trabajas con archivos grandes
+#   4. Agrega geopandas solo si haces análisis geográfico
+#
+# PROBLEMAS COMUNES:
+#   - En Windows: usar conda para pyreadstat y geopandas
+#   - Memoria limitada: omitir dask y dependencias pesadas
+#   - Solo producción: comentar todo lo de development/testing
+#
+# VERIFICAR INSTALACIÓN:
+#   python -c "from loader.utils import get_available_data; print('✅ ENAHO Analyzer OK')"
