@@ -194,6 +194,27 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+
+# IDE files
+.idea/
+.vscode/
+
+# Data files
+*.dta
+*.sav
+loader/datos_enaho/
+loader/.enaho_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Distribution
+build/
+dist/
+*.egg-info/" > .gitignore
+
+
 # Cursor
 #  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
 #  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
