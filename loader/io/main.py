@@ -277,7 +277,7 @@ class ENAHODataDownloader:
                 self.logger.info(f"Tiempo total: {elapsed_time:.1f} segundos")
 
                 if failed_tasks:
-                    self.logger.warning(f"Tareas completada: {failed_tasks}")
+                    self.logger.warning(f"Tareas fallidas: {failed_tasks}")
 
             # Guardar metadatos de la sesión
             session_metadata = {
