@@ -157,6 +157,7 @@ class ModuleMergeConfig:
     # Configuración de performance
     chunk_processing: bool = False
     chunk_size: int = 10000
+    continue_on_error: bool = False
 
 
 # =====================================================

@@ -464,6 +464,9 @@ class ENAHOModuleMerger:
                 df.drop([left_col, right_col], axis=1, inplace=True, errors='ignore')
                 conflicts_resolved += 1
 
+            except ConflictResolutionError: # relanza sin atrapar
+                raise
+
             except Exception as e:
                 self.logger.error(f"Error resolviendo conflicto en {base_name}: {str(e)}")
                 # Mantener columna izquierda como fallback

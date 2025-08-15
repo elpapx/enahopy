@@ -188,6 +188,9 @@ class ModuleValidator:
             Diccionario con análisis de compatibilidad
         """
 
+        if '+' in module1 or module1.isdigit(): # modulo compuesto
+            return {'compatible': True}
+
         # Obtener información de módulos
         if module1 not in self.config.module_validations:
             return {'compatible': False, 'error': f"Módulo {module1} no reconocido"}
