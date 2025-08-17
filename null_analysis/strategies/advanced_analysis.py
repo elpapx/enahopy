@@ -236,7 +236,7 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
         if common_patterns:
             most_common_pattern = str(list(common_patterns.keys())[0])
         else:
-            most_common_patern = "No patterns Found"
+            most_common_pattern = "No patterns Found"
 
         advanced_metrics = MissingDataMetrics(
             total_cells=basic_metrics.total_cells,
