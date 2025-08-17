@@ -4,37 +4,36 @@ Funciones de conveniencia para análisis de valores nulos
 
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
-import pandas as pd
 import warnings
+
+import pandas as pd
+import numpy as np
 
 from .config import (
     NullAnalysisConfig,
     AnalysisComplexity,
     ExportFormat,
-    VisualizationType  # Agregar esta importación
+    VisualizationType,
+    MissingDataPattern  # Agregar si se usa en detect_missing_patterns_automatically
 )
 from .core.analyzer import ENAHONullAnalyzer
+from .exceptions import NullAnalysisError
 
 def quick_null_analysis(df: pd.DataFrame,
-                       group_by: Optional[str] = None,
-                       complexity: str = "standard") -> Dict[str, Any]:
-    """
-    Función de conveniencia para análisis rápido de nulos.
-    """
+                        group_by: Optional[str] = None,
+                        complexity: str = "standard") -> Dict[str, Any]:
+    """Análisis rápido de nulos con validación mejorada."""
+
     # Validar y convertir complexity de forma segura
     valid_complexities = {c.value for c in AnalysisComplexity}
     if complexity not in valid_complexities:
-        raise ValueError(f"Complejidad {complexity} no valida. Valores permitidos: {valid_complexities}")
+        raise ValueError(f"Complejidad '{complexity}' no válida. Use: {valid_complexities}")
 
-    try:
-        complexity_enum = AnalysisComplexity(complexity)
-    except ValueError:
-        complexity_enum = AnalysisComplexity.STANDARD
+    complexity_enum = AnalysisComplexity(complexity)
 
-    # Convertir string a enum apropiadamente
     config = NullAnalysisConfig(
-        complexity_level=AnalysisComplexity(complexity),
-        visualization_type=VisualizationType.STATIC  # Usar enum en lugar de string
+        complexity_level=complexity_enum,  # Usar la variable ya validada
+        visualization_type=VisualizationType.STATIC
     )
 
     analyzer = ENAHONullAnalyzer(config=config, verbose=False)
@@ -213,71 +212,63 @@ def validate_data_completeness(df: pd.DataFrame,
                                required_variables: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Valida si un DataFrame cumple con requisitos de completitud.
-
-    Args:
-        df: DataFrame a validar.
-        required_completeness: Porcentaje de completitud requerido.
-        required_variables: Lista de variables requeridas.
-
-    Returns:
-        Dict con resultados de validación y reocmendaciones
     """
-
     if df is None or df.empty:
-        return{
+        return {
             'is_valid': False,
             'reason': 'DataFrame vacío o None',
-            'completeness': 0.0,
+            'completeness_score': 0.0,
             'missing_variables': required_variables or [],
             'recommendations': ['Cargar datos antes de validar']
         }
 
     analyzer = ENAHONullAnalyzer(verbose=False)
 
-    # calcular métricas básicas
+    # Calcular métricas básicas
     total_cells = df.shape[0] * df.shape[1]
     missing_cells = df.isnull().sum().sum()
     completeness = ((total_cells - missing_cells) / total_cells * 100) if total_cells > 0 else 0
 
     validation_result = {
-        'is_valid': False,
-        'overall_completeness': 0.0,
-        'fails': [],
-        'warnings': [],
+        'is_valid': True,
+        'completeness_score': completeness,
+        'required_completeness': required_completeness,
+        'missing_variables': [],
+        'variables_below_threshold': {},
         'recommendations': []
     }
 
-    # validar completitud global
+    # Validar completitud global
     if completeness < required_completeness:
         validation_result['is_valid'] = False
         validation_result['recommendations'].append(
-            f"completitud global ({completeness:.1f}%) por debajo del umbral ({required_completeness}%)"
+            f"Completitud global ({completeness:.1f}%) por debajo del umbral ({required_completeness}%)"
         )
 
-    # validar variables requeridas
+    # Validar variables requeridas
     if required_variables:
         missing_vars = [var for var in required_variables if var not in df.columns]
         if missing_vars:
             validation_result['is_valid'] = False
             validation_result['missing_variables'] = missing_vars
             validation_result['recommendations'].append(
-                f"variables requeridas faltantes: {', '.join(missing_vars)}"
+                f"Variables requeridas faltantes: {', '.join(missing_vars)}"
             )
 
         # Verificar completitud por variable
         for var in required_variables:
             if var in df.columns:
-                var_completeness = (1- df[var].isnull().mean()) * 100
-                if var_completeness < required_completness:
+                var_completeness = (1 - df[var].isnull().mean()) * 100
+                if var_completeness < required_completeness:
                     validation_result['variables_below_threshold'][var] = var_completeness
                     validation_result['recommendations'].append(
-                        f"Variable '{var}' tiene ({var_completeness:.1f}% de completitud)"
+                        f"Variable '{var}' tiene {var_completeness:.1f}% de completitud"
                     )
 
+    # Agregar score de calidad
     validation_result['data_quality_score'] = analyzer.get_data_quality_score(df)
 
     return validation_result
-
 
 def detect_missing_patterns_automatically(df: pd.DataFrame,
                                           min_pattern_frequency: int = 10) -> Dict[str, Any]:
@@ -422,3 +413,49 @@ def diagnostico_nulos_enaho(df: pd.DataFrame,
     return analyzer.diagnostico_nulos_enaho(
         df, desagregado_por, True, filtro_geografico, columnas_geo
     )
+
+
+def detect_missing_patterns_automatically(df: pd.DataFrame,
+                                          confidence_threshold: float = 0.95) -> Dict[str, Any]:
+    """
+    Detecta automáticamente el tipo de patrón de valores faltantes.
+
+    Args:
+        df: DataFrame a analizar
+        confidence_threshold: Umbral de confianza para clasificación
+
+    Returns:
+        Dict con patrón detectado y nivel de confianza
+    """
+    analyzer = ENAHONullAnalyzer(
+        config=NullAnalysisConfig(complexity_level=AnalysisComplexity.EXPERT),
+        verbose=False
+    )
+
+    result = analyzer.analyze_null_patterns(df)
+
+    # Extraer información de patrones
+    pattern_info = {
+        'detected_pattern': result['metrics'].missing_data_pattern,
+        'confidence': 0.0,
+        'evidence': [],
+        'alternative_patterns': []
+    }
+
+    # Calcular confianza basada en tests estadísticos
+    if 'statistical_tests' in result:
+        mcar_test = result['statistical_tests'].get('simplified_mcar_test', {})
+        if mcar_test.get('p_value'):
+            if mcar_test['p_value'] > 0.05:
+                pattern_info['confidence'] = min(0.95, 1 - mcar_test['p_value'])
+                pattern_info['evidence'].append(f"Test MCAR p-value: {mcar_test['p_value']:.4f}")
+
+    # Agregar patrones alternativos si la confianza es baja
+    if pattern_info['confidence'] < confidence_threshold:
+        pattern_info['alternative_patterns'] = [
+            p for p in MissingDataPattern
+            if p != pattern_info['detected_pattern']
+        ]
+        pattern_info['recommendation'] = "Considere análisis adicional para confirmar el patrón"
+
+    return pattern_info
