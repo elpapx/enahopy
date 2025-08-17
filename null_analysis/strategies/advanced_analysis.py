@@ -56,6 +56,17 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
 
     def _analyze_missing_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Analiza patrones de datos faltantes"""
+
+        if df.empty:
+            return {
+                'total_patterns': 0,
+                'most_common_patterns': {},
+                'is_monotone': False,
+                'pattern_diversity': 0,
+                'complete_cases_pattern': 0,
+                'error': 'DataFrame Vacío'
+            }
+
         missing_matrix = df.isnull()
 
         pattern_strings = missing_matrix.apply(
@@ -65,6 +76,10 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
         pattern_counts = pattern_strings.value_counts()
         is_monotone = self._check_monotone_missing(missing_matrix)
         top_patterns = pattern_counts.head(10)
+
+        # Calclar diversidad con protección contra división por 0
+
+        pattern_diversity = len(pattern_counts) / max(len(df),1)
 
         return {
             'total_patterns': len(pattern_counts),
@@ -214,6 +229,14 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
                                    patterns: Dict, correlations: Dict, clustering: Dict,
                                    statistical_tests: Dict) -> MissingDataMetrics:
         """Calcula métricas avanzadas"""
+
+        # Obtener patrón más común de forma segura
+
+        common_patterns = patterns.get('most_common_patterns', {})
+        if common_patterns:
+            most_common_pattern = str(list(common_patterns.keys())[0])
+        else:
+            most_common_patern = "No patterns Found"
 
         advanced_metrics = MissingDataMetrics(
             total_cells=basic_metrics.total_cells,

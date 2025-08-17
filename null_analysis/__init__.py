@@ -5,6 +5,7 @@ ENAHO Null Analysis Module
 Análisis avanzado de valores nulos para microdatos del INEI.
 """
 
+
 from .config import (
     NullAnalysisConfig,
     MissingDataMetrics,
@@ -36,8 +37,17 @@ from .exceptions import (
     PatternDetectionError
 )
 
-__version__ = '3.0.0'
-__author__ = 'ENAHO Analyzer Team'
+# Importar utilidades principales
+from .utils import (
+    safe_dict_merge,
+    InputValidator,
+    null_analysis_context,
+    safe_percentage,
+    format_percentage
+)
+
+__version__ = '0.0.3'
+__author__ = 'ELPAPX'
 
 __all__ = [
     # Clases principales
@@ -65,6 +75,11 @@ __all__ = [
     'suggest_imputation_methods',
     'validate_data_completeness',
     'detect_missing_patterns_automatically',
+
+    # Utilidades
+    'safe_dict_merge',
+    'InputValidator',
+    'null_analysis_context',
 
     # Compatibilidad (deprecated)
     'LegacyNullAnalyzer',

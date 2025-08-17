@@ -21,6 +21,16 @@ def quick_null_analysis(df: pd.DataFrame,
     """
     Función de conveniencia para análisis rápido de nulos.
     """
+    # Validar y convertir complexity de forma segura
+    valid_complexities = {c.value for c in AnalysisComplexity}
+    if complexity not in valid_complexities:
+        raise ValueError(f"Complejidad {complexity} no valida. Valores permitidos: {valid_complexities}")
+
+    try:
+        complexity_enum = AnalysisComplexity(complexity)
+    except ValueError:
+        complexity_enum = AnalysisComplexity.STANDARD
+
     # Convertir string a enum apropiadamente
     config = NullAnalysisConfig(
         complexity_level=AnalysisComplexity(complexity),
@@ -64,13 +74,40 @@ def generate_null_report(df: pd.DataFrame,
                         geographic_filter: Optional[Dict[str, str]] = None,
                         format_types: Optional[List[str]] = None) -> Dict[str, Any]:
     """
-    Función de conveniencia para generar reporte completo de nulos.
+    Genera reporte completo de análisis de valores nulos.
+
+    Args:
+        df: Dataframe a analizar.
+        output_path: Ruta donde guardar el reporte.
+        group_by: Variable a agrupar. opcional
+        geographic_filter: Filtros geográficos. opcional
+        format_types: Formato de salida.
+
+    Returns:
+        Dict con rutas de archivos generados y métricas.
+
     """
     if format_types is None:
         format_types = ["html", "json"]
 
+    # validar formatos
+
+    valids_formats = ["html", "json", "xlsx", "md"]
+    invalid_formats = set(format_types) - set(valids_formats)
+    if invalid_formats:
+        raise ValueError(f"Formatos inválidos: {invalid_formats}. Formatos permitidos: {valids_formats}")
+
+
     # Convertir strings a enums
-    export_formats = [ExportFormat(fmt) for fmt in format_types if fmt in ["html", "json", "xlsx", "md"]]
+    export_formats = []
+    for fmt in format_types:
+        try:
+            export_formats.append(ExportFormat(fmt))
+        except ValueError:
+            print(f"formato '{fmt}' omitdo - no válido")
+            continue
+    if not export_formats:
+        export_formats = [ExportFormat("html"), ExportFormat("json")]
 
     config = NullAnalysisConfig(
         export_formats=export_formats,
@@ -86,15 +123,76 @@ def generate_null_report(df: pd.DataFrame,
         geographic_filter=geographic_filter
     )
 
+
 def compare_null_patterns(datasets: Dict[str, pd.DataFrame],
                           group_by: Optional[str] = None) -> Dict[str, Any]:
     """
-    Función de conveniencia para comparar patrones de nulos entre datasets.
+    Compara patrones de nulos entre múltiples datasets.
+
+    Args:
+        datasets: Diccionario {nombre: DataFrame}
+        group_by: Variable de agrupación opcional
+
+    Returns:
+        Comparación detallada entre datasets
     """
+    if not datasets:
+        raise ValueError("Se requiere al menos un dataset para comparar")
+
+    if len(datasets) == 1:
+        raise ValueError("Se requieren al menos 2 datasets para comparar")
 
     analyzer = ENAHONullAnalyzer(verbose=False)
-    return analyzer.compare_datasets_nulls(datasets, group_by=group_by)
 
+    results = {}
+    metrics_comparison = {}
+
+    # Analizar cada dataset
+    for name, df in datasets.items():
+        if df is None or df.empty:
+            results[name] = {'error': 'Dataset vacío o None'}
+            continue
+
+        analysis = analyzer.analyze_null_patterns(df, group_by=group_by)
+        results[name] = analysis
+
+        # Extraer métricas para comparación
+        if 'metrics' in analysis:
+            metrics_comparison[name] = {
+                'missing_percentage': analysis['metrics'].missing_percentage,
+                'complete_cases_percentage': analysis['metrics'].complete_cases_percentage,
+                'variables_with_missing': analysis['metrics'].variables_with_missing,
+                'data_quality_score': analysis['metrics'].data_quality_score
+            }
+
+    # Calcular diferencias
+    if len(metrics_comparison) >= 2:
+        names = list(metrics_comparison.keys())
+        base_name = names[0]
+        base_metrics = metrics_comparison[base_name]
+
+        differences = {}
+        for name in names[1:]:
+            diff = {}
+            for metric_key in base_metrics:
+                if metric_key in metrics_comparison[name]:
+                    diff[metric_key] = (
+                            metrics_comparison[name][metric_key] -
+                            base_metrics[metric_key]
+                    )
+            differences[f"{base_name}_vs_{name}"] = diff
+    else:
+        differences = {}
+
+    return {
+        'individual_analyses': results,
+        'metrics_comparison': metrics_comparison,
+        'differences': differences,
+        'best_quality_dataset': max(
+            metrics_comparison.items(),
+            key=lambda x: x[1].get('data_quality_score', 0)
+        )[0] if metrics_comparison else None
+    }
 
 def suggest_imputation_methods(df: pd.DataFrame,
                                variable: Optional[str] = None) -> Dict[str, Any]:
@@ -115,7 +213,31 @@ def validate_data_completeness(df: pd.DataFrame,
                                required_variables: Optional[List[str]] = None) -> Dict[str, Any]:
     """
     Valida si un DataFrame cumple con requisitos de completitud.
+
+    Args:
+        df: DataFrame a validar.
+        required_completeness: Porcentaje de completitud requerido.
+        required_variables: Lista de variables requeridas.
+
+    Returns:
+        Dict con resultados de validación y reocmendaciones
     """
+
+    if df is None or df.empty:
+        return{
+            'is_valid': False,
+            'reason': 'DataFrame vacío o None',
+            'completeness': 0.0,
+            'missing_variables': required_variables or [],
+            'recommendations': ['Cargar datos antes de validar']
+        }
+
+    analyzer = ENAHONullAnalyzer(verbose=False)
+
+    # calcular métricas básicas
+    total_cells = df.shape[0] * df.shape[1]
+    missing_cells = df.isnull().sum().sum()
+    completeness = ((total_cells - missing_cells) / total_cells * 100) if total_cells > 0 else 0
 
     validation_result = {
         'is_valid': False,
@@ -125,45 +247,34 @@ def validate_data_completeness(df: pd.DataFrame,
         'recommendations': []
     }
 
-    total_cells = df.shape[0] * df.shape[1]
-    missing_cells = df.isnull().sum().sum()
-    overall_completeness = ((total_cells - missing_cells) / total_cells) * 100
-
-    validation_result['overall_completeness'] = overall_completeness
-
-    if overall_completeness < required_completeness:
-        validation_result['fails'].append(
-            f"Completitud general ({overall_completeness:.1f}%) "
-            f"menor al requerido ({required_completeness}%)"
-        )
-
-    if required_variables:
-        for var in required_variables:
-            if var not in df.columns:
-                validation_result['fails'].append(f"Variable requerida '{var}' no encontrada")
-            else:
-                var_completeness = ((len(df) - df[var].isnull().sum()) / len(df)) * 100
-                if var_completeness < 100:
-                    if var_completeness < required_completeness:
-                        validation_result['fails'].append(
-                            f"Variable '{var}' tiene completitud insuficiente ({var_completeness:.1f}%)"
-                        )
-                    else:
-                        validation_result['warnings'].append(
-                            f"Variable '{var}' tiene algunos valores faltantes ({var_completeness:.1f}%)"
-                        )
-
-    validation_result['is_valid'] = len(validation_result['fails']) == 0
-
-    if not validation_result['is_valid']:
+    # validar completitud global
+    if completeness < required_completeness:
+        validation_result['is_valid'] = False
         validation_result['recommendations'].append(
-            "Considere técnicas de imputación o recolección adicional de datos"
+            f"completitud global ({completeness:.1f}%) por debajo del umbral ({required_completeness}%)"
         )
 
-        if overall_completeness < 50:
+    # validar variables requeridas
+    if required_variables:
+        missing_vars = [var for var in required_variables if var not in df.columns]
+        if missing_vars:
+            validation_result['is_valid'] = False
+            validation_result['missing_variables'] = missing_vars
             validation_result['recommendations'].append(
-                "Completitud muy baja: revisar calidad de la fuente de datos"
+                f"variables requeridas faltantes: {', '.join(missing_vars)}"
             )
+
+        # Verificar completitud por variable
+        for var in required_variables:
+            if var in df.columns:
+                var_completeness = (1- df[var].isnull().mean()) * 100
+                if var_completeness < required_completness:
+                    validation_result['variables_below_threshold'][var] = var_completeness
+                    validation_result['recommendations'].append(
+                        f"Variable '{var}' tiene ({var_completeness:.1f}% de completitud)"
+                    )
+
+    validation_result['data_quality_score'] = analyzer.get_data_quality_score(df)
 
     return validation_result
 
