@@ -12,6 +12,10 @@ class NullAnalysisError(ENAHOError):
     """Error específico del análisis de nulos"""
     pass
 
+class ValidationError(NullAnalysisError):
+    """Error de validación de parámetros o datos"""
+    pass
+
 class VisualizationError(NullAnalysisError):
     """Error en la generación de visualizaciones"""
     pass

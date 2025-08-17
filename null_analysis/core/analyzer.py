@@ -234,20 +234,23 @@ class ENAHONullAnalyzer:
 
         geographic_patterns = ['departamento', 'provincia', 'distrito', 'region', 'geo_']
         for col in df.columns:
-            col_lower = col.lower()
-            if any(pattern in col_lower for pattern in geographic_patterns):
-                if df[col].dtype == 'object' and df[col].nunique() < len(df) * 0.8:
-                    self.logger.info(f"📍 Columna de agrupación detectada por patrón: {col}")
+            # FIX: Convertir columna a string antes de aplicar .lower()
+            col_str = str(col)
+            col_lower = col_str.lower()
+
+            for pattern in geographic_patterns:
+                if pattern in col_lower:
+                    self.logger.info(f"🗺️  Columna de agrupación detectada: {col}")
                     return col
 
+        # Si hay columnas categóricas con pocos valores únicos
         for col in df.columns:
-            if (df[col].dtype == 'object' and
-                    5 <= df[col].nunique() <= 50 and
-                    df[col].nunique() / len(df) < 0.5):
-                self.logger.info(f"🏷️  Columna de agrupación detectada (categórica): {col}")
-                return col
+            if df[col].dtype == 'object' or pd.api.types.is_categorical_dtype(df[col]):
+                n_unique = df[col].nunique()
+                if 2 <= n_unique <= 20:  # Rango razonable para agrupación
+                    self.logger.info(f"📊 Columna categórica detectada para agrupación: {col}")
+                    return col
 
-        self.logger.info("ℹ️  No se detectó columna de agrupación apropiada")
         return None
 
     def create_visualizations(self,

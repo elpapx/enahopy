@@ -18,8 +18,8 @@ import time
 import traceback
 from contextlib import contextmanager
 
-from .config import AnalysisComplexity, VisualizationType, ExportFormat
-from .exceptions import NullAnalysisError, ValidationError
+from null_analysis.config import AnalysisComplexity, VisualizationType, ExportFormat
+from null_analysis.exceptions import NullAnalysisError, ValidationError
 
 
 # =====================================================
