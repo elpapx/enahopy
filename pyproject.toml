@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "enahopy"
+version = "0.1.0"
+authors = [
+    {name = "Paul Camacho", email = "pcamacho447@gmail.com"}
+]
+description = "Librería Python para análisis de microdatos ENAHO del INEI (Perú)"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "pandas>=1.3.0",
+    "numpy>=1.20.0",
+    "requests>=2.25.0",
+    "tqdm>=4.60.0",
+    "matplotlib>=3.3.0",
+    "seaborn>=0.11.0",
+]
+
+[project.optional-dependencies]
+full = [
+    "pyreadstat>=1.1.0",
+    "dask[complete]>=2021.0.0",
+    "geopandas>=0.10.0",
+    "plotly>=5.0.0",
+]
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.10.0",
+    "black>=21.0.0",
+    "flake8>=3.9.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/elpapx/enahopy"
+Documentation = "https://github.com/elpapx/enahopy/docs"
+Repository = "https://github.com/elpapx/enahopy"
+Issues = "https://github.com/elpapx/enahopy/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "examples*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 100
