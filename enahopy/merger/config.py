@@ -323,3 +323,6 @@ PATRONES_GEOGRAFICOS = {
         'latitud', 'latitude', 'lat', 'coord_y', 'y', 'norte', 'north'
     ]
 }
+
+# Alias para compatibilidad
+MergerConfig = ModuleMergeConfig

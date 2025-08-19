@@ -278,3 +278,8 @@ def _get_error_recommendations(exception: Exception) -> list:
         "Validar estructura de DataFrames de entrada",
         "Consultar documentación para parámetros correctos"
     ]
+
+# Alias para compatibilidad
+class MergerError(Exception):
+    """Error base para operaciones de merge"""
+    pass

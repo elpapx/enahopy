@@ -58,6 +58,15 @@ from .geographic.strategies import DuplicateStrategyFactory
 from .modules.merger import ENAHOModuleMerger
 from .modules.validator import ModuleValidator
 
+# Import de panel con manejo de errores
+try:
+    from .panel.creator import PanelCreator, create_panel_data
+except ImportError:
+    # Si panel no está disponible, crear función dummy
+    PanelCreator = None
+    def create_panel_data(*args, **kwargs):
+        raise ImportError('Panel module not available')
+
 
 # =====================================================
 # FUNCIONES DE CONVENIENCIA PRINCIPALES
@@ -486,7 +495,14 @@ def agregar_info_geografica(
 # EXPORTACIONES PÚBLICAS
 # =====================================================
 
+
+# Aliases para compatibilidad
+ENAHOMerger = ENAHOGeoMerger
+
 __all__ = [
+    'create_panel_data',
+    # Alias principal
+    'ENAHOMerger',
     # Clases principales
     'ENAHOGeoMerger',
     'ENAHOModuleMerger',
