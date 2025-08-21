@@ -358,7 +358,7 @@ class ENAHOGeoMerger:
         if validate_territory and valid_ubigeos > 0:
             valid_data = df[non_nan_mask & valid_mask]
             if not valid_data.empty:
-                territorial_issues = self.territorial_validator.validar_consistencia_territorial(
+                territorial_issues = self.territorial_validator.validar_jerarquia_territorial(
                     valid_data,
                     columna_ubigeo
                 )
