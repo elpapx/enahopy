@@ -14,15 +14,54 @@ Correcciones aplicadas:
 - División por cero en métricas
 - Documentación mejorada
 """
+"""
+Imports centralizados para evitar errores de dependencias.
+"""
 
-import logging
+# Imports estándar de Python (siempre disponibles)
+import os
+import sys
 import time
+import logging
 import warnings
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Any, Union
+from collections import defaultdict, Counter
 
-import numpy as np
-import pandas as pd
+# Imports científicos (verificar disponibilidad)
+try:
+    import pandas as pd
+    import numpy as np
+
+    HAS_PANDAS = True
+except ImportError:
+    HAS_PANDAS = False
+
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    HAS_PLOTTING = True
+except ImportError:
+    HAS_PLOTTING = False
+
+
+# Verificación de dependencias
+def check_dependencies():
+    """Verifica que todas las dependencias estén disponibles."""
+    missing = []
+
+    if not HAS_PANDAS:
+        missing.append("pandas")
+    if not HAS_PLOTTING:
+        missing.append("matplotlib, seaborn")
+
+    if missing:
+        raise ImportError(f"Dependencias faltantes: {', '.join(missing)}")
+
+    return True
+
 
 # Importaciones internas
 from .config import (
@@ -830,7 +869,7 @@ class ENAHOGeoMerger:
         Returns:
             ModuleMergeResult con el resultado del merge
         """
-        start_time = datetime.now()
+        start_time = time.time()
         config = config or self.module_config
 
         try:
@@ -899,7 +938,7 @@ class ENAHOGeoMerger:
             total_quality = self._calculate_total_quality(merge_reports)
 
             # Crear reporte consolidado
-            elapsed_time = (datetime.now() - start_time).total_seconds()
+            elapsed_time = time.time() - start_time
 
             merge_report = {
                 'modules_merged': list(modules_dict.keys()),
@@ -930,7 +969,7 @@ class ENAHOGeoMerger:
             return final_result
 
         except Exception as e:
-            elapsed_time = (datetime.now() - start_time).total_seconds()
+            elapsed_time =  time.time() - start_time
             self.logger.error(
                 f"merge_multiple_modules falló después de {elapsed_time:.2f}s: {str(e)}"
             )
