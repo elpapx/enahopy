@@ -3,12 +3,14 @@ Exportadores de reportes para análisis de nulos
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, Union
+from pathlib import Path
+from typing import Any, Dict, Union
+
 import pandas as pd
 
-from ..config import NullAnalysisConfig, ExportFormat
+from ..config import ExportFormat, NullAnalysisConfig
+
 
 class ReportExporter:
     """Exportador de reportes en múltiples formatos"""
@@ -17,9 +19,12 @@ class ReportExporter:
         self.config = config
         self.logger = logger
 
-    def export_report(self, analysis_result: Dict[str, Any],
-                     visualizations: Dict[str, Any],
-                     output_path: Union[str, Path]) -> Dict[str, str]:
+    def export_report(
+        self,
+        analysis_result: Dict[str, Any],
+        visualizations: Dict[str, Any],
+        output_path: Union[str, Path],
+    ) -> Dict[str, str]:
         """Exporta reporte completo en formatos especificados"""
         output_path = Path(output_path)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -33,17 +38,11 @@ class ReportExporter:
                         analysis_result, visualizations, output_path
                     )
                 elif format_type == ExportFormat.JSON:
-                    file_path = self._export_json_report(
-                        analysis_result, output_path
-                    )
+                    file_path = self._export_json_report(analysis_result, output_path)
                 elif format_type == ExportFormat.XLSX:
-                    file_path = self._export_excel_report(
-                        analysis_result, output_path
-                    )
+                    file_path = self._export_excel_report(analysis_result, output_path)
                 elif format_type == ExportFormat.MARKDOWN:
-                    file_path = self._export_markdown_report(
-                        analysis_result, output_path
-                    )
+                    file_path = self._export_markdown_report(analysis_result, output_path)
                 else:
                     continue
 
@@ -56,76 +55,74 @@ class ReportExporter:
 
         return exported_files
 
-    def _export_html_report(self, analysis_result: Dict[str, Any],
-                           visualizations: Dict[str, Any],
-                           output_path: Path) -> Path:
+    def _export_html_report(
+        self, analysis_result: Dict[str, Any], visualizations: Dict[str, Any], output_path: Path
+    ) -> Path:
         """Exporta reporte HTML completo"""
 
         html_content = self._generate_html_content(analysis_result, visualizations)
 
         file_path = output_path / "null_analysis_report.html"
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content)
 
         return file_path
 
-    def _export_json_report(self, analysis_result: Dict[str, Any],
-                           output_path: Path) -> Path:
+    def _export_json_report(self, analysis_result: Dict[str, Any], output_path: Path) -> Path:
         """Exporta reporte JSON"""
 
         json_data = self._prepare_for_json_export(analysis_result)
 
         file_path = output_path / "null_analysis_report.json"
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(json_data, f, indent=2, ensure_ascii=False, default=str)
 
         return file_path
 
-    def _export_excel_report(self, analysis_result: Dict[str, Any],
-                            output_path: Path) -> Path:
+    def _export_excel_report(self, analysis_result: Dict[str, Any], output_path: Path) -> Path:
         """Exporta reporte Excel con múltiples hojas"""
 
         file_path = output_path / "null_analysis_report.xlsx"
 
-        with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-            if analysis_result['analysis_type'] == 'basic':
-                summary = analysis_result['summary']
+        with pd.ExcelWriter(file_path, engine="openpyxl") as writer:
+            if analysis_result["analysis_type"] == "basic":
+                summary = analysis_result["summary"]
             else:
-                summary = analysis_result['basic_analysis']['summary']
+                summary = analysis_result["basic_analysis"]["summary"]
 
-            summary.to_excel(writer, sheet_name='Resumen_Variables', index=False)
+            summary.to_excel(writer, sheet_name="Resumen_Variables", index=False)
 
-            metrics_df = pd.DataFrame([analysis_result['metrics'].to_dict()])
-            metrics_df.to_excel(writer, sheet_name='Metricas_Generales', index=False)
+            metrics_df = pd.DataFrame([analysis_result["metrics"].to_dict()])
+            metrics_df.to_excel(writer, sheet_name="Metricas_Generales", index=False)
 
-            if analysis_result['analysis_type'] == 'advanced':
-                if 'correlations' in analysis_result:
-                    corr_df = analysis_result['correlations']['correlation_matrix']
-                    corr_df.to_excel(writer, sheet_name='Correlaciones_Missing')
+            if analysis_result["analysis_type"] == "advanced":
+                if "correlations" in analysis_result:
+                    corr_df = analysis_result["correlations"]["correlation_matrix"]
+                    corr_df.to_excel(writer, sheet_name="Correlaciones_Missing")
 
-                if analysis_result.get('patterns', {}).get('most_common_patterns'):
+                if analysis_result.get("patterns", {}).get("most_common_patterns"):
                     patterns_df = pd.DataFrame(
-                        list(analysis_result['patterns']['most_common_patterns'].items()),
-                        columns=['Patron', 'Frecuencia']
+                        list(analysis_result["patterns"]["most_common_patterns"].items()),
+                        columns=["Patron", "Frecuencia"],
                     )
-                    patterns_df.to_excel(writer, sheet_name='Patrones_Comunes', index=False)
+                    patterns_df.to_excel(writer, sheet_name="Patrones_Comunes", index=False)
 
         return file_path
 
-    def _export_markdown_report(self, analysis_result: Dict[str, Any],
-                               output_path: Path) -> Path:
+    def _export_markdown_report(self, analysis_result: Dict[str, Any], output_path: Path) -> Path:
         """Exporta reporte Markdown"""
 
         markdown_content = self._generate_markdown_content(analysis_result)
 
         file_path = output_path / "null_analysis_report.md"
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
         return file_path
 
-    def _generate_html_content(self, analysis_result: Dict[str, Any],
-                              visualizations: Dict[str, Any]) -> str:
+    def _generate_html_content(
+        self, analysis_result: Dict[str, Any], visualizations: Dict[str, Any]
+    ) -> str:
         """Genera contenido HTML del reporte"""
 
         html_template = """
@@ -170,7 +167,7 @@ class ReportExporter:
         """
 
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        metrics = analysis_result['metrics']
+        metrics = analysis_result["metrics"]
 
         resumen_metricas = f"""
         <div class="metric-card">
@@ -187,22 +184,30 @@ class ReportExporter:
         </div>
         """
 
-        if analysis_result['analysis_type'] == 'basic':
-            summary = analysis_result['summary']
+        if analysis_result["analysis_type"] == "basic":
+            summary = analysis_result["summary"]
         else:
-            summary = analysis_result['basic_analysis']['summary']
+            summary = analysis_result["basic_analysis"]["summary"]
 
-        tabla_html = summary.head(10).to_html(classes='table', escape=False)
+        tabla_html = summary.head(10).to_html(classes="table", escape=False)
 
         recommendations = []
-        if analysis_result['analysis_type'] == 'advanced':
+        if analysis_result["analysis_type"] == "advanced":
             from ..strategies.advanced_analysis import AdvancedNullAnalysis
-            recommendations = AdvancedNullAnalysis(self.config, self.logger).get_recommendations(analysis_result)
+
+            recommendations = AdvancedNullAnalysis(self.config, self.logger).get_recommendations(
+                analysis_result
+            )
         else:
             from ..strategies.basic_analysis import BasicNullAnalysis
-            recommendations = BasicNullAnalysis(self.config, self.logger).get_recommendations(analysis_result)
 
-        recomendaciones_html = "\n".join([f'<div class="recommendation">{rec}</div>' for rec in recommendations])
+            recommendations = BasicNullAnalysis(self.config, self.logger).get_recommendations(
+                analysis_result
+            )
+
+        recomendaciones_html = "\n".join(
+            [f'<div class="recommendation">{rec}</div>' for rec in recommendations]
+        )
 
         detalles = f"""
         <ul>
@@ -218,13 +223,13 @@ class ReportExporter:
             resumen_metricas=resumen_metricas,
             tabla_resumen=tabla_html,
             recomendaciones=recomendaciones_html,
-            detalles_tecnicos=detalles
+            detalles_tecnicos=detalles,
         )
 
     def _generate_markdown_content(self, analysis_result: Dict[str, Any]) -> str:
         """Genera contenido Markdown del reporte"""
 
-        metrics = analysis_result['metrics']
+        metrics = analysis_result["metrics"]
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         markdown_content = f"""# 📊 Reporte de Análisis de Valores Nulos
@@ -245,10 +250,10 @@ class ReportExporter:
 ## 📈 Variables con Más Valores Faltantes
 """
 
-        if analysis_result['analysis_type'] == 'basic':
-            summary = analysis_result['summary']
+        if analysis_result["analysis_type"] == "basic":
+            summary = analysis_result["summary"]
         else:
-            summary = analysis_result['basic_analysis']['summary']
+            summary = analysis_result["basic_analysis"]["summary"]
 
         top_missing = summary.head(10)
         for _, row in top_missing.iterrows():
@@ -257,12 +262,18 @@ class ReportExporter:
         markdown_content += "\n## 💡 Recomendaciones\n\n"
 
         recommendations = []
-        if analysis_result['analysis_type'] == 'advanced':
+        if analysis_result["analysis_type"] == "advanced":
             from ..strategies.advanced_analysis import AdvancedNullAnalysis
-            recommendations = AdvancedNullAnalysis(self.config, self.logger).get_recommendations(analysis_result)
+
+            recommendations = AdvancedNullAnalysis(self.config, self.logger).get_recommendations(
+                analysis_result
+            )
         else:
             from ..strategies.basic_analysis import BasicNullAnalysis
-            recommendations = BasicNullAnalysis(self.config, self.logger).get_recommendations(analysis_result)
+
+            recommendations = BasicNullAnalysis(self.config, self.logger).get_recommendations(
+                analysis_result
+            )
 
         for rec in recommendations:
             markdown_content += f"- {rec}\n"
@@ -281,16 +292,17 @@ class ReportExporter:
     def _prepare_for_json_export(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
         """Prepara datos para exportación JSON"""
         import copy
+
         clean_result = copy.deepcopy(analysis_result)
 
-        if hasattr(clean_result['metrics'], 'to_dict'):
-            clean_result['metrics'] = clean_result['metrics'].to_dict()
+        if hasattr(clean_result["metrics"], "to_dict"):
+            clean_result["metrics"] = clean_result["metrics"].to_dict()
 
         def clean_dataframes(obj):
             if isinstance(obj, dict):
                 return {k: clean_dataframes(v) for k, v in obj.items()}
             elif isinstance(obj, pd.DataFrame):
-                return obj.to_dict('records')
+                return obj.to_dict("records")
             elif isinstance(obj, pd.Series):
                 return obj.to_dict()
             elif isinstance(obj, list):

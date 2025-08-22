@@ -7,10 +7,11 @@ Utiliza pyreadstat para lectura optimizada con soporte
 completo para etiquetas y formatos Stata.
 """
 
+import logging
 import warnings
 from pathlib import Path
-from typing import List, Union, Iterator, Dict
-import logging
+from typing import Dict, Iterator, List, Union
+
 import pandas as pd
 
 from ...core.exceptions import UnsupportedFormatError
@@ -20,10 +21,13 @@ from .base import BaseReader
 # Import opcional para Stata
 try:
     import pyreadstat
+
     PYREADSTAT_AVAILABLE = True
 except ImportError:
     PYREADSTAT_AVAILABLE = False
-    warnings.warn("pyreadstat no disponible. Los archivos .dta y .sav no podrán ser leídos directamente.")
+    warnings.warn(
+        "pyreadstat no disponible. Los archivos .dta y .sav no podrán ser leídos directamente."
+    )
 
 if DASK_AVAILABLE:
     import dask.dataframe as dd
@@ -42,9 +46,13 @@ class StataReader(BaseReader):
         df, _ = pyreadstat.read_dta(str(self.file_path), usecols=columns, apply_value_formats=True)
         return df
 
-    def read_in_chunks(self, columns: List[str], chunk_size: int) -> Union[dd.DataFrame, Iterator[pd.DataFrame]]:
+    def read_in_chunks(
+        self, columns: List[str], chunk_size: int
+    ) -> Union[dd.DataFrame, Iterator[pd.DataFrame]]:
         """Lee en chunks (limitado para Stata)"""
-        self.logger.warning("Lectura por chunks no optimizada para Stata. Leyendo completo y particionando.")
+        self.logger.warning(
+            "Lectura por chunks no optimizada para Stata. Leyendo completo y particionando."
+        )
         df = self.read_columns(columns)
 
         if DASK_AVAILABLE:
@@ -54,7 +62,7 @@ class StataReader(BaseReader):
             # Crear iterador manual si Dask no está disponible
             def chunk_iterator():
                 for i in range(0, len(df), chunk_size):
-                    yield df.iloc[i:i + chunk_size]
+                    yield df.iloc[i : i + chunk_size]
 
             return chunk_iterator()
 
@@ -67,11 +75,8 @@ class StataReader(BaseReader):
         """Extrae metadatos completos del archivo Stata"""
         metadata = self._extract_base_metadata()
         _, meta = pyreadstat.read_dta(str(self.file_path), metadataonly=True)
-        metadata['file_info']['file_format'] = 'Stata DTA'
+        metadata["file_info"]["file_format"] = "Stata DTA"
         return self._populate_spss_dta_metadata(metadata, meta)
 
 
-__all__ = [
-    'StataReader',
-    'PYREADSTAT_AVAILABLE'
-]
+__all__ = ["StataReader", "PYREADSTAT_AVAILABLE"]

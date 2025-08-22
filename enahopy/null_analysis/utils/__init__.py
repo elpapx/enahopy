@@ -5,9 +5,10 @@ ENAHO Null Analysis - Utilidades
 Funciones auxiliares para análisis de valores nulos.
 """
 
-from typing import Dict, Any, List, Optional, Union
-import pandas as pd
+from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
+import pandas as pd
 
 
 def safe_dict_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
@@ -34,15 +35,15 @@ def identify_null_patterns(df: pd.DataFrame, threshold: float = 0.05) -> Dict[st
         null_pct = null_percentages[col]
 
         if null_pct == 0:
-            patterns[col] = 'complete'
+            patterns[col] = "complete"
         elif null_pct < threshold * 100:
-            patterns[col] = 'low_missing'
+            patterns[col] = "low_missing"
         elif null_pct < 30:
-            patterns[col] = 'moderate_missing'
+            patterns[col] = "moderate_missing"
         elif null_pct < 70:
-            patterns[col] = 'high_missing'
+            patterns[col] = "high_missing"
         else:
-            patterns[col] = 'mostly_missing'
+            patterns[col] = "mostly_missing"
 
     return patterns
 
@@ -60,15 +61,17 @@ def find_columns_with_nulls(df: pd.DataFrame) -> List[str]:
 
 def get_null_summary(df: pd.DataFrame) -> pd.DataFrame:
     """Genera resumen de valores nulos por columna"""
-    summary = pd.DataFrame({
-        'column': df.columns,
-        'null_count': df.isnull().sum(),
-        'null_percentage': (df.isnull().sum() / len(df)) * 100,
-        'non_null_count': df.count(),
-        'dtype': df.dtypes
-    })
+    summary = pd.DataFrame(
+        {
+            "column": df.columns,
+            "null_count": df.isnull().sum(),
+            "null_percentage": (df.isnull().sum() / len(df)) * 100,
+            "non_null_count": df.count(),
+            "dtype": df.dtypes,
+        }
+    )
 
-    summary = summary[summary['null_count'] > 0].sort_values('null_percentage', ascending=False)
+    summary = summary[summary["null_count"] > 0].sort_values("null_percentage", ascending=False)
     return summary
 
 
@@ -86,9 +89,9 @@ def detect_monotone_pattern(df: pd.DataFrame) -> bool:
     return all_increasing or all_decreasing
 
 
-def impute_with_strategy(df: pd.DataFrame, 
-                         strategy: str = 'mean',
-                         columns: Optional[List[str]] = None) -> pd.DataFrame:
+def impute_with_strategy(
+    df: pd.DataFrame, strategy: str = "mean", columns: Optional[List[str]] = None
+) -> pd.DataFrame:
     """Imputa valores nulos con estrategia especificada"""
     df_copy = df.copy()
 
@@ -99,29 +102,29 @@ def impute_with_strategy(df: pd.DataFrame,
         if col not in df_copy.columns:
             continue
 
-        if strategy == 'mean' and pd.api.types.is_numeric_dtype(df_copy[col]):
+        if strategy == "mean" and pd.api.types.is_numeric_dtype(df_copy[col]):
             df_copy[col].fillna(df_copy[col].mean(), inplace=True)
-        elif strategy == 'median' and pd.api.types.is_numeric_dtype(df_copy[col]):
+        elif strategy == "median" and pd.api.types.is_numeric_dtype(df_copy[col]):
             df_copy[col].fillna(df_copy[col].median(), inplace=True)
-        elif strategy == 'mode':
+        elif strategy == "mode":
             mode_val = df_copy[col].mode()
             if len(mode_val) > 0:
                 df_copy[col].fillna(mode_val[0], inplace=True)
-        elif strategy == 'forward':
-            df_copy[col].fillna(method='ffill', inplace=True)
-        elif strategy == 'backward':
-            df_copy[col].fillna(method='bfill', inplace=True)
+        elif strategy == "forward":
+            df_copy[col].fillna(method="ffill", inplace=True)
+        elif strategy == "backward":
+            df_copy[col].fillna(method="bfill", inplace=True)
 
     return df_copy
 
 
 __all__ = [
-    'safe_dict_merge',
-    'calculate_null_percentage',
-    'identify_null_patterns',
-    'get_null_correlation_matrix',
-    'find_columns_with_nulls',
-    'get_null_summary',
-    'detect_monotone_pattern',
-    'impute_with_strategy'
+    "safe_dict_merge",
+    "calculate_null_percentage",
+    "identify_null_patterns",
+    "get_null_correlation_matrix",
+    "find_columns_with_nulls",
+    "get_null_summary",
+    "detect_monotone_pattern",
+    "impute_with_strategy",
 ]

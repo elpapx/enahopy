@@ -2,32 +2,33 @@
 Setup configuration for enahopy package
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Leer el contenido del README
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text(encoding='utf-8')
+long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 # Leer las dependencias desde requirements.txt
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     required = f.read().splitlines()
     # Filtrar comentarios y líneas vacías
-    required = [line for line in required if line and not line.startswith('#')]
+    required = [line for line in required if line and not line.startswith("#")]
 
 setup(
     name="enahopy",
     version="0.1.0",
-    author="Tu Nombre",
-    author_email="tu.email@example.com",
+    author="Alonso Camacho Abadie",
+    author_email="pcamacho447@gmail.com",
     description="Librería Python para análisis de microdatos ENAHO del INEI (Perú)",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tu-usuario/enahopy",
+    url="https://github.com/elpapx/enahopy",
     project_urls={
-        "Bug Tracker": "https://github.com/tu-usuario/enahopy/issues",
-        "Documentation": "https://github.com/tu-usuario/enahopy/docs",
-        "Source Code": "https://github.com/tu-usuario/enahopy",
+        "Bug Tracker": "https://github.com/elpapx/enahopy/issues",
+        "Documentation": "https://github.com/elpapx/enahopy/docs",
+        "Source Code": "https://github.com/elpapx/enahopy",
     },
     packages=find_packages(exclude=["tests", "tests.*", "examples", "examples.*"]),
     classifiers=[
@@ -84,7 +85,14 @@ setup(
     include_package_data=True,
     zip_safe=False,
     keywords=[
-        "enaho", "peru", "inei", "survey", "microdata",
-        "encuesta", "hogares", "estadistica", "analisis"
+        "enaho",
+        "peru",
+        "inei",
+        "survey",
+        "microdata",
+        "encuesta",
+        "hogares",
+        "estadistica",
+        "analisis",
     ],
 )

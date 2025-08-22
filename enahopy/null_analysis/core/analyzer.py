@@ -6,16 +6,17 @@ Analizador principal de valores nulos.
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 @dataclass
 class NullAnalysisConfig:
     """Configuración para análisis de valores nulos"""
+
     threshold_low: float = 0.05
     threshold_moderate: float = 0.20
     threshold_high: float = 0.50
@@ -33,8 +34,9 @@ class NullAnalyzer:
     incluyendo estadísticas, detección de patrones y generación de reportes.
     """
 
-    def __init__(self, config: Optional[NullAnalysisConfig] = None,
-                 logger: Optional[logging.Logger] = None):
+    def __init__(
+        self, config: Optional[NullAnalysisConfig] = None, logger: Optional[logging.Logger] = None
+    ):
         """
         Inicializa el analizador
 
@@ -59,19 +61,19 @@ class NullAnalyzer:
         self.logger.info(f"Analizando DataFrame de forma {df.shape}")
 
         results = {
-            'shape': df.shape,
-            'total_values': df.size,
-            'null_values': df.isnull().sum().sum(),
-            'null_percentage': 0.0,
-            'columns_analysis': {},
-            'row_analysis': {},
-            'patterns': {},
-            'severity': 'none'
+            "shape": df.shape,
+            "total_values": df.size,
+            "null_values": df.isnull().sum().sum(),
+            "null_percentage": 0.0,
+            "columns_analysis": {},
+            "row_analysis": {},
+            "patterns": {},
+            "severity": "none",
         }
 
         # Calcular porcentaje global
-        if results['total_values'] > 0:
-            results['null_percentage'] = (results['null_values'] / results['total_values']) * 100
+        if results["total_values"] > 0:
+            results["null_percentage"] = (results["null_values"] / results["total_values"]) * 100
 
         # Análisis por columnas
         for col in df.columns:
@@ -79,29 +81,29 @@ class NullAnalyzer:
             total_count = len(df[col])
             null_pct = (null_count / total_count * 100) if total_count > 0 else 0
 
-            results['columns_analysis'][col] = {
-                'null_count': int(null_count),
-                'null_percentage': float(null_pct),
-                'non_null_count': int(total_count - null_count),
-                'dtype': str(df[col].dtype),
-                'severity': self._classify_severity(null_pct)
+            results["columns_analysis"][col] = {
+                "null_count": int(null_count),
+                "null_percentage": float(null_pct),
+                "non_null_count": int(total_count - null_count),
+                "dtype": str(df[col].dtype),
+                "severity": self._classify_severity(null_pct),
             }
 
         # Análisis por filas
         rows_with_nulls = df.isnull().any(axis=1).sum()
         complete_rows = (~df.isnull().any(axis=1)).sum()
 
-        results['row_analysis'] = {
-            'rows_with_nulls': int(rows_with_nulls),
-            'complete_rows': int(complete_rows),
-            'percentage_incomplete': float(rows_with_nulls / len(df) * 100) if len(df) > 0 else 0
+        results["row_analysis"] = {
+            "rows_with_nulls": int(rows_with_nulls),
+            "complete_rows": int(complete_rows),
+            "percentage_incomplete": float(rows_with_nulls / len(df) * 100) if len(df) > 0 else 0,
         }
 
         # Determinar severidad global
-        results['severity'] = self._classify_severity(results['null_percentage'])
+        results["severity"] = self._classify_severity(results["null_percentage"])
 
         # Detectar patrones básicos
-        results['patterns'] = self._detect_basic_patterns(df)
+        results["patterns"] = self._detect_basic_patterns(df)
 
         return results
 
@@ -116,17 +118,17 @@ class NullAnalyzer:
             Clasificación de severidad
         """
         if percentage == 0:
-            return 'none'
+            return "none"
         elif percentage < self.config.threshold_low * 100:
-            return 'low'
+            return "low"
         elif percentage < self.config.threshold_moderate * 100:
-            return 'moderate'
+            return "moderate"
         elif percentage < self.config.threshold_high * 100:
-            return 'high'
+            return "high"
         elif percentage < self.config.threshold_critical * 100:
-            return 'critical'
+            return "critical"
         else:
-            return 'extreme'
+            return "extreme"
 
     def _detect_basic_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """
@@ -139,22 +141,22 @@ class NullAnalyzer:
             Diccionario con patrones detectados
         """
         patterns = {
-            'has_complete_columns': False,
-            'has_empty_columns': False,
-            'has_monotone_pattern': False,
-            'correlation_detected': False,
-            'pattern_type': 'unknown'
+            "has_complete_columns": False,
+            "has_empty_columns": False,
+            "has_monotone_pattern": False,
+            "correlation_detected": False,
+            "pattern_type": "unknown",
         }
 
         # Verificar columnas completas
         complete_cols = df.columns[~df.isnull().any()].tolist()
-        patterns['has_complete_columns'] = len(complete_cols) > 0
-        patterns['complete_columns'] = complete_cols
+        patterns["has_complete_columns"] = len(complete_cols) > 0
+        patterns["complete_columns"] = complete_cols
 
         # Verificar columnas vacías
         empty_cols = df.columns[df.isnull().all()].tolist()
-        patterns['has_empty_columns'] = len(empty_cols) > 0
-        patterns['empty_columns'] = empty_cols
+        patterns["has_empty_columns"] = len(empty_cols) > 0
+        patterns["empty_columns"] = empty_cols
 
         # Detectar patrón monótono (simplificado)
         null_counts_by_row = df.isnull().sum(axis=1)
@@ -163,7 +165,7 @@ class NullAnalyzer:
             if len(diffs) > 0:
                 all_increasing = (diffs >= 0).all()
                 all_decreasing = (diffs <= 0).all()
-                patterns['has_monotone_pattern'] = all_increasing or all_decreasing
+                patterns["has_monotone_pattern"] = all_increasing or all_decreasing
 
         # Detectar correlación en nulos (simplificado)
         if len(df.columns) > 1:
@@ -173,19 +175,19 @@ class NullAnalyzer:
             # Verificar si hay alta correlación
             upper_triangle = np.triu(corr_matrix.values, k=1)
             high_corr = np.any(np.abs(upper_triangle) > 0.7)
-            patterns['correlation_detected'] = bool(high_corr)
+            patterns["correlation_detected"] = bool(high_corr)
 
         # Determinar tipo de patrón
-        if patterns['has_empty_columns']:
-            patterns['pattern_type'] = 'structural'
-        elif patterns['has_monotone_pattern']:
-            patterns['pattern_type'] = 'monotone'
-        elif patterns['correlation_detected']:
-            patterns['pattern_type'] = 'correlated'
-        elif not patterns['has_complete_columns']:
-            patterns['pattern_type'] = 'random'
+        if patterns["has_empty_columns"]:
+            patterns["pattern_type"] = "structural"
+        elif patterns["has_monotone_pattern"]:
+            patterns["pattern_type"] = "monotone"
+        elif patterns["correlation_detected"]:
+            patterns["pattern_type"] = "correlated"
+        elif not patterns["has_complete_columns"]:
+            patterns["pattern_type"] = "random"
         else:
-            patterns['pattern_type'] = 'mixed'
+            patterns["pattern_type"] = "mixed"
 
         return patterns
 
@@ -205,23 +207,26 @@ class NullAnalyzer:
             null_count = df[col].isnull().sum()
             total_count = len(df[col])
 
-            summary_data.append({
-                'column': col,
-                'dtype': str(df[col].dtype),
-                'null_count': null_count,
-                'non_null_count': total_count - null_count,
-                'null_percentage': (null_count / total_count * 100) if total_count > 0 else 0,
-                'unique_values': df[col].nunique(),
-                'has_nulls': null_count > 0
-            })
+            summary_data.append(
+                {
+                    "column": col,
+                    "dtype": str(df[col].dtype),
+                    "null_count": null_count,
+                    "non_null_count": total_count - null_count,
+                    "null_percentage": (null_count / total_count * 100) if total_count > 0 else 0,
+                    "unique_values": df[col].nunique(),
+                    "has_nulls": null_count > 0,
+                }
+            )
 
         summary_df = pd.DataFrame(summary_data)
-        summary_df = summary_df.sort_values('null_percentage', ascending=False)
+        summary_df = summary_df.sort_values("null_percentage", ascending=False)
 
         return summary_df
 
-    def identify_columns_for_imputation(self, df: pd.DataFrame,
-                                       max_null_percentage: float = 50.0) -> List[str]:
+    def identify_columns_for_imputation(
+        self, df: pd.DataFrame, max_null_percentage: float = 50.0
+    ) -> List[str]:
         """
         Identifica columnas candidatas para imputación
 
@@ -255,41 +260,51 @@ class NullAnalyzer:
         """
         recommendations = []
 
-        severity = analysis_results.get('severity', 'unknown')
-        null_pct = analysis_results.get('null_percentage', 0)
+        severity = analysis_results.get("severity", "unknown")
+        null_pct = analysis_results.get("null_percentage", 0)
 
         # Recomendaciones por severidad
-        if severity == 'none':
+        if severity == "none":
             recommendations.append("✅ No se detectaron valores nulos. Los datos están completos.")
-        elif severity == 'low':
-            recommendations.append("✓ Porcentaje bajo de valores nulos. Considere imputación simple.")
-            recommendations.append("✓ Los valores faltantes probablemente no afectarán significativamente el análisis.")
-        elif severity == 'moderate':
+        elif severity == "low":
+            recommendations.append(
+                "✓ Porcentaje bajo de valores nulos. Considere imputación simple."
+            )
+            recommendations.append(
+                "✓ Los valores faltantes probablemente no afectarán significativamente el análisis."
+            )
+        elif severity == "moderate":
             recommendations.append("⚠️ Porcentaje moderado de valores nulos detectado.")
-            recommendations.append("⚠️ Considere técnicas de imputación múltiple o modelos predictivos.")
+            recommendations.append(
+                "⚠️ Considere técnicas de imputación múltiple o modelos predictivos."
+            )
             recommendations.append("⚠️ Investigue las causas de los valores faltantes.")
-        elif severity in ['high', 'critical', 'extreme']:
+        elif severity in ["high", "critical", "extreme"]:
             recommendations.append(f"❌ ADVERTENCIA: {null_pct:.1f}% de valores nulos detectados.")
             recommendations.append("❌ El análisis puede estar severamente comprometido.")
-            recommendations.append("❌ Considere excluir variables con exceso de valores faltantes.")
+            recommendations.append(
+                "❌ Considere excluir variables con exceso de valores faltantes."
+            )
             recommendations.append("❌ Revise la calidad de la fuente de datos.")
 
         # Recomendaciones por patrones
-        patterns = analysis_results.get('patterns', {})
+        patterns = analysis_results.get("patterns", {})
 
-        if patterns.get('has_empty_columns'):
-            empty_cols = patterns.get('empty_columns', [])
+        if patterns.get("has_empty_columns"):
+            empty_cols = patterns.get("empty_columns", [])
             recommendations.append(f"⚠️ Columnas completamente vacías detectadas: {empty_cols[:5]}")
             recommendations.append("⚠️ Considere eliminar estas columnas del análisis.")
 
-        if patterns.get('has_monotone_pattern'):
+        if patterns.get("has_monotone_pattern"):
             recommendations.append("📊 Patrón monótono detectado en valores nulos.")
             recommendations.append("📊 Considere imputación secuencial o análisis longitudinal.")
 
-        if patterns.get('correlation_detected'):
+        if patterns.get("correlation_detected"):
             recommendations.append("🔍 Correlación detectada entre patrones de valores nulos.")
             recommendations.append("🔍 Los valores pueden no faltar aleatoriamente (MAR/MNAR).")
-            recommendations.append("🔍 Use técnicas avanzadas de imputación que consideren dependencias.")
+            recommendations.append(
+                "🔍 Use técnicas avanzadas de imputación que consideren dependencias."
+            )
 
         return recommendations
 

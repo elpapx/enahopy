@@ -11,8 +11,9 @@ from .validator import ModuleValidator
 
 
 # Funciones de conveniencia específicas del submódulo de módulos
-def quick_module_merge(df1, df2, module1_code, module2_code,
-                       level='hogar', strategy='coalesce', **kwargs):
+def quick_module_merge(
+    df1, df2, module1_code, module2_code, level="hogar", strategy="coalesce", **kwargs
+):
     """
     Función de conveniencia para merge rápido entre dos módulos
 
@@ -27,19 +28,19 @@ def quick_module_merge(df1, df2, module1_code, module2_code,
         DataFrame resultado del merge
     """
     import logging
+
     from ..config import ModuleMergeConfig, ModuleMergeLevel, ModuleMergeStrategy
 
-    logger = logging.getLogger('module_merger')
+    logger = logging.getLogger("module_merger")
     if not logger.handlers:
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('[%(levelname)s] %(message)s')
+        formatter = logging.Formatter("[%(levelname)s] %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO if kwargs.get('verbose', True) else logging.WARNING)
+        logger.setLevel(logging.INFO if kwargs.get("verbose", True) else logging.WARNING)
 
     config = ModuleMergeConfig(
-        merge_level=ModuleMergeLevel(level),
-        merge_strategy=ModuleMergeStrategy(strategy)
+        merge_level=ModuleMergeLevel(level), merge_strategy=ModuleMergeStrategy(strategy)
     )
 
     merger = ENAHOModuleMerger(config, logger)
@@ -60,9 +61,10 @@ def validate_module_structure_quick(df, module_code):
         Lista de advertencias encontradas
     """
     import logging
+
     from ..config import ModuleMergeConfig
 
-    logger = logging.getLogger('module_validator')
+    logger = logging.getLogger("module_validator")
     if not logger.handlers:
         handler = logging.StreamHandler()
         logger.addHandler(handler)
@@ -74,7 +76,7 @@ def validate_module_structure_quick(df, module_code):
     return validator.validate_module_structure(df, module_code)
 
 
-def check_modules_compatibility_quick(modules_dict, merge_level='hogar'):
+def check_modules_compatibility_quick(modules_dict, merge_level="hogar"):
     """
     Función de conveniencia para verificar compatibilidad entre múltiples módulos
 
@@ -86,9 +88,10 @@ def check_modules_compatibility_quick(modules_dict, merge_level='hogar'):
         Diccionario con resultado de compatibilidad
     """
     import logging
+
     from ..config import ModuleMergeConfig, ModuleMergeLevel
 
-    logger = logging.getLogger('compatibility_checker')
+    logger = logging.getLogger("compatibility_checker")
     if not logger.handlers:
         handler = logging.StreamHandler()
         logger.addHandler(handler)
@@ -98,11 +101,11 @@ def check_modules_compatibility_quick(modules_dict, merge_level='hogar'):
     validator = ModuleValidator(config, logger)
 
     compatibility_report = {
-        'overall_compatible': True,
-        'merge_level': merge_level,
-        'modules_analyzed': list(modules_dict.keys()),
-        'pairwise_compatibility': {},
-        'issues': []
+        "overall_compatible": True,
+        "merge_level": merge_level,
+        "modules_analyzed": list(modules_dict.keys()),
+        "pairwise_compatibility": {},
+        "issues": [],
     }
 
     # Verificar compatibilidad por pares
@@ -110,26 +113,26 @@ def check_modules_compatibility_quick(modules_dict, merge_level='hogar'):
     level_enum = ModuleMergeLevel(merge_level)
 
     for i, module1 in enumerate(module_codes):
-        for module2 in module_codes[i + 1:]:
+        for module2 in module_codes[i + 1 :]:
             compatibility = validator.check_module_compatibility(
-                modules_dict[module1], modules_dict[module2],
-                module1, module2, level_enum
+                modules_dict[module1], modules_dict[module2], module1, module2, level_enum
             )
 
             pair_key = f"{module1}-{module2}"
-            compatibility_report['pairwise_compatibility'][pair_key] = compatibility
+            compatibility_report["pairwise_compatibility"][pair_key] = compatibility
 
-            if not compatibility['compatible']:
-                compatibility_report['overall_compatible'] = False
-                compatibility_report['issues'].append(
+            if not compatibility["compatible"]:
+                compatibility_report["overall_compatible"] = False
+                compatibility_report["issues"].append(
                     f"Módulos {module1} y {module2}: {compatibility.get('error', 'Incompatible')}"
                 )
 
     return compatibility_report
 
 
-def merge_multiple_modules_quick(modules_dict, base_module='34',
-                                 level='hogar', strategy='coalesce', **kwargs):
+def merge_multiple_modules_quick(
+    modules_dict, base_module="34", level="hogar", strategy="coalesce", **kwargs
+):
     """
     Función de conveniencia para merge múltiple con configuración automática
 
@@ -144,25 +147,25 @@ def merge_multiple_modules_quick(modules_dict, base_module='34',
         DataFrame con todos los módulos combinados
     """
     import logging
+
     from ..config import ModuleMergeConfig, ModuleMergeLevel, ModuleMergeStrategy
 
-    logger = logging.getLogger('multi_module_merger')
+    logger = logging.getLogger("multi_module_merger")
     if not logger.handlers:
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('[%(levelname)s] %(message)s')
+        formatter = logging.Formatter("[%(levelname)s] %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO if kwargs.get('verbose', True) else logging.WARNING)
+        logger.setLevel(logging.INFO if kwargs.get("verbose", True) else logging.WARNING)
 
     config = ModuleMergeConfig(
-        merge_level=ModuleMergeLevel(level),
-        merge_strategy=ModuleMergeStrategy(strategy)
+        merge_level=ModuleMergeLevel(level), merge_strategy=ModuleMergeStrategy(strategy)
     )
 
     merger = ENAHOModuleMerger(config, logger)
     result = merger.merge_multiple_modules(modules_dict, base_module)
 
-    if kwargs.get('return_report', False):
+    if kwargs.get("return_report", False):
         return result.merged_df, result.merge_report
     else:
         return result.merged_df
@@ -184,40 +187,40 @@ def get_module_info(module_code):
 
     if module_code not in config.module_validations:
         return {
-            'valid': False,
-            'error': f'Módulo {module_code} no reconocido',
-            'available_modules': list(config.module_validations.keys())
+            "valid": False,
+            "error": f"Módulo {module_code} no reconocido",
+            "available_modules": list(config.module_validations.keys()),
         }
 
     module_info = config.module_validations[module_code]
 
     return {
-        'valid': True,
-        'module_code': module_code,
-        'level': module_info['level'].value,
-        'required_keys': module_info['required_keys'],
-        'description': _get_module_description(module_code)
+        "valid": True,
+        "module_code": module_code,
+        "level": module_info["level"].value,
+        "required_keys": module_info["required_keys"],
+        "description": _get_module_description(module_code),
     }
 
 
 def _get_module_description(module_code):
     """Obtiene descripción del módulo ENAHO"""
     descriptions = {
-        '01': 'Características de la Vivienda y del Hogar',
-        '02': 'Características de los Miembros del Hogar',
-        '03': 'Educación',
-        '04': 'Salud',
-        '05': 'Empleo e Ingresos',
-        '07': 'Ingresos del Hogar',
-        '08': 'Gastos del Hogar',
-        '09': 'Programas Sociales',
-        '34': 'Sumaria (Resumen del Hogar)',
-        '37': 'Gobierno Electrónico'
+        "01": "Características de la Vivienda y del Hogar",
+        "02": "Características de los Miembros del Hogar",
+        "03": "Educación",
+        "04": "Salud",
+        "05": "Empleo e Ingresos",
+        "07": "Ingresos del Hogar",
+        "08": "Gastos del Hogar",
+        "09": "Programas Sociales",
+        "34": "Sumaria (Resumen del Hogar)",
+        "37": "Gobierno Electrónico",
     }
-    return descriptions.get(module_code, 'Módulo ENAHO')
+    return descriptions.get(module_code, "Módulo ENAHO")
 
 
-def analyze_merge_feasibility_quick(modules_dict, target_level='hogar'):
+def analyze_merge_feasibility_quick(modules_dict, target_level="hogar"):
     """
     Función de conveniencia para análisis rápido de viabilidad de merge
 
@@ -229,9 +232,10 @@ def analyze_merge_feasibility_quick(modules_dict, target_level='hogar'):
         Diccionario con análisis de viabilidad
     """
     import logging
+
     from ..config import ModuleMergeConfig, ModuleMergeLevel
 
-    logger = logging.getLogger('feasibility_analyzer')
+    logger = logging.getLogger("feasibility_analyzer")
     if not logger.handlers:
         handler = logging.StreamHandler()
         logger.addHandler(handler)
@@ -243,7 +247,7 @@ def analyze_merge_feasibility_quick(modules_dict, target_level='hogar'):
     return merger.analyze_merge_feasibility(modules_dict, ModuleMergeLevel(target_level))
 
 
-def create_optimal_merge_plan(modules_dict, target_module='34'):
+def create_optimal_merge_plan(modules_dict, target_module="34"):
     """
     Función de conveniencia para crear plan óptimo de merge
 
@@ -255,9 +259,10 @@ def create_optimal_merge_plan(modules_dict, target_module='34'):
         Plan de merge optimizado
     """
     import logging
+
     from ..config import ModuleMergeConfig
 
-    logger = logging.getLogger('merge_planner')
+    logger = logging.getLogger("merge_planner")
     if not logger.handlers:
         handler = logging.StreamHandler()
         logger.addHandler(handler)
@@ -272,17 +277,16 @@ def create_optimal_merge_plan(modules_dict, target_module='34'):
 # Exportaciones públicas del submódulo
 __all__ = [
     # Clases principales
-    'ENAHOModuleMerger',
-    'ModuleValidator',
-
+    "ENAHOModuleMerger",
+    "ModuleValidator",
     # Funciones de conveniencia
-    'quick_module_merge',
-    'validate_module_structure_quick',
-    'check_modules_compatibility_quick',
-    'merge_multiple_modules_quick',
-    'get_module_info',
-    'analyze_merge_feasibility_quick',
-    'create_optimal_merge_plan'
+    "quick_module_merge",
+    "validate_module_structure_quick",
+    "check_modules_compatibility_quick",
+    "merge_multiple_modules_quick",
+    "get_module_info",
+    "analyze_merge_feasibility_quick",
+    "create_optimal_merge_plan",
 ]
 
 # Metadatos del submódulo

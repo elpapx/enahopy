@@ -8,7 +8,7 @@ para facilitar debugging y logging.
 """
 
 from datetime import datetime
-from typing import Optional, Any
+from typing import Any, Optional
 
 
 class ENAHOError(Exception):
@@ -23,40 +23,46 @@ class ENAHOError(Exception):
 
 class ENAHODownloadError(ENAHOError):
     """Error durante la descarga de archivos"""
+
     pass
 
 
 class ENAHOValidationError(ENAHOError):
     """Error de validación de parámetros"""
+
     pass
 
 
 class ENAHOIntegrityError(ENAHOError):
     """Error de integridad de archivos"""
+
     pass
 
 
 class ENAHOTimeoutError(ENAHOError):
     """Error de timeout"""
+
     pass
 
 
 class FileReaderError(ENAHOError):
     """Errores específicos de la lectura de archivos."""
+
     pass
 
 
 class UnsupportedFormatError(FileReaderError):
     """Error para formatos de archivo no soportados."""
+
     pass
 
 
 __all__ = [
-    'ENAHOError',
-    'ENAHODownloadError',
-    'ENAHOValidationError',
-    'ENAHOIntegrityError',
-    'ENAHOTimeoutError',
-    'FileReaderError',
-    'UnsupportedFormatError'
+    "ENAHOError",
+    "ENAHODownloadError",
+    "ENAHOValidationError",
+    "ENAHOIntegrityError",
+    "ENAHOTimeoutError",
+    "FileReaderError",
+    "UnsupportedFormatError",
 ]

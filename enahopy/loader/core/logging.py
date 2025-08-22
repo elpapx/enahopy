@@ -19,22 +19,24 @@ class StructuredFormatter(logging.Formatter):
 
     def format(self, record):
         log_obj = {
-            'timestamp': datetime.now().isoformat(),
-            'level': record.levelname,
-            'message': record.getMessage(),
-            'module': record.module,
-            'function': record.funcName,
-            'line': record.lineno
+            "timestamp": datetime.now().isoformat(),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
         }
 
         # Agregar contexto adicional si está disponible
-        if hasattr(record, 'context'):
-            log_obj['context'] = record.context
+        if hasattr(record, "context"):
+            log_obj["context"] = record.context
 
         return json.dumps(log_obj, ensure_ascii=False)
 
 
-def setup_logging(verbose: bool = True, structured: bool = False, log_file: Optional[str] = None) -> logging.Logger:
+def setup_logging(
+    verbose: bool = True, structured: bool = False, log_file: Optional[str] = None
+) -> logging.Logger:
     """
     Configura el sistema de logging mejorado
 
@@ -46,7 +48,7 @@ def setup_logging(verbose: bool = True, structured: bool = False, log_file: Opti
     Returns:
         Logger configurado
     """
-    logger = logging.getLogger('enaho_downloader')
+    logger = logging.getLogger("enaho_downloader")
 
     if logger.handlers:
         return logger
@@ -60,8 +62,7 @@ def setup_logging(verbose: bool = True, structured: bool = False, log_file: Opti
         formatter = StructuredFormatter()
     else:
         formatter = logging.Formatter(
-            '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
 
     handler.setFormatter(formatter)
@@ -81,8 +82,8 @@ def setup_logging(verbose: bool = True, structured: bool = False, log_file: Opti
 
 def log_performance(func):
     """Decorator para logging de performance"""
-    import time
     import functools
+    import time
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -92,7 +93,7 @@ def log_performance(func):
             execution_time = time.time() - start_time
 
             # Log success
-            logger = logging.getLogger('enaho_downloader')
+            logger = logging.getLogger("enaho_downloader")
             logger.debug(f"{func.__name__} executed successfully in {execution_time:.2f}s")
 
             return result
@@ -100,7 +101,7 @@ def log_performance(func):
             execution_time = time.time() - start_time
 
             # Log error
-            logger = logging.getLogger('enaho_downloader')
+            logger = logging.getLogger("enaho_downloader")
             logger.error(f"{func.__name__} failed after {execution_time:.2f}s: {str(e)}")
 
             raise
@@ -108,8 +109,4 @@ def log_performance(func):
     return wrapper
 
 
-__all__ = [
-    'StructuredFormatter',
-    'setup_logging',
-    'log_performance'
-]
+__all__ = ["StructuredFormatter", "setup_logging", "log_performance"]

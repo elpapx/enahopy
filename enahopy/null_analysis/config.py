@@ -4,39 +4,49 @@ Configuración y enums para análisis de valores nulos
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
+
 
 class MissingDataPattern(Enum):
     """Patrones de datos faltantes según Little & Rubin"""
+
     MCAR = "missing_completely_at_random"
     MAR = "missing_at_random"
     MNAR = "missing_not_at_random"
     UNKNOWN = "unknown_pattern"
 
+
 class AnalysisComplexity(Enum):
     """Niveles de complejidad del análisis"""
+
     BASIC = "basic"
     STANDARD = "standard"
     ADVANCED = "advanced"
     EXPERT = "expert"
 
+
 class VisualizationType(Enum):
     """Tipos de visualización disponibles"""
+
     STATIC = "static"
     INTERACTIVE = "interactive"
     BOTH = "both"
 
+
 class ExportFormat(Enum):
     """Formatos de exportación de reportes"""
+
     HTML = "html"
     PDF = "pdf"
     XLSX = "xlsx"
     JSON = "json"
     MARKDOWN = "md"
 
+
 @dataclass
 class NullAnalysisConfig:
     """Configuración avanzada para análisis de valores nulos"""
+
     # Configuración básica
     complexity_level: AnalysisComplexity = AnalysisComplexity.STANDARD
     visualization_type: VisualizationType = VisualizationType.STATIC
@@ -76,9 +86,11 @@ class NullAnalysisConfig:
     statistical_tests: bool = True
     multiple_testing_correction: str = "bonferroni"
 
+
 @dataclass
 class MissingDataMetrics:
     """Métricas completas de datos faltantes"""
+
     total_cells: int
     missing_cells: int
     missing_percentage: float
@@ -104,31 +116,31 @@ class MissingDataMetrics:
     def to_dict(self) -> Dict[str, Any]:
         """Convierte métricas a diccionario"""
         return {
-            'basic_metrics': {
-                'total_cells': self.total_cells,
-                'missing_cells': self.missing_cells,
-                'missing_percentage': self.missing_percentage,
-                'complete_cases': self.complete_cases,
-                'complete_cases_percentage': self.complete_cases_percentage
+            "basic_metrics": {
+                "total_cells": self.total_cells,
+                "missing_cells": self.missing_cells,
+                "missing_percentage": self.missing_percentage,
+                "complete_cases": self.complete_cases,
+                "complete_cases_percentage": self.complete_cases_percentage,
             },
-            'variable_metrics': {
-                'variables_with_missing': self.variables_with_missing,
-                'variables_without_missing': self.variables_without_missing
+            "variable_metrics": {
+                "variables_with_missing": self.variables_with_missing,
+                "variables_without_missing": self.variables_without_missing,
             },
-            'pattern_metrics': {
-                'missing_pattern_count': self.missing_pattern_count,
-                'most_common_pattern': self.most_common_pattern,
-                'missing_data_pattern': self.missing_data_pattern.value,
-                'monotone_missing': self.monotone_missing,
-                'temporal_pattern_detected': self.temporal_pattern_detected
+            "pattern_metrics": {
+                "missing_pattern_count": self.missing_pattern_count,
+                "most_common_pattern": self.most_common_pattern,
+                "missing_data_pattern": self.missing_data_pattern.value,
+                "monotone_missing": self.monotone_missing,
+                "temporal_pattern_detected": self.temporal_pattern_detected,
             },
-            'statistical_metrics': {
-                'little_mcar_test_pvalue': self.little_mcar_test_pvalue,
-                'missing_clustering_score': self.missing_clustering_score
+            "statistical_metrics": {
+                "little_mcar_test_pvalue": self.little_mcar_test_pvalue,
+                "missing_clustering_score": self.missing_clustering_score,
             },
-            'quality_metrics': {
-                'data_quality_score': self.data_quality_score,
-                'completeness_score': self.completeness_score,
-                'consistency_score': self.consistency_score
-            }
+            "quality_metrics": {
+                "data_quality_score": self.data_quality_score,
+                "completeness_score": self.completeness_score,
+                "consistency_score": self.consistency_score,
+            },
         }

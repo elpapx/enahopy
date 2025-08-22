@@ -18,14 +18,14 @@ class NullAnalysisCache:
         """Obtiene valor del cache"""
         cache_file = self.cache_dir / f"{key}.json"
         if cache_file.exists():
-            with open(cache_file, 'r') as f:
+            with open(cache_file, "r") as f:
                 return json.load(f)
         return None
 
     def set(self, key: str, value: Any) -> None:
         """Guarda valor en cache"""
         cache_file = self.cache_dir / f"{key}.json"
-        with open(cache_file, 'w') as f:
+        with open(cache_file, "w") as f:
             json.dump(value, f, default=str)
 
     def clear(self) -> None:

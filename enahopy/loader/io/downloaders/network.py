@@ -8,10 +8,11 @@ y configuración de headers apropiados.
 """
 
 import logging
+from typing import Optional
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from typing import Optional
 
 from ...core.config import ENAHOConfig
 
@@ -32,7 +33,7 @@ class NetworkUtils:
             total=self.config.max_retries,
             backoff_factor=self.config.backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS"]
+            allowed_methods=["HEAD", "GET", "OPTIONS"],
         )
 
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -40,11 +41,13 @@ class NetworkUtils:
         session.mount("https://", adapter)
 
         # Headers personalizados
-        session.headers.update({
-            'User-Agent': 'ENAHO-Analyzer/1.0 (Python Data Analysis Tool)',
-            'Accept': 'application/zip, application/octet-stream, */*',
-            'Accept-Encoding': 'gzip, deflate'
-        })
+        session.headers.update(
+            {
+                "User-Agent": "ENAHO-Analyzer/1.0 (Python Data Analysis Tool)",
+                "Accept": "application/zip, application/octet-stream, */*",
+                "Accept-Encoding": "gzip, deflate",
+            }
+        )
 
         return session
 
@@ -77,12 +80,10 @@ class NetworkUtils:
         try:
             response = self.session.head(url, timeout=self.config.timeout)
             if response.status_code == 200:
-                return int(response.headers.get('content-length', 0))
+                return int(response.headers.get("content-length", 0))
         except (requests.exceptions.RequestException, ValueError):
             pass
         return None
 
 
-__all__ = [
-    'NetworkUtils'
-]
+__all__ = ["NetworkUtils"]

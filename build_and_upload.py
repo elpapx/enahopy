@@ -13,14 +13,14 @@ Uso:
 """
 
 import argparse
+import json
+import os
+import re
+import shutil
 import subprocess
 import sys
-import os
-import shutil
 from pathlib import Path
-import re
-import json
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 class ENAHOPackageBuilder:
@@ -38,11 +38,7 @@ class ENAHOPackageBuilder:
 
         try:
             result = subprocess.run(
-                command,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                check=True
+                command, cwd=self.project_root, capture_output=True, text=True, check=True
             )
 
             if result.stdout:
@@ -69,12 +65,12 @@ class ENAHOPackageBuilder:
         print(f"✅ Python {python_version.major}.{python_version.minor}")
 
         # Verificar herramientas necesarias
-        tools = ['build', 'twine', 'pytest', 'black', 'flake8', 'isort']
+        tools = ["build", "twine", "pytest", "black", "flake8", "isort"]
         missing_tools = []
 
         for tool in tools:
             try:
-                subprocess.run([tool, '--version'], capture_output=True, check=True)
+                subprocess.run([tool, "--version"], capture_output=True, check=True)
                 print(f"✅ {tool}")
             except (subprocess.CalledProcessError, FileNotFoundError):
                 missing_tools.append(tool)
@@ -86,12 +82,7 @@ class ENAHOPackageBuilder:
             return False
 
         # Verificar archivos esenciales
-        essential_files = [
-            'pyproject.toml',
-            'README.md',
-            'LICENSE',
-            '__init__.py'
-        ]
+        essential_files = ["pyproject.toml", "README.md", "LICENSE", "__init__.py"]
 
         for file in essential_files:
             if not (self.project_root / file).exists():
@@ -106,13 +97,12 @@ class ENAHOPackageBuilder:
         print("\n🧪 Ejecutando tests...")
 
         # Tests unitarios
-        if not self.run_command(['pytest', '-v', '--tb=short'], "Tests unitarios"):
+        if not self.run_command(["pytest", "-v", "--tb=short"], "Tests unitarios"):
             return False
 
         # Tests con cobertura
         if not self.run_command(
-                ['pytest', '--cov=enaho_analyzer', '--cov-report=term-missing'],
-                "Tests con cobertura"
+            ["pytest", "--cov=enaho_analyzer", "--cov-report=term-missing"], "Tests con cobertura"
         ):
             return False
 
@@ -123,17 +113,17 @@ class ENAHOPackageBuilder:
         print("\n🔍 Verificando calidad del código...")
 
         # Black formatting
-        if not self.run_command(['black', '--check', '.'], "Verificar formateo Black"):
+        if not self.run_command(["black", "--check", "."], "Verificar formateo Black"):
             print("   💡 Ejecuta 'black .' para corregir formato")
             return False
 
         # Import sorting
-        if not self.run_command(['isort', '--check-only', '.'], "Verificar orden de imports"):
+        if not self.run_command(["isort", "--check-only", "."], "Verificar orden de imports"):
             print("   💡 Ejecuta 'isort .' para corregir imports")
             return False
 
         # Flake8 linting
-        if not self.run_command(['flake8', '.'], "Verificar linting"):
+        if not self.run_command(["flake8", "."], "Verificar linting"):
             return False
 
         return True
@@ -142,7 +132,7 @@ class ENAHOPackageBuilder:
         """Actualiza versión si es necesario y retorna la versión actual."""
         pyproject_path = self.project_root / "pyproject.toml"
 
-        with open(pyproject_path, 'r') as f:
+        with open(pyproject_path, "r") as f:
             content = f.read()
 
         # Extraer versión actual
@@ -176,10 +166,7 @@ class ENAHOPackageBuilder:
         print("\n🔨 Construyendo paquete...")
 
         # Build con python -m build
-        if not self.run_command(
-                [sys.executable, '-m', 'build'],
-                "Construir distribuciones"
-        ):
+        if not self.run_command([sys.executable, "-m", "build"], "Construir distribuciones"):
             return False
 
         # Verificar que se crearon los archivos
@@ -203,18 +190,14 @@ class ENAHOPackageBuilder:
         print("\n🔍 Verificando paquete...")
 
         # Verificar con twine
-        return self.run_command(
-            ['twine', 'check', 'dist/*'],
-            "Verificar paquete con twine"
-        )
+        return self.run_command(["twine", "check", "dist/*"], "Verificar paquete con twine")
 
     def upload_to_test_pypi(self) -> bool:
         """Sube el paquete a TestPyPI."""
         print("\n🚀 Subiendo a TestPyPI...")
 
         return self.run_command(
-            ['twine', 'upload', '--repository', 'testpypi', 'dist/*'],
-            "Upload a TestPyPI"
+            ["twine", "upload", "--repository", "testpypi", "dist/*"], "Upload a TestPyPI"
         )
 
     def upload_to_pypi(self) -> bool:
@@ -223,14 +206,11 @@ class ENAHOPackageBuilder:
 
         # Confirmación adicional
         confirm = input("¿Estás seguro de subir a PyPI PRODUCCIÓN? (yes/no): ")
-        if confirm.lower() != 'yes':
+        if confirm.lower() != "yes":
             print("❌ Upload cancelado")
             return False
 
-        return self.run_command(
-            ['twine', 'upload', 'dist/*'],
-            "Upload a PyPI"
-        )
+        return self.run_command(["twine", "upload", "dist/*"], "Upload a PyPI")
 
     def test_installation(self, test_pypi: bool = False) -> bool:
         """Prueba la instalación del paquete."""
@@ -241,7 +221,7 @@ class ENAHOPackageBuilder:
 
         try:
             # Crear entorno virtual temporal
-            subprocess.run([sys.executable, '-m', 'venv', str(temp_env)], check=True)
+            subprocess.run([sys.executable, "-m", "venv", str(temp_env)], check=True)
 
             # Determinar comando pip en el entorno
             if sys.platform == "win32":
@@ -252,13 +232,16 @@ class ENAHOPackageBuilder:
             # Instalar paquete
             if test_pypi:
                 install_cmd = [
-                    str(pip_cmd), 'install',
-                    '--index-url', 'https://test.pypi.org/simple/',
-                    '--extra-index-url', 'https://pypi.org/simple/',
-                    'enaho-analyzer'
+                    str(pip_cmd),
+                    "install",
+                    "--index-url",
+                    "https://test.pypi.org/simple/",
+                    "--extra-index-url",
+                    "https://pypi.org/simple/",
+                    "enaho-analyzer",
                 ]
             else:
-                install_cmd = [str(pip_cmd), 'install', 'enaho-analyzer']
+                install_cmd = [str(pip_cmd), "install", "enaho-analyzer"]
 
             if not self.run_command(install_cmd, "Instalar paquete"):
                 return False
@@ -266,8 +249,9 @@ class ENAHOPackageBuilder:
             # Probar import básico
             python_cmd = temp_env / ("Scripts/python" if sys.platform == "win32" else "bin/python")
             test_cmd = [
-                str(python_cmd), '-c',
-                'import enaho_analyzer; print(f"✅ enaho_analyzer {enaho_analyzer.__version__} instalado correctamente")'
+                str(python_cmd),
+                "-c",
+                'import enaho_analyzer; print(f"✅ enaho_analyzer {enaho_analyzer.__version__} instalado correctamente")',
             ]
 
             return self.run_command(test_cmd, "Probar import")
@@ -290,7 +274,7 @@ class ENAHOPackageBuilder:
             print("❌ CHANGELOG.md no encontrado")
             return False
 
-        with open(changelog_path, 'r', encoding='utf-8') as f:
+        with open(changelog_path, "r", encoding="utf-8") as f:
             changelog_content = f.read()
 
         # Extraer sección de la versión actual
@@ -305,7 +289,7 @@ class ENAHOPackageBuilder:
 
         # Guardar notas de release
         release_notes_path = self.project_root / f"release_notes_v{version}.md"
-        with open(release_notes_path, 'w', encoding='utf-8') as f:
+        with open(release_notes_path, "w", encoding="utf-8") as f:
             f.write(release_notes)
 
         print(f"✅ Notas de release guardadas en: {release_notes_path}")
@@ -345,7 +329,7 @@ class ENAHOPackageBuilder:
 
             # Test installation opcional
             test_install = input("\n¿Probar instalación desde TestPyPI? (y/n): ")
-            if test_install.lower() in ['y', 'yes']:
+            if test_install.lower() in ["y", "yes"]:
                 self.test_installation(test_pypi=True)
 
         elif target == "prod":
@@ -355,6 +339,7 @@ class ENAHOPackageBuilder:
 
             print("\n⏳ Esperando propagación en PyPI...")
             import time
+
             time.sleep(30)  # Esperar propagación
 
             self.test_installation(test_pypi=False)
@@ -379,22 +364,20 @@ Ejemplos:
   python scripts/build_and_upload.py --test          # Upload a TestPyPI  
   python scripts/build_and_upload.py --prod          # Upload a PyPI
   python scripts/build_and_upload.py --build-only    # Solo build local
-        """
+        """,
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--check', action='store_true',
-                       help='Solo ejecutar verificaciones (tests, calidad)')
-    group.add_argument('--test', action='store_true',
-                       help='Build y upload a TestPyPI')
-    group.add_argument('--prod', action='store_true',
-                       help='Build y upload a PyPI (PRODUCCIÓN)')
-    group.add_argument('--build-only', action='store_true',
-                       help='Solo build local sin upload')
+    group.add_argument(
+        "--check", action="store_true", help="Solo ejecutar verificaciones (tests, calidad)"
+    )
+    group.add_argument("--test", action="store_true", help="Build y upload a TestPyPI")
+    group.add_argument("--prod", action="store_true", help="Build y upload a PyPI (PRODUCCIÓN)")
+    group.add_argument("--build-only", action="store_true", help="Solo build local sin upload")
 
-    parser.add_argument('--project-root', type=Path,
-                        default=Path.cwd(),
-                        help='Directorio raíz del proyecto')
+    parser.add_argument(
+        "--project-root", type=Path, default=Path.cwd(), help="Directorio raíz del proyecto"
+    )
 
     args = parser.parse_args()
 
@@ -405,20 +388,18 @@ Ejemplos:
         if args.check:
             print("🔍 MODO VERIFICACIÓN - Solo checks de calidad")
             success = (
-                    builder.check_environment() and
-                    builder.check_code_quality() and
-                    builder.run_tests()
+                builder.check_environment() and builder.check_code_quality() and builder.run_tests()
             )
 
         elif args.build_only:
             print("🔨 MODO BUILD - Solo construcción local")
             success = (
-                    builder.check_environment() and
-                    builder.check_code_quality() and
-                    builder.run_tests() and
-                    builder.clean_build_artifacts() and
-                    builder.build_package() and
-                    builder.check_package()
+                builder.check_environment()
+                and builder.check_code_quality()
+                and builder.run_tests()
+                and builder.clean_build_artifacts()
+                and builder.build_package()
+                and builder.check_package()
             )
 
         elif args.test:
@@ -442,6 +423,7 @@ Ejemplos:
     except Exception as e:
         print(f"\n❌ Error inesperado: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

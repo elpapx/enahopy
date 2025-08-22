@@ -9,7 +9,7 @@ Gestión de TTL, limpieza automática y persistencia JSON.
 import json
 import time
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class CacheManager:
@@ -31,11 +31,11 @@ class CacheManager:
             return None
 
         try:
-            with open(self.metadata_file, 'r', encoding='utf-8') as f:
+            with open(self.metadata_file, "r", encoding="utf-8") as f:
                 cache_data = json.load(f)
 
-            if key in cache_data and self._is_valid(cache_data[key]['timestamp']):
-                return cache_data[key]['data']
+            if key in cache_data and self._is_valid(cache_data[key]["timestamp"]):
+                return cache_data[key]["data"]
         except (json.JSONDecodeError, KeyError):
             pass
 
@@ -47,17 +47,14 @@ class CacheManager:
 
         if self.metadata_file.exists():
             try:
-                with open(self.metadata_file, 'r', encoding='utf-8') as f:
+                with open(self.metadata_file, "r", encoding="utf-8") as f:
                     cache_data = json.load(f)
             except json.JSONDecodeError:
                 cache_data = {}
 
-        cache_data[key] = {
-            'timestamp': time.time(),
-            'data': data
-        }
+        cache_data[key] = {"timestamp": time.time(), "data": data}
 
-        with open(self.metadata_file, 'w', encoding='utf-8') as f:
+        with open(self.metadata_file, "w", encoding="utf-8") as f:
             json.dump(cache_data, f, ensure_ascii=False, indent=2)
 
     def clean_expired(self) -> None:
@@ -66,21 +63,20 @@ class CacheManager:
             return
 
         try:
-            with open(self.metadata_file, 'r', encoding='utf-8') as f:
+            with open(self.metadata_file, "r", encoding="utf-8") as f:
                 cache_data = json.load(f)
 
             valid_data = {
-                key: value for key, value in cache_data.items()
-                if self._is_valid(value['timestamp'])
+                key: value
+                for key, value in cache_data.items()
+                if self._is_valid(value["timestamp"])
             }
 
-            with open(self.metadata_file, 'w', encoding='utf-8') as f:
+            with open(self.metadata_file, "w", encoding="utf-8") as f:
                 json.dump(valid_data, f, ensure_ascii=False, indent=2)
 
         except (json.JSONDecodeError, KeyError):
             pass
 
 
-__all__ = [
-    'CacheManager'
-]
+__all__ = ["CacheManager"]

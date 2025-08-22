@@ -13,25 +13,27 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple, Callable, Any
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from ..core.config import ENAHOConfig
 from ..core.cache import CacheManager
-from ..core.logging import setup_logging, log_performance
+from ..core.config import ENAHOConfig
 from ..core.exceptions import ENAHOError
-from .validators.enaho import ENAHOValidator
+from ..core.logging import log_performance, setup_logging
 from .downloaders.downloader import ENAHODownloader
 from .downloaders.extractor import ENAHOExtractor
 from .local_reader import ENAHOLocalReader
+from .validators.enaho import ENAHOValidator
 
 
 class ENAHODataDownloader:
     """Descargador principal con funcionalidades avanzadas y lectura local"""
 
-    def __init__(self,
-                 verbose: bool = True,
-                 structured_logging: bool = False,
-                 config: Optional[ENAHOConfig] = None):
+    def __init__(
+        self,
+        verbose: bool = True,
+        structured_logging: bool = False,
+        config: Optional[ENAHOConfig] = None,
+    ):
         """
         Inicializa el descargador principal
 
@@ -59,7 +61,9 @@ class ENAHODataDownloader:
         """Obtiene los módulos disponibles con descripciones"""
         return self.config.AVAILABLE_MODULES.copy()
 
-    def validate_availability(self, modules: List[str], years: List[str], is_panel: bool = False) -> Dict[str, Any]:
+    def validate_availability(
+        self, modules: List[str], years: List[str], is_panel: bool = False
+    ) -> Dict[str, Any]:
         """Valida la disponibilidad de módulos y años, retorna reporte detallado"""
         try:
             normalized_modules = self.validator.validate_modules(modules)
@@ -70,14 +74,14 @@ class ENAHODataDownloader:
                 "modules": normalized_modules,
                 "years": years,
                 "dataset_type": "panel" if is_panel else "transversal",
-                "estimated_downloads": len(normalized_modules) * len(years)
+                "estimated_downloads": len(normalized_modules) * len(years),
             }
         except Exception as e:
             return {
                 "status": "invalid",
                 "error": str(e),
-                "error_code": getattr(e, 'error_code', None),
-                "context": getattr(e, 'context', {})
+                "error_code": getattr(e, "error_code", None),
+                "context": getattr(e, "context", {}),
             }
 
     def read_local_file(self, file_path: str, **kwargs) -> ENAHOLocalReader:
@@ -94,15 +98,14 @@ class ENAHODataDownloader:
         return ENAHOLocalReader(
             file_path=file_path,
             config=self.config,
-            verbose=kwargs.get('verbose', True),
-            structured_logging=kwargs.get('structured_logging', False),
-            log_file=kwargs.get('log_file', None)
+            verbose=kwargs.get("verbose", True),
+            structured_logging=kwargs.get("structured_logging", False),
+            log_file=kwargs.get("log_file", None),
         )
 
-    def find_local_files(self,
-                         directory: Union[str, Path],
-                         pattern: str = "*.dta",
-                         recursive: bool = True) -> List[Path]:
+    def find_local_files(
+        self, directory: Union[str, Path], pattern: str = "*.dta", recursive: bool = True
+    ) -> List[Path]:
         """
         Encuentra archivos locales en un directorio
 
@@ -127,10 +130,9 @@ class ENAHODataDownloader:
         self.logger.info(f"Encontrados {len(files)} archivos con patrón '{pattern}' en {directory}")
         return files
 
-    def batch_read_local_files(self,
-                               file_paths: List[Union[str, Path]],
-                               columns: Optional[List[str]] = None,
-                               **read_kwargs) -> Dict[str, Tuple]:
+    def batch_read_local_files(
+        self, file_paths: List[Union[str, Path]], columns: Optional[List[str]] = None, **read_kwargs
+    ) -> Dict[str, Tuple]:
         """
         Lee múltiples archivos locales en lote
 
@@ -161,21 +163,23 @@ class ENAHODataDownloader:
         return results
 
     @log_performance
-    def download(self,
-                 modules: List[str],
-                 years: List[str],
-                 output_dir: str = ".",
-                 is_panel: bool = False,
-                 decompress: bool = False,
-                 only_dta: bool = False,
-                 load_dta: bool = False,
-                 overwrite: bool = False,
-                 parallel: bool = False,
-                 max_workers: Optional[int] = None,
-                 verbose: bool = True,
-                 low_memory: bool = True,
-                 chunksize: Optional[int] = None,
-                 progress_callback: Optional[Callable[[str, int, int], None]] = None) -> Optional[Dict]:
+    def download(
+        self,
+        modules: List[str],
+        years: List[str],
+        output_dir: str = ".",
+        is_panel: bool = False,
+        decompress: bool = False,
+        only_dta: bool = False,
+        load_dta: bool = False,
+        overwrite: bool = False,
+        parallel: bool = False,
+        max_workers: Optional[int] = None,
+        verbose: bool = True,
+        low_memory: bool = True,
+        chunksize: Optional[int] = None,
+        progress_callback: Optional[Callable[[str, int, int], None]] = None,
+    ) -> Optional[Dict]:
         """Metodo principal mejorado para descarga de datos ENAHO"""
 
         start_time = time.time()
@@ -187,7 +191,9 @@ class ENAHODataDownloader:
             output_path = self.validator.validate_output_dir(output_dir)
 
             # Configuración
-            year_mapping = self.config.YEAR_MAP_PANEL if is_panel else self.config.YEAR_MAP_TRANSVERSAL
+            year_mapping = (
+                self.config.YEAR_MAP_PANEL if is_panel else self.config.YEAR_MAP_TRANSVERSAL
+            )
             dataset_type = "panel" if is_panel else "corte transversal"
 
             if verbose:
@@ -197,7 +203,11 @@ class ENAHODataDownloader:
                 self.logger.info(f"Directorio: {output_path}")
 
             # Preparar tareas
-            tasks = [(year, module, year_mapping[year]) for year in years for module in normalized_modules]
+            tasks = [
+                (year, module, year_mapping[year])
+                for year in years
+                for module in normalized_modules
+            ]
             total_tasks = len(tasks)
 
             if verbose:
@@ -212,9 +222,17 @@ class ENAHODataDownloader:
             def process_task(year: str, module: str, code: int) -> Tuple[str, str, Optional[Dict]]:
                 try:
                     result = self._process_single_download(
-                        year, module, code, output_path, overwrite,
-                        decompress, only_dta, load_dta, verbose,
-                        low_memory, chunksize
+                        year,
+                        module,
+                        code,
+                        output_path,
+                        overwrite,
+                        decompress,
+                        only_dta,
+                        load_dta,
+                        verbose,
+                        low_memory,
+                        chunksize,
                     )
                     return year, module, result
                 except Exception as e:
@@ -246,7 +264,9 @@ class ENAHODataDownloader:
 
                             # Callback de progreso
                             if progress_callback:
-                                progress_callback(f"{task_year}-{task_module}", completed_tasks, total_tasks)
+                                progress_callback(
+                                    f"{task_year}-{task_module}", completed_tasks, total_tasks
+                                )
 
                         except Exception as e:
                             failed_tasks.append((year, module))
@@ -264,7 +284,9 @@ class ENAHODataDownloader:
 
                     # Callback de progreso
                     if progress_callback:
-                        progress_callback(f"{task_year}-{task_module}", completed_tasks, total_tasks)
+                        progress_callback(
+                            f"{task_year}-{task_module}", completed_tasks, total_tasks
+                        )
 
             # Resumen final
             elapsed_time = time.time() - start_time
@@ -289,7 +311,7 @@ class ENAHODataDownloader:
                 "successful_tasks": total_tasks - len(failed_tasks),
                 "failed_tasks": failed_tasks,
                 "elapsed_time": elapsed_time,
-                "success_rate": success_rate
+                "success_rate": success_rate,
             }
             self.cache_manager.set_metadata("last_download_session", session_metadata)
 
@@ -301,14 +323,26 @@ class ENAHODataDownloader:
             self.logger.error(f"Error inesperado durante la descarga: {str(e)}")
             raise ENAHOError(f"Error inesperado: {str(e)}", "UNEXPECTED_ERROR")
 
-    def _process_single_download(self, year: str, module: str, code: int,
-                                 output_dir: Path, overwrite: bool, decompress: bool,
-                                 only_dta: bool, load_dta: bool, verbose: bool,
-                                 low_memory: bool, chunksize: Optional[int]) -> Optional[Dict]:
+    def _process_single_download(
+        self,
+        year: str,
+        module: str,
+        code: int,
+        output_dir: Path,
+        overwrite: bool,
+        decompress: bool,
+        only_dta: bool,
+        load_dta: bool,
+        verbose: bool,
+        low_memory: bool,
+        chunksize: Optional[int],
+    ) -> Optional[Dict]:
         """Procesa una descarga individual"""
         try:
             # Descargar archivo
-            zip_path = self.downloader.download_file(year, module, code, output_dir, overwrite, verbose)
+            zip_path = self.downloader.download_file(
+                year, module, code, output_dir, overwrite, verbose
+            )
 
             if not decompress:
                 return None
@@ -333,7 +367,9 @@ class ENAHODataDownloader:
 
             # Cargar archivos .dta si se solicita
             if load_dta:
-                return self.extractor.load_dta_files(extract_dir, low_memory=low_memory, chunksize=chunksize)
+                return self.extractor.load_dta_files(
+                    extract_dir, low_memory=low_memory, chunksize=chunksize
+                )
 
             return None
 
@@ -360,18 +396,16 @@ class ENAHODataDownloader:
                 "available_years_panel": self.get_available_years(True),
                 "available_modules": self.get_available_modules(),
                 "base_url": self.config.base_url,
-                "cache_dir": self.config.cache_dir
+                "cache_dir": self.config.cache_dir,
             },
             "last_session": self.get_download_history(),
-            "export_timestamp": datetime.now().isoformat()
+            "export_timestamp": datetime.now().isoformat(),
         }
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
 
         self.logger.info(f"Metadatos exportados a: {output_file}")
 
 
-__all__ = [
-    'ENAHODataDownloader'
-]
+__all__ = ["ENAHODataDownloader"]

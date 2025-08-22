@@ -9,15 +9,16 @@ utilidades de estimación y recomendaciones.
 
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple, Iterator, Any, Callable
-import pandas as pd
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+
 import numpy as np
+import pandas as pd
 
 from ..core.config import ENAHOConfig
 from ..core.exceptions import ENAHOValidationError
+from ..io.base import DASK_AVAILABLE
 from ..io.main import ENAHODataDownloader
 from ..io.validators.results import ColumnValidationResult
-from ..io.base import DASK_AVAILABLE
 
 if DASK_AVAILABLE:
     import dask.dataframe as dd
@@ -27,21 +28,22 @@ if DASK_AVAILABLE:
 # FUNCIONES DE CONVENIENCIA PRINCIPALES
 # =====================================================
 
+
 def download_enaho_data(
-        modules: List[str],
-        years: List[str],
-        output_dir: str = ".",
-        is_panel: bool = False,
-        decompress: bool = False,
-        only_dta: bool = False,
-        load_dta: bool = False,
-        overwrite: bool = False,
-        parallel: bool = False,
-        max_workers: Optional[int] = None,
-        verbose: bool = True,
-        low_memory: bool = True,
-        chunksize: Optional[int] = None,
-        progress_callback: Optional[Callable[[str, int, int], None]] = None
+    modules: List[str],
+    years: List[str],
+    output_dir: str = ".",
+    is_panel: bool = False,
+    decompress: bool = False,
+    only_dta: bool = False,
+    load_dta: bool = False,
+    overwrite: bool = False,
+    parallel: bool = False,
+    max_workers: Optional[int] = None,
+    verbose: bool = True,
+    low_memory: bool = True,
+    chunksize: Optional[int] = None,
+    progress_callback: Optional[Callable[[str, int, int], None]] = None,
 ) -> Optional[Dict[Tuple[str, str], Dict[str, pd.DataFrame]]]:
     """
     Función de conveniencia para descargar datos ENAHO
@@ -86,18 +88,18 @@ def download_enaho_data(
         verbose=verbose,
         low_memory=low_memory,
         chunksize=chunksize,
-        progress_callback=progress_callback
+        progress_callback=progress_callback,
     )
 
 
 def read_enaho_file(
-        file_path: str,
-        columns: Optional[List[str]] = None,
-        use_chunks: bool = False,
-        chunk_size: Optional[int] = None,
-        ignore_missing_columns: bool = True,
-        case_sensitive: bool = False,
-        verbose: bool = True
+    file_path: str,
+    columns: Optional[List[str]] = None,
+    use_chunks: bool = False,
+    chunk_size: Optional[int] = None,
+    ignore_missing_columns: bool = True,
+    case_sensitive: bool = False,
+    verbose: bool = True,
 ) -> Tuple[Union[pd.DataFrame, dd.DataFrame, Iterator[pd.DataFrame]], ColumnValidationResult]:
     """
     Función de conveniencia para leer un archivo ENAHO local
@@ -127,7 +129,7 @@ def read_enaho_file(
         use_chunks=use_chunks,
         chunk_size=chunk_size,
         ignore_missing_columns=ignore_missing_columns,
-        case_sensitive=case_sensitive
+        case_sensitive=case_sensitive,
     )
 
 
@@ -153,10 +155,7 @@ def get_file_info(file_path: str, verbose: bool = False) -> Dict[str, Any]:
 
 
 def find_enaho_files(
-        directory: str,
-        pattern: str = "*.dta",
-        recursive: bool = True,
-        verbose: bool = False
+    directory: str, pattern: str = "*.dta", recursive: bool = True, verbose: bool = False
 ) -> List[Path]:
     """
     Función de conveniencia para encontrar archivos ENAHO en un directorio
@@ -191,11 +190,13 @@ def get_available_data(is_panel: bool = False) -> Dict[str, Any]:
     return {
         "years": downloader.get_available_years(is_panel),
         "modules": downloader.get_available_modules(),
-        "dataset_type": "panel" if is_panel else "transversal"
+        "dataset_type": "panel" if is_panel else "transversal",
     }
 
 
-def validate_download_request(modules: List[str], years: List[str], is_panel: bool = False) -> Dict[str, Any]:
+def validate_download_request(
+    modules: List[str], years: List[str], is_panel: bool = False
+) -> Dict[str, Any]:
     """
     Valida una solicitud de descarga sin ejecutarla
 
@@ -215,6 +216,7 @@ def validate_download_request(modules: List[str], years: List[str], is_panel: bo
 # CLASE DE UTILIDADES ADICIONALES
 # =====================================================
 
+
 class ENAHOUtils:
     """Utilidades adicionales para trabajar con datos ENAHO"""
 
@@ -228,8 +230,16 @@ class ENAHOUtils:
         """
         # Tamaños promedio por módulo (en MB)
         avg_sizes = {
-            "01": 15, "02": 25, "03": 20, "04": 18, "05": 45,
-            "07": 8, "08": 12, "09": 5, "34": 10, "37": 3
+            "01": 15,
+            "02": 25,
+            "03": 20,
+            "04": 18,
+            "05": 45,
+            "07": 8,
+            "08": 12,
+            "09": 5,
+            "34": 10,
+            "37": 3,
         }
 
         total_estimated = 0
@@ -246,7 +256,7 @@ class ENAHOUtils:
             "total_gb": total_estimated / 1024,
             "by_module": detailed_estimate,
             "compressed_size": total_estimated * 0.3,  # Estimación de compresión
-            "note": "Estimaciones basadas en tamaños promedio históricos"
+            "note": "Estimaciones basadas en tamaños promedio históricos",
         }
 
     @staticmethod
@@ -269,9 +279,7 @@ class ENAHOUtils:
 
     @staticmethod
     def merge_enaho_dataframes(
-            dataframes: Dict[str, pd.DataFrame],
-            on: List[str] = None,
-            how: str = 'inner'
+        dataframes: Dict[str, pd.DataFrame], on: List[str] = None, how: str = "inner"
     ) -> pd.DataFrame:
         """
         Une múltiples DataFrames ENAHO usando llaves comunes
@@ -289,10 +297,10 @@ class ENAHOUtils:
 
         # Llaves comunes de ENAHO si no se especifican
         if on is None:
-            on = ['conglome', 'vivienda', 'hogar']
+            on = ["conglome", "vivienda", "hogar"]
             # Agregar codperso si está disponible en todos los DataFrames
-            if all('codperso' in df.columns for df in dataframes.values()):
-                on.append('codperso')
+            if all("codperso" in df.columns for df in dataframes.values()):
+                on.append("codperso")
 
         # Verificar que las llaves existen en todos los DataFrames
         for name, df in dataframes.items():
@@ -307,7 +315,7 @@ class ENAHOUtils:
             if result is None:
                 result = df.copy()
             else:
-                result = result.merge(df, on=available_keys, how=how, suffixes=('', f'_{name}'))
+                result = result.merge(df, on=available_keys, how=how, suffixes=("", f"_{name}"))
 
         return result
 
@@ -324,9 +332,9 @@ class ENAHOUtils:
             Diccionario con resultado de validación
         """
         key_configs = {
-            "hogar": ['conglome', 'vivienda', 'hogar'],
-            "persona": ['conglome', 'vivienda', 'hogar', 'codperso'],
-            "vivienda": ['conglome', 'vivienda']
+            "hogar": ["conglome", "vivienda", "hogar"],
+            "persona": ["conglome", "vivienda", "hogar", "codperso"],
+            "vivienda": ["conglome", "vivienda"],
         }
 
         if level not in key_configs:
@@ -342,7 +350,7 @@ class ENAHOUtils:
                 "is_valid": False,
                 "missing_keys": missing_keys,
                 "level": level,
-                "error": f"Columnas faltantes: {missing_keys}"
+                "error": f"Columnas faltantes: {missing_keys}",
             }
 
         # Verificar duplicados
@@ -355,13 +363,14 @@ class ENAHOUtils:
             "total_records": len(df),
             "unique_combinations": unique_combinations,
             "duplicates": duplicates,
-            "completeness": (df[required_keys].notna().all(axis=1).sum() / len(df)) * 100
+            "completeness": (df[required_keys].notna().all(axis=1).sum() / len(df)) * 100,
         }
 
 
 # =====================================================
 # FUNCIONES DE COMPATIBILIDAD
 # =====================================================
+
 
 def main():
     """Función de ejemplo de uso con todas las nuevas funcionalidades"""
@@ -409,7 +418,7 @@ def main():
                 columns=["conglome", "vivienda", "hogar"],
                 ignore_missing_columns=True,
                 case_sensitive=False,
-                verbose=True
+                verbose=True,
             )
 
             print(f"\nDatos leídos: {len(data)} filas")
@@ -448,21 +457,20 @@ def main():
     except Exception as e:
         print(f"\n❌ Error en la demostración: {str(e)}")
         import traceback
+
         traceback.print_exc()
 
 
 __all__ = [
     # Funciones principales
-    'download_enaho_data',
-    'read_enaho_file',
-    'get_file_info',
-    'find_enaho_files',
-    'get_available_data',
-    'validate_download_request',
-
+    "download_enaho_data",
+    "read_enaho_file",
+    "get_file_info",
+    "find_enaho_files",
+    "get_available_data",
+    "validate_download_request",
     # Clases de utilidades
-    'ENAHOUtils',
-
+    "ENAHOUtils",
     # Función de demostración
-    'main'
+    "main",
 ]

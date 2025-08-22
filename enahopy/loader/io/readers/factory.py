@@ -7,15 +7,15 @@ la extensión del archivo. Manejo centralizado de
 formatos soportados y no soportados.
 """
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from ...core.exceptions import UnsupportedFormatError
 from ...io.base import IReader
+from .csv import CSVReader
+from .parquet import ParquetReader
 from .spss import SPSSReader
 from .stata import StataReader
-from .parquet import ParquetReader
-from .csv import CSVReader
 
 
 class ReaderFactory:
@@ -40,12 +40,12 @@ class ReaderFactory:
         logger.info(f"Detectado formato de archivo: {extension}")
 
         reader_map = {
-            '.sav': SPSSReader,
-            '.por': SPSSReader,
-            '.dta': StataReader,
-            '.parquet': ParquetReader,
-            '.csv': CSVReader,
-            '.txt': CSVReader
+            ".sav": SPSSReader,
+            ".por": SPSSReader,
+            ".dta": StataReader,
+            ".parquet": ParquetReader,
+            ".csv": CSVReader,
+            ".txt": CSVReader,
         }
 
         reader_class = reader_map.get(extension)
@@ -61,6 +61,4 @@ class ReaderFactory:
         return reader_class(file_path, logger)
 
 
-__all__ = [
-    'ReaderFactory'
-]
+__all__ = ["ReaderFactory"]

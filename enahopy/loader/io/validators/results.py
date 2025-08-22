@@ -8,12 +8,13 @@ resultados de validación de columnas.
 """
 
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import Dict, List
 
 
 @dataclass
 class ColumnValidationResult:
     """Resultado de la validación de columnas."""
+
     found_columns: List[str]
     missing_columns: List[str]
     mapped_columns: Dict[str, str]
@@ -35,6 +36,4 @@ class ColumnValidationResult:
         return summary
 
 
-__all__ = [
-    'ColumnValidationResult'
-]
+__all__ = ["ColumnValidationResult"]

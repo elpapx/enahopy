@@ -6,55 +6,39 @@ Exportaciones principales y funciones de conveniencia para el sistema
 de fusión geográfica y merge entre módulos ENAHO.
 """
 
-from .core import ENAHOGeoMerger
-from .config import (
-    # Configuraciones
+from .config import (  # Configuraciones; Enums geográficos; Enums de módulos; Dataclasses de resultados; Constantes
+    DEPARTAMENTOS_VALIDOS,
+    PATRONES_GEOGRAFICOS,
     GeoMergeConfiguration,
+    GeoValidationResult,
     ModuleMergeConfig,
-
-    # Enums geográficos
-    TipoManejoDuplicados,
-    TipoManejoErrores,
-    NivelTerritorial,
-    TipoValidacionUbigeo,
-
-    # Enums de módulos
     ModuleMergeLevel,
+    ModuleMergeResult,
     ModuleMergeStrategy,
     ModuleType,
-
-    # Dataclasses de resultados
-    GeoValidationResult,
-    ModuleMergeResult,
-
-    # Constantes
-    DEPARTAMENTOS_VALIDOS,
-    PATRONES_GEOGRAFICOS
+    NivelTerritorial,
+    TipoManejoDuplicados,
+    TipoManejoErrores,
+    TipoValidacionUbigeo,
 )
-
-from .exceptions import (
-    # Excepciones geográficas
-    GeoMergeError,
-    UbigeoValidationError,
-    TerritorialInconsistencyError,
+from .core import ENAHOGeoMerger
+from .exceptions import (  # Excepciones geográficas; Excepciones de módulos; Excepciones de calidad
+    ConfigurationError,
+    ConflictResolutionError,
+    DataQualityError,
     DuplicateHandlingError,
-
-    # Excepciones de módulos
-    ModuleMergeError,
-    ModuleValidationError,
+    GeoMergeError,
     IncompatibleModulesError,
     MergeKeyError,
-    ConflictResolutionError,
-
-    # Excepciones de calidad
-    DataQualityError,
+    ModuleMergeError,
+    ModuleValidationError,
+    TerritorialInconsistencyError,
+    UbigeoValidationError,
     ValidationThresholdError,
-    ConfigurationError
 )
-
-from .geographic.validators import UbigeoValidator, TerritorialValidator, GeoDataQualityValidator
 from .geographic.patterns import GeoPatternDetector
 from .geographic.strategies import DuplicateStrategyFactory
+from .geographic.validators import GeoDataQualityValidator, TerritorialValidator, UbigeoValidator
 from .modules.merger import ENAHOModuleMerger
 from .modules.validator import ModuleValidator
 
@@ -64,21 +48,23 @@ try:
 except ImportError:
     # Si panel no está disponible, crear función dummy
     PanelCreator = None
+
     def create_panel_data(*args, **kwargs):
-        raise ImportError('Panel module not available')
+        raise ImportError("Panel module not available")
 
 
 # =====================================================
 # FUNCIONES DE CONVENIENCIA PRINCIPALES
 # =====================================================
 
+
 def merge_with_geography(
-        df_principal: 'pd.DataFrame',
-        df_geografia: 'pd.DataFrame',
-        columna_union: str = 'ubigeo',
-        columnas_geograficas: dict = None,
-        config: GeoMergeConfiguration = None,
-        verbose: bool = True
+    df_principal: "pd.DataFrame",
+    df_geografia: "pd.DataFrame",
+    columna_union: str = "ubigeo",
+    columnas_geograficas: dict = None,
+    config: GeoMergeConfiguration = None,
+    verbose: bool = True,
 ) -> tuple:
     """
     Función de conveniencia para fusión geográfica básica.
@@ -101,15 +87,17 @@ def merge_with_geography(
         df_principal=df_principal,
         df_geografia=df_geografia,
         columnas_geograficas=columnas_geograficas,
-        columna_union=columna_union
+        columna_union=columna_union,
     )
 
 
-def merge_enaho_modules(modules_dict: dict,
-                        base_module: str = "34",
-                        level: str = "hogar",
-                        strategy: str = "coalesce",
-                        verbose: bool = True) -> 'pd.DataFrame':
+def merge_enaho_modules(
+    modules_dict: dict,
+    base_module: str = "34",
+    level: str = "hogar",
+    strategy: str = "coalesce",
+    verbose: bool = True,
+) -> "pd.DataFrame":
     """
     Función de conveniencia para merge rápido entre módulos.
 
@@ -124,8 +112,7 @@ def merge_enaho_modules(modules_dict: dict,
         DataFrame combinado
     """
     module_config = ModuleMergeConfig(
-        merge_level=ModuleMergeLevel(level),
-        merge_strategy=ModuleMergeStrategy(strategy)
+        merge_level=ModuleMergeLevel(level), merge_strategy=ModuleMergeStrategy(strategy)
     )
 
     merger = ENAHOGeoMerger(module_config=module_config, verbose=verbose)
@@ -137,12 +124,14 @@ def merge_enaho_modules(modules_dict: dict,
     return result.merged_df
 
 
-def merge_modules_with_geography(modules_dict: dict,
-                                 df_geografia: 'pd.DataFrame',
-                                 base_module: str = "34",
-                                 level: str = "hogar",
-                                 strategy: str = "coalesce",
-                                 verbose: bool = True) -> 'pd.DataFrame':
+def merge_modules_with_geography(
+    modules_dict: dict,
+    df_geografia: "pd.DataFrame",
+    base_module: str = "34",
+    level: str = "hogar",
+    strategy: str = "coalesce",
+    verbose: bool = True,
+) -> "pd.DataFrame":
     """
     Función de conveniencia para merge combinado (módulos + geografía).
 
@@ -158,8 +147,7 @@ def merge_modules_with_geography(modules_dict: dict,
         DataFrame final con módulos combinados y geografía
     """
     module_config = ModuleMergeConfig(
-        merge_level=ModuleMergeLevel(level),
-        merge_strategy=ModuleMergeStrategy(strategy)
+        merge_level=ModuleMergeLevel(level), merge_strategy=ModuleMergeStrategy(strategy)
     )
 
     merger = ENAHOGeoMerger(module_config=module_config, verbose=verbose)
@@ -168,11 +156,12 @@ def merge_modules_with_geography(modules_dict: dict,
         modules_dict=modules_dict,
         df_geografia=df_geografia,
         base_module=base_module,
-        merge_config=module_config
+        merge_config=module_config,
     )
 
     if verbose:
-        print(f"""
+        print(
+            f"""
 🔗🗺️  MERGE COMBINADO COMPLETADO
 ===============================
 Módulos procesados: {report['processing_summary']['modules_processed']}
@@ -180,16 +169,17 @@ Secuencia: {report['processing_summary']['merge_sequence']}
 Registros finales: {report['processing_summary']['final_records']:,}
 Cobertura geográfica: {report['processing_summary']['geographic_coverage']:.1f}%
 Calidad general: {report['overall_quality']['quality_grade']}
-        """)
+        """
+        )
 
     return result_df
 
 
 def validate_ubigeo_data(
-        df: 'pd.DataFrame',
-        columna_ubigeo: str = 'ubigeo',
-        tipo_validacion: TipoValidacionUbigeo = TipoValidacionUbigeo.STRUCTURAL,
-        verbose: bool = True
+    df: "pd.DataFrame",
+    columna_ubigeo: str = "ubigeo",
+    tipo_validacion: TipoValidacionUbigeo = TipoValidacionUbigeo.STRUCTURAL,
+    verbose: bool = True,
 ) -> GeoValidationResult:
     """
     Función de conveniencia para validar datos UBIGEO.
@@ -204,8 +194,7 @@ def validate_ubigeo_data(
         Resultado de validación
     """
     config = GeoMergeConfiguration(
-        columna_union=columna_ubigeo,
-        tipo_validacion_ubigeo=tipo_validacion
+        columna_union=columna_ubigeo, tipo_validacion_ubigeo=tipo_validacion
     )
 
     merger = ENAHOGeoMerger(geo_config=config, verbose=verbose)
@@ -213,9 +202,7 @@ def validate_ubigeo_data(
 
 
 def detect_geographic_columns(
-        df: 'pd.DataFrame',
-        confianza_minima: float = 0.8,
-        verbose: bool = True
+    df: "pd.DataFrame", confianza_minima: float = 0.8, verbose: bool = True
 ) -> dict:
     """
     Función de conveniencia para detectar columnas geográficas.
@@ -232,11 +219,12 @@ def detect_geographic_columns(
         from ..loader import setup_logging
     except ImportError:
         import logging
+
         def setup_logging(verbose):
-            logger = logging.getLogger('geo_detector')
+            logger = logging.getLogger("geo_detector")
             if not logger.handlers:
                 handler = logging.StreamHandler()
-                formatter = logging.Formatter('[%(levelname)s] %(message)s')
+                formatter = logging.Formatter("[%(levelname)s] %(message)s")
                 handler.setFormatter(formatter)
                 logger.addHandler(handler)
                 logger.setLevel(logging.INFO if verbose else logging.WARNING)
@@ -248,10 +236,8 @@ def detect_geographic_columns(
 
 
 def extract_ubigeo_components(
-        df: 'pd.DataFrame',
-        columna_ubigeo: str = 'ubigeo',
-        verbose: bool = True
-) -> 'pd.DataFrame':
+    df: "pd.DataFrame", columna_ubigeo: str = "ubigeo", verbose: bool = True
+) -> "pd.DataFrame":
     """
     Función de conveniencia para extraer componentes de UBIGEO.
 
@@ -267,9 +253,9 @@ def extract_ubigeo_components(
     return merger.extract_territorial_components(df, columna_ubigeo)
 
 
-def validate_module_compatibility(modules_dict: dict,
-                                  level: str = "hogar",
-                                  verbose: bool = True) -> dict:
+def validate_module_compatibility(
+    modules_dict: dict, level: str = "hogar", verbose: bool = True
+) -> dict:
     """
     Función de conveniencia para validar compatibilidad entre módulos.
 
@@ -285,8 +271,9 @@ def validate_module_compatibility(modules_dict: dict,
     compatibility = merger.validate_module_compatibility(modules_dict, level)
 
     if verbose:
-        status = "✅ COMPATIBLE" if compatibility['overall_compatible'] else "⚠️  CON PROBLEMAS"
-        print(f"""
+        status = "✅ COMPATIBLE" if compatibility["overall_compatible"] else "⚠️  CON PROBLEMAS"
+        print(
+            f"""
 📋 REPORTE DE COMPATIBILIDAD
 ===========================
 Estado: {status}
@@ -295,21 +282,26 @@ Módulos analizados: {len(compatibility['modules_analyzed'])}
 
 Recomendaciones:
 {chr(10).join(['  - ' + rec for rec in compatibility['recommendations']])}
-        """)
+        """
+        )
 
-        if compatibility['potential_issues']:
-            print(f"""
+        if compatibility["potential_issues"]:
+            print(
+                f"""
 ⚠️  Problemas detectados:
 {chr(10).join(['  - ' + issue for issue in compatibility['potential_issues']])}
-            """)
+            """
+            )
 
     return compatibility
 
 
-def create_merge_report(df: 'pd.DataFrame',
-                        include_geographic: bool = True,
-                        include_quality: bool = True,
-                        verbose: bool = True) -> str:
+def create_merge_report(
+    df: "pd.DataFrame",
+    include_geographic: bool = True,
+    include_quality: bool = True,
+    verbose: bool = True,
+) -> str:
     """
     Crea reporte integral de análisis de datos.
 
@@ -330,6 +322,7 @@ def create_merge_report(df: 'pd.DataFrame',
 # FUNCIONES UTILITARIAS
 # =====================================================
 
+
 def get_available_duplicate_strategies() -> list:
     """Retorna lista de estrategias disponibles para manejo de duplicados"""
     return DuplicateStrategyFactory.get_available_strategies()
@@ -340,8 +333,9 @@ def get_strategy_info(strategy: TipoManejoDuplicados) -> dict:
     return DuplicateStrategyFactory.get_strategy_info(strategy)
 
 
-def validate_merge_configuration(geo_config: GeoMergeConfiguration = None,
-                                 module_config: ModuleMergeConfig = None) -> dict:
+def validate_merge_configuration(
+    geo_config: GeoMergeConfiguration = None, module_config: ModuleMergeConfig = None
+) -> dict:
     """
     Valida configuraciones de merge.
 
@@ -352,51 +346,47 @@ def validate_merge_configuration(geo_config: GeoMergeConfiguration = None,
     Returns:
         Resultado de validación
     """
-    validation = {
-        'valid': True,
-        'warnings': [],
-        'errors': []
-    }
+    validation = {"valid": True, "warnings": [], "errors": []}
 
     if geo_config:
         # Validar configuración geográfica
         if geo_config.manejo_duplicados == TipoManejoDuplicados.AGGREGATE:
             if not geo_config.funciones_agregacion:
-                validation['errors'].append(
+                validation["errors"].append(
                     "funciones_agregacion requerido para estrategia AGGREGATE"
                 )
-                validation['valid'] = False
+                validation["valid"] = False
 
         if geo_config.manejo_duplicados == TipoManejoDuplicados.BEST_QUALITY:
             if not geo_config.columna_calidad:
-                validation['errors'].append(
+                validation["errors"].append(
                     "columna_calidad requerido para estrategia BEST_QUALITY"
                 )
-                validation['valid'] = False
+                validation["valid"] = False
 
         if geo_config.chunk_size <= 0:
-            validation['errors'].append("chunk_size debe ser positivo")
-            validation['valid'] = False
+            validation["errors"].append("chunk_size debe ser positivo")
+            validation["valid"] = False
 
     if module_config:
         # Validar configuración de módulos
         if not module_config.hogar_keys:
-            validation['warnings'].append("hogar_keys vacío - usando valores por defecto")
+            validation["warnings"].append("hogar_keys vacío - usando valores por defecto")
 
         if module_config.min_match_rate < 0 or module_config.min_match_rate > 1:
-            validation['errors'].append("min_match_rate debe estar entre 0 y 1")
-            validation['valid'] = False
+            validation["errors"].append("min_match_rate debe estar entre 0 y 1")
+            validation["valid"] = False
 
         if module_config.max_conflicts_allowed < 0:
-            validation['errors'].append("max_conflicts_allowed debe ser positivo")
-            validation['valid'] = False
+            validation["errors"].append("max_conflicts_allowed debe ser positivo")
+            validation["valid"] = False
 
     return validation
 
 
-def create_optimized_merge_config(df_size: int,
-                                  merge_type: str = "geographic",
-                                  performance_priority: str = "balanced") -> dict:
+def create_optimized_merge_config(
+    df_size: int, merge_type: str = "geographic", performance_priority: str = "balanced"
+) -> dict:
     """
     Crea configuración optimizada según tamaño de datos.
 
@@ -412,34 +402,29 @@ def create_optimized_merge_config(df_size: int,
 
     if merge_type == "geographic":
         if df_size < 10000:  # Dataset pequeño
-            configs['geo_config'] = GeoMergeConfiguration(
-                chunk_size=df_size,
-                optimizar_memoria=False,
-                usar_cache=False
+            configs["geo_config"] = GeoMergeConfiguration(
+                chunk_size=df_size, optimizar_memoria=False, usar_cache=False
             )
         elif df_size < 100000:  # Dataset mediano
-            configs['geo_config'] = GeoMergeConfiguration(
+            configs["geo_config"] = GeoMergeConfiguration(
                 chunk_size=10000,
                 optimizar_memoria=performance_priority == "memory",
-                usar_cache=True
+                usar_cache=True,
             )
         else:  # Dataset grande
-            configs['geo_config'] = GeoMergeConfiguration(
+            configs["geo_config"] = GeoMergeConfiguration(
                 chunk_size=50000 if performance_priority != "memory" else 25000,
                 optimizar_memoria=True,
-                usar_cache=True
+                usar_cache=True,
             )
 
     elif merge_type == "module":
         if df_size < 50000:  # Dataset pequeño
-            configs['module_config'] = ModuleMergeConfig(
-                chunk_processing=False,
-                chunk_size=df_size
-            )
+            configs["module_config"] = ModuleMergeConfig(chunk_processing=False, chunk_size=df_size)
         else:  # Dataset grande
-            configs['module_config'] = ModuleMergeConfig(
+            configs["module_config"] = ModuleMergeConfig(
                 chunk_processing=performance_priority == "memory",
-                chunk_size=25000 if performance_priority == "memory" else 50000
+                chunk_size=25000 if performance_priority == "memory" else 50000,
             )
 
     return configs
@@ -449,26 +434,28 @@ def create_optimized_merge_config(df_size: int,
 # COMPATIBILIDAD CON VERSIÓN ANTERIOR
 # =====================================================
 
+
 def agregar_info_geografica(
-        df_principal: 'pd.DataFrame',
-        df_geografia: 'pd.DataFrame',
-        columna_union: str = 'ubigeo',
-        columnas_geograficas: dict = None,
-        manejo_duplicados: str = 'first',
-        manejo_errores: str = 'coerce',
-        valor_faltante='DESCONOCIDO',
-        reporte_duplicados: bool = False
-) -> 'pd.DataFrame':
+    df_principal: "pd.DataFrame",
+    df_geografia: "pd.DataFrame",
+    columna_union: str = "ubigeo",
+    columnas_geograficas: dict = None,
+    manejo_duplicados: str = "first",
+    manejo_errores: str = "coerce",
+    valor_faltante="DESCONOCIDO",
+    reporte_duplicados: bool = False,
+) -> "pd.DataFrame":
     """
     Función de compatibilidad con la API anterior.
 
     DEPRECATED: Use merge_with_geography() para nuevas implementaciones.
     """
     import warnings
+
     warnings.warn(
         "agregar_info_geografica está deprecated. Use merge_with_geography() en su lugar.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     # Convertir parámetros a nueva configuración
@@ -477,7 +464,7 @@ def agregar_info_geografica(
         manejo_duplicados=TipoManejoDuplicados(manejo_duplicados),
         manejo_errores=TipoManejoErrores(manejo_errores),
         valor_faltante=valor_faltante,
-        reporte_duplicados=reporte_duplicados
+        reporte_duplicados=reporte_duplicados,
     )
 
     result_df, _ = merge_with_geography(
@@ -485,7 +472,7 @@ def agregar_info_geografica(
         df_geografia=df_geografia,
         columna_union=columna_union,
         columnas_geograficas=columnas_geograficas,
-        config=config
+        config=config,
     )
 
     return result_df
@@ -500,70 +487,59 @@ def agregar_info_geografica(
 ENAHOMerger = ENAHOGeoMerger
 
 __all__ = [
-    'create_panel_data',
+    "create_panel_data",
     # Alias principal
-    'ENAHOMerger',
+    "ENAHOMerger",
     # Clases principales
-    'ENAHOGeoMerger',
-    'ENAHOModuleMerger',
-
+    "ENAHOGeoMerger",
+    "ENAHOModuleMerger",
     # Configuraciones
-    'GeoMergeConfiguration',
-    'ModuleMergeConfig',
-
+    "GeoMergeConfiguration",
+    "ModuleMergeConfig",
     # Enums geográficos
-    'TipoManejoDuplicados',
-    'TipoManejoErrores',
-    'NivelTerritorial',
-    'TipoValidacionUbigeo',
-
+    "TipoManejoDuplicados",
+    "TipoManejoErrores",
+    "NivelTerritorial",
+    "TipoValidacionUbigeo",
     # Enums de módulos
-    'ModuleMergeLevel',
-    'ModuleMergeStrategy',
-    'ModuleType',
-
+    "ModuleMergeLevel",
+    "ModuleMergeStrategy",
+    "ModuleType",
     # Resultados
-    'GeoValidationResult',
-    'ModuleMergeResult',
-
+    "GeoValidationResult",
+    "ModuleMergeResult",
     # Validadores y detectores
-    'UbigeoValidator',
-    'TerritorialValidator',
-    'GeoDataQualityValidator',
-    'GeoPatternDetector',
-    'ModuleValidator',
-
+    "UbigeoValidator",
+    "TerritorialValidator",
+    "GeoDataQualityValidator",
+    "GeoPatternDetector",
+    "ModuleValidator",
     # Factories
-    'DuplicateStrategyFactory',
-
+    "DuplicateStrategyFactory",
     # Excepciones principales
-    'GeoMergeError',
-    'ModuleMergeError',
-    'UbigeoValidationError',
-    'IncompatibleModulesError',
-
+    "GeoMergeError",
+    "ModuleMergeError",
+    "UbigeoValidationError",
+    "IncompatibleModulesError",
     # Funciones principales
-    'merge_with_geography',
-    'merge_enaho_modules',
-    'merge_modules_with_geography',
-    'validate_ubigeo_data',
-    'detect_geographic_columns',
-    'extract_ubigeo_components',
-    'validate_module_compatibility',
-    'create_merge_report',
-
+    "merge_with_geography",
+    "merge_enaho_modules",
+    "merge_modules_with_geography",
+    "validate_ubigeo_data",
+    "detect_geographic_columns",
+    "extract_ubigeo_components",
+    "validate_module_compatibility",
+    "create_merge_report",
     # Utilidades
-    'get_available_duplicate_strategies',
-    'get_strategy_info',
-    'validate_merge_configuration',
-    'create_optimized_merge_config',
-
+    "get_available_duplicate_strategies",
+    "get_strategy_info",
+    "validate_merge_configuration",
+    "create_optimized_merge_config",
     # Constantes
-    'DEPARTAMENTOS_VALIDOS',
-    'PATRONES_GEOGRAFICOS',
-
+    "DEPARTAMENTOS_VALIDOS",
+    "PATRONES_GEOGRAFICOS",
     # Compatibilidad (deprecated)
-    'agregar_info_geografica'
+    "agregar_info_geografica",
 ]
 
 # Información del módulo

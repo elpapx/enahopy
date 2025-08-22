@@ -45,7 +45,7 @@ class ENAHOValidator:
                 "INVALID_YEARS",
                 invalid_years=invalid_years,
                 valid_years=list(year_map.keys()),
-                dataset_type=dataset_type
+                dataset_type=dataset_type,
             )
 
     def validate_modules(self, modules: List[str]) -> List[str]:
@@ -68,7 +68,9 @@ class ENAHOValidator:
         normalized_modules = []
         for module in modules:
             if not isinstance(module, str):
-                raise ENAHOValidationError(f"Módulo debe ser string: {module}", "INVALID_MODULE_TYPE")
+                raise ENAHOValidationError(
+                    f"Módulo debe ser string: {module}", "INVALID_MODULE_TYPE"
+                )
 
             module = module.strip().zfill(2)  # Asegura formato 01, 02, etc.
             normalized_modules.append(module)
@@ -80,7 +82,7 @@ class ENAHOValidator:
                 f"Módulos {invalid_modules} no están disponibles",
                 "INVALID_MODULES",
                 invalid_modules=invalid_modules,
-                available_modules=list(self.config.AVAILABLE_MODULES.keys())
+                available_modules=list(self.config.AVAILABLE_MODULES.keys()),
             )
 
         return normalized_modules
@@ -104,14 +106,10 @@ class ENAHOValidator:
             output_path.mkdir(parents=True, exist_ok=True)
         except PermissionError:
             raise ENAHOValidationError(
-                f"Sin permisos para crear directorio: {output_path}",
-                "PERMISSION_ERROR"
+                f"Sin permisos para crear directorio: {output_path}", "PERMISSION_ERROR"
             )
         except OSError as e:
-            raise ENAHOValidationError(
-                f"Error creando directorio: {e}",
-                "DIRECTORY_ERROR"
-            )
+            raise ENAHOValidationError(f"Error creando directorio: {e}", "DIRECTORY_ERROR")
 
         return output_path
 
@@ -134,6 +132,4 @@ class ENAHOValidator:
         return path
 
 
-__all__ = [
-    'ENAHOValidator'
-]
+__all__ = ["ENAHOValidator"]

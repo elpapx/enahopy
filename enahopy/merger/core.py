@@ -19,29 +19,37 @@ import logging
 import time
 import warnings
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 # Importaciones internas
 from .config import (
-    GeoMergeConfiguration, ModuleMergeConfig, GeoValidationResult,
-    ModuleMergeResult, TipoManejoErrores, TipoManejoDuplicados
+    GeoMergeConfiguration,
+    GeoValidationResult,
+    ModuleMergeConfig,
+    ModuleMergeResult,
+    TipoManejoDuplicados,
+    TipoManejoErrores,
 )
 from .exceptions import (
-    GeoMergeError, ModuleMergeError, DataQualityError,
-    ConfigurationError, ValidationThresholdError
+    ConfigurationError,
+    DataQualityError,
+    GeoMergeError,
+    ModuleMergeError,
+    ValidationThresholdError,
 )
-from .geographic.validators import UbigeoValidator, TerritorialValidator, GeoDataQualityValidator
 from .geographic.patterns import GeoPatternDetector
 from .geographic.strategies import DuplicateStrategyFactory
+from .geographic.validators import GeoDataQualityValidator, TerritorialValidator, UbigeoValidator
 from .modules.merger import ENAHOModuleMerger
 from .modules.validator import ModuleValidator
 
 # Importaciones opcionales del loader principal con fallback robusto
 try:
-    from ..loader import ENAHOConfig, setup_logging, log_performance, CacheManager
+    from ..loader import CacheManager, ENAHOConfig, log_performance, setup_logging
+
     LOADER_AVAILABLE = True
 except ImportError:
     LOADER_AVAILABLE = False
@@ -51,19 +59,24 @@ except ImportError:
     @dataclass(frozen=True)
     class ENAHOConfig:
         """Configuración fallback para uso independiente"""
+
         cache_dir: str = ".enaho_cache"
         use_cache: bool = True
         validate_data: bool = True
 
-    def setup_logging(verbose: bool = True, structured: bool = False, log_file: Optional[str] = None):
+    def setup_logging(
+        verbose: bool = True, structured: bool = False, log_file: Optional[str] = None
+    ):
         """Setup de logging fallback"""
-        logger = logging.getLogger('enaho_geo_merger')
+        logger = logging.getLogger("enaho_geo_merger")
         if not logger.handlers:
             handler = logging.StreamHandler()
             if structured:
-                formatter = logging.Formatter('{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}')
+                formatter = logging.Formatter(
+                    '{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}'
+                )
             else:
-                formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
+                formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
@@ -77,19 +90,21 @@ except ImportError:
 
     def log_performance(func):
         """Decorador de performance fallback"""
+
         def wrapper(*args, **kwargs):
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)
                 elapsed = time.time() - start_time
-                logger = logging.getLogger('enaho_geo_merger')
+                logger = logging.getLogger("enaho_geo_merger")
                 logger.debug(f"⏱️ {func.__name__} ejecutado en {elapsed:.2f}s")
                 return result
             except Exception as e:
                 elapsed = time.time() - start_time
-                logger = logging.getLogger('enaho_geo_merger')
+                logger = logging.getLogger("enaho_geo_merger")
                 logger.error(f"❌ {func.__name__} falló después de {elapsed:.2f}s: {str(e)}")
                 raise
+
         return wrapper
 
     # CacheManager será None si no está disponible
@@ -119,47 +134,33 @@ class ENAHOGeoMerger:
     """
 
     def __init__(self,
-                 config: Optional[ENAHOConfig] = None,
-                 geo_config: Optional[GeoMergeConfiguration] = None,
                  module_config: Optional[ModuleMergeConfig] = None,
-                 verbose: bool = True,
-                 structured_logging: bool = False,
-                 log_file: Optional[str] = None):
+                 verbose: bool = True):
         """
-        Inicializa el merger geográfico extendido.
-
-        Args:
-            config: Configuración general de ENAHO
-            geo_config: Configuración para merge geográfico
-            module_config: Configuración para merge de módulos
-            verbose: Si mostrar logs detallados
-            structured_logging: Si usar formato JSON para logs
-            log_file: Archivo opcional para guardar logs
-
-        Raises:
-            ConfigurationError: Si la configuración es inválida
+        Inicializa el merger
         """
-        # Configuración principal con validación
-        self.config = config or ENAHOConfig()
-        self.geo_config = geo_config or GeoMergeConfiguration()
         self.module_config = module_config or ModuleMergeConfig()
+        self.verbose = verbose
+        self.logger = self._setup_logger()
 
-        # Validar configuraciones
-        self._validate_configurations()
+        # Inicializar el merger de módulos
+        self.module_merger = ENAHOModuleMerger(self.module_config, self.logger)
 
-        # Setup logging
-        self.logger = setup_logging(verbose, structured_logging, log_file)
+        if self.verbose:
+            self.logger.info("ENAHOGeoMerger inicializado correctamente")
 
-        # Verificar y configurar cache de manera segura
-        self._setup_cache()
-
-        # Inicializar componentes geográficos
-        self._initialize_geographic_components()
-
-        # Inicializar componentes de módulos
-        self._initialize_module_components()
-
-        self.logger.info("ENAHOGeoMerger inicializado correctamente")
+    def _setup_logger(self) -> logging.Logger:
+        """Configura el logger"""
+        logger = logging.getLogger('enaho_geo_merger')
+        if not logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
+            )
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+            logger.setLevel(logging.INFO if self.verbose else logging.WARNING)
+        return logger
 
     def _validate_configurations(self):
         """
@@ -178,7 +179,7 @@ class ENAHOGeoMerger:
             warnings.warn(
                 f"chunk_size muy grande ({self.geo_config.chunk_size}), "
                 "puede causar problemas de memoria",
-                ResourceWarning
+                ResourceWarning,
             )
 
         if self.geo_config.manejo_duplicados == TipoManejoDuplicados.AGGREGATE:
@@ -201,16 +202,14 @@ class ENAHOGeoMerger:
             errors.append("max_conflicts_allowed debe ser no negativo")
 
         if errors:
-            raise ConfigurationError(
-                f"Configuración inválida: {'; '.join(errors)}"
-            )
+            raise ConfigurationError(f"Configuración inválida: {'; '.join(errors)}")
 
     def _setup_cache(self):
         """Configura el cache de manera segura verificando disponibilidad."""
         self.cache_manager = None
         self.cache_enabled = False
 
-        if hasattr(self.config, 'use_cache') and self.config.use_cache:
+        if hasattr(self.config, "use_cache") and self.config.use_cache:
             if CacheManager is not None:
                 try:
                     self.cache_manager = CacheManager(cache_dir=self.config.cache_dir)
@@ -218,8 +217,7 @@ class ENAHOGeoMerger:
                     self.logger.info("Cache habilitado y configurado")
                 except Exception as e:
                     self.logger.warning(
-                        f"No se pudo inicializar el cache: {str(e)}. "
-                        "Continuando sin cache."
+                        f"No se pudo inicializar el cache: {str(e)}. " "Continuando sin cache."
                     )
             else:
                 if self.geo_config.usar_cache:
@@ -251,11 +249,13 @@ class ENAHOGeoMerger:
             raise
 
     @log_performance
-    def validate_geographic_data(self,
-                                  df: pd.DataFrame,
-                                  columna_ubigeo: str = 'ubigeo',
-                                  validate_territory: bool = True,
-                                  validate_quality: bool = True) -> GeoValidationResult:
+    def validate_geographic_data(
+        self,
+        df: pd.DataFrame,
+        columna_ubigeo: str = "ubigeo",
+        validate_territory: bool = True,
+        validate_quality: bool = True,
+    ) -> GeoValidationResult:
         """
         Valida datos geográficos con checks comprehensivos.
 
@@ -289,7 +289,7 @@ class ENAHOGeoMerger:
                 coverage_percentage=0.0,
                 errors=["DataFrame vacío"],
                 warnings=[],
-                quality_metrics={}
+                quality_metrics={},
             )
 
         if columna_ubigeo not in df.columns:
@@ -315,7 +315,7 @@ class ENAHOGeoMerger:
                 coverage_percentage=0.0,
                 errors=["Todos los valores de UBIGEO son NaN"],
                 warnings=["No hay datos geográficos válidos para procesar"],
-                quality_metrics={'data_completeness': 0.0}
+                quality_metrics={"data_completeness": 0.0},
             )
 
         # Validación de UBIGEO con manejo de NaN
@@ -324,8 +324,7 @@ class ENAHOGeoMerger:
 
         if non_nan_count > 0:
             valid_mask, validation_errors = self.ubigeo_validator.validar_serie_ubigeos(
-                df.loc[non_nan_mask, columna_ubigeo],
-                self.geo_config.tipo_validacion_ubigeo
+                df.loc[non_nan_mask, columna_ubigeo], self.geo_config.tipo_validacion_ubigeo
             )
             valid_ubigeos = valid_mask.sum()
             invalid_ubigeos = non_nan_count - valid_ubigeos
@@ -335,7 +334,7 @@ class ENAHOGeoMerger:
             validation_errors = []
 
         # Agregar NaN a los inválidos
-        invalid_ubigeos += (total_records - non_nan_count)
+        invalid_ubigeos += total_records - non_nan_count
 
         if validation_errors:
             errors.extend(validation_errors[:5])  # Limitar errores mostrados
@@ -351,7 +350,9 @@ class ENAHOGeoMerger:
 
         if duplicate_ubigeos > 0:
             unique_duplicates = df.loc[non_nan_mask][duplicates_mask][columna_ubigeo].nunique()
-            warnings.append(f"{duplicate_ubigeos} registros con UBIGEO duplicado ({unique_duplicates} valores únicos)")
+            warnings.append(
+                f"{duplicate_ubigeos} registros con UBIGEO duplicado ({unique_duplicates} valores únicos)"
+            )
 
         # Validación territorial
         territorial_inconsistencies = 0
@@ -359,16 +360,17 @@ class ENAHOGeoMerger:
             valid_data = df[non_nan_mask & valid_mask]
             if not valid_data.empty:
                 territorial_issues = self.territorial_validator.validar_jerarquia_territorial(
-                    valid_data,
-                    columna_ubigeo
+                    valid_data, columna_ubigeo
                 )
                 territorial_inconsistencies = len(territorial_issues)
                 if territorial_inconsistencies > 0:
-                    warnings.append(f"{territorial_inconsistencies} inconsistencias territoriales detectadas")
+                    warnings.append(
+                        f"{territorial_inconsistencies} inconsistencias territoriales detectadas"
+                    )
 
         # Validación de coordenadas
         missing_coordinates = 0
-        coord_columns = ['latitud', 'longitud', 'lat', 'lon', 'x', 'y']
+        coord_columns = ["latitud", "longitud", "lat", "lon", "x", "y"]
         found_coords = [col for col in coord_columns if col in df.columns]
 
         if found_coords and self.geo_config.validar_coordenadas:
@@ -376,8 +378,15 @@ class ENAHOGeoMerger:
                 missing_coordinates += df[coord_col].isna().sum()
 
             if missing_coordinates > 0:
-                coord_coverage = ((len(found_coords) * total_records - missing_coordinates) /
-                                 (len(found_coords) * total_records) * 100) if total_records > 0 else 0
+                coord_coverage = (
+                    (
+                        (len(found_coords) * total_records - missing_coordinates)
+                        / (len(found_coords) * total_records)
+                        * 100
+                    )
+                    if total_records > 0
+                    else 0
+                )
                 warnings.append(f"Cobertura de coordenadas: {coord_coverage:.1f}%")
 
         # Calcular métricas de calidad
@@ -385,20 +394,28 @@ class ENAHOGeoMerger:
         coverage_percentage = (valid_ubigeos / total_records * 100) if total_records > 0 else 0.0
 
         quality_metrics = {
-            'completeness': (non_nan_count / total_records * 100) if total_records > 0 else 0.0,
-            'validity': (valid_ubigeos / non_nan_count * 100) if non_nan_count > 0 else 0.0,
-            'uniqueness': ((non_nan_count - duplicate_ubigeos) / non_nan_count * 100) if non_nan_count > 0 else 100.0,
-            'consistency': ((total_records - territorial_inconsistencies) / total_records * 100) if total_records > 0 else 100.0
+            "completeness": (non_nan_count / total_records * 100) if total_records > 0 else 0.0,
+            "validity": (valid_ubigeos / non_nan_count * 100) if non_nan_count > 0 else 0.0,
+            "uniqueness": (
+                ((non_nan_count - duplicate_ubigeos) / non_nan_count * 100)
+                if non_nan_count > 0
+                else 100.0
+            ),
+            "consistency": (
+                ((total_records - territorial_inconsistencies) / total_records * 100)
+                if total_records > 0
+                else 100.0
+            ),
         }
 
         # Determinar si es válido con umbrales ajustables
-        min_coverage = getattr(self.geo_config, 'min_coverage_threshold', 80.0)
-        min_uniqueness = getattr(self.geo_config, 'min_uniqueness_threshold', 95.0)
+        min_coverage = getattr(self.geo_config, "min_coverage_threshold", 80.0)
+        min_uniqueness = getattr(self.geo_config, "min_uniqueness_threshold", 95.0)
 
         is_valid = (
-            coverage_percentage >= min_coverage and
-            quality_metrics['uniqueness'] >= min_uniqueness and
-            territorial_inconsistencies == 0
+            coverage_percentage >= min_coverage
+            and quality_metrics["uniqueness"] >= min_uniqueness
+            and territorial_inconsistencies == 0
         )
 
         result = GeoValidationResult(
@@ -412,7 +429,7 @@ class ENAHOGeoMerger:
             coverage_percentage=coverage_percentage,
             errors=errors,
             warnings=warnings,
-            quality_metrics=quality_metrics
+            quality_metrics=quality_metrics,
         )
 
         self.logger.info(f"Validación completada - Cobertura: {coverage_percentage:.1f}%")
@@ -466,12 +483,14 @@ class ENAHOGeoMerger:
             raise
 
     @log_performance
-    def merge_geographic_data(self,
-                              df_principal: pd.DataFrame,
-                              df_geografia: pd.DataFrame,
-                              columnas_geograficas: Optional[Dict[str, str]] = None,
-                              columna_union: Optional[str] = None,
-                              validate_before_merge: bool = None) -> Tuple[pd.DataFrame, GeoValidationResult]:
+    def merge_geographic_data(
+        self,
+        df_principal: pd.DataFrame,
+        df_geografia: pd.DataFrame,
+        columnas_geograficas: Optional[Dict[str, str]] = None,
+        columna_union: Optional[str] = None,
+        validate_before_merge: bool = None,
+    ) -> Tuple[pd.DataFrame, GeoValidationResult]:
         """
         Fusiona datos principales con información geográfica.
 
@@ -538,8 +557,7 @@ class ENAHOGeoMerger:
         if columnas_geograficas is None:
             self.logger.info("columnas geográficas automáticamente...")
             columnas_geograficas = self.pattern_detector.detectar_columnas_geograficas(
-                df_geografia,
-                confidence_threshold=0.7
+                df_geografia, confidence_threshold=0.7
             )
             self.logger.info(f"Columnas detectadas: {list(columnas_geograficas.keys())}")
 
@@ -550,17 +568,22 @@ class ENAHOGeoMerger:
                 df_geografia,
                 columna_union,
                 validate_territory=self.geo_config.validar_consistencia_territorial,
-                validate_quality=self.geo_config.generar_reporte_calidad
+                validate_quality=self.geo_config.generar_reporte_calidad,
             )
 
-            if not validation_result.is_valid and self.geo_config.manejo_errores == TipoManejoErrores.RAISE:
+            if (
+                not validation_result.is_valid
+                and self.geo_config.manejo_errores == TipoManejoErrores.RAISE
+            ):
                 raise DataQualityError(
                     f"Validación de datos geográficos falló: {validation_result.errors}",
-                    validation_result=validation_result
+                    validation_result=validation_result,
                 )
 
         # Preparar DataFrames para merge
-        df_geo_clean = self._prepare_geographic_df(df_geografia, columna_union, columnas_geograficas)
+        df_geo_clean = self._prepare_geographic_df(
+            df_geografia, columna_union, columnas_geograficas
+        )
 
         # Manejar duplicados
         df_geo_clean = self._handle_duplicates(df_geo_clean, columna_union)
@@ -579,11 +602,12 @@ class ENAHOGeoMerger:
 
         # Generar reporte final
         if validation_result is None:
-            validation_result = self._generate_merge_report(df_principal, df_geografia, result_df, columna_union)
+            validation_result = self._generate_merge_report(
+                df_principal, df_geografia, result_df, columna_union
+            )
 
         self.logger.info(
-            f"Merge completado: {len(result_df)} registros, "
-            f"{result_df.shape[1]} columnas"
+            f"Merge completado: {len(result_df)} registros, " f"{result_df.shape[1]} columnas"
         )
 
         return result_df, validation_result
@@ -625,10 +649,9 @@ class ENAHOGeoMerger:
                     f"No se pudieron compatibilizar los tipos de datos para '{column}': {str(e)}"
                 )
 
-    def _prepare_geographic_df(self,
-                               df: pd.DataFrame,
-                               columna_union: str,
-                               columnas_geograficas: Dict[str, str]) -> pd.DataFrame:
+    def _prepare_geographic_df(
+        self, df: pd.DataFrame, columna_union: str, columnas_geograficas: Dict[str, str]
+    ) -> pd.DataFrame:
         """
         Prepara DataFrame geográfico para merge.
 
@@ -666,7 +689,9 @@ class ENAHOGeoMerger:
             rename_dict = {}
             for col in df_clean.columns:
                 if col != columna_union:  # No renombrar la columna de unión
-                    new_name = f"{self.geo_config.prefijo_columnas}{col}{self.geo_config.sufijo_columnas}"
+                    new_name = (
+                        f"{self.geo_config.prefijo_columnas}{col}{self.geo_config.sufijo_columnas}"
+                    )
                     rename_dict[col] = new_name
 
             if rename_dict:
@@ -686,12 +711,12 @@ class ENAHOGeoMerger:
             DataFrame fusionado
         """
         try:
-            return pd.merge(df1, df2, on=on, how='left', validate='m:1')
+            return pd.merge(df1, df2, on=on, how="left", validate="m:1")
         except pd.errors.MergeError as e:
             self.logger.error(f"Error en merge: {str(e)}")
             # Intentar merge sin validación
             self.logger.warning("Reintentando merge sin validación m:1...")
-            return pd.merge(df1, df2, on=on, how='left')
+            return pd.merge(df1, df2, on=on, how="left")
 
     def _merge_by_chunks(self, df1: pd.DataFrame, df2: pd.DataFrame, on: str) -> pd.DataFrame:
         """
@@ -715,7 +740,7 @@ class ENAHOGeoMerger:
             end_idx = min((i + 1) * chunk_size, len(df1))
 
             chunk = df1.iloc[start_idx:end_idx]
-            chunk_merged = pd.merge(chunk, df2, on=on, how='left')
+            chunk_merged = pd.merge(chunk, df2, on=on, how="left")
             chunks_results.append(chunk_merged)
 
             if (i + 1) % 10 == 0:
@@ -726,11 +751,13 @@ class ENAHOGeoMerger:
 
         return result
 
-    def _generate_merge_report(self,
-                               df_original: pd.DataFrame,
-                               df_geo: pd.DataFrame,
-                               df_result: pd.DataFrame,
-                               columna_union: str) -> GeoValidationResult:
+    def _generate_merge_report(
+        self,
+        df_original: pd.DataFrame,
+        df_geo: pd.DataFrame,
+        df_result: pd.DataFrame,
+        columna_union: str,
+    ) -> GeoValidationResult:
         """
         Genera reporte detallado del merge.
 
@@ -757,12 +784,12 @@ class ENAHOGeoMerger:
             missing_geo = max(missing_geo, df_result[col].isna().sum())
 
         quality_metrics = {
-            'original_records': len(df_original),
-            'geographic_records': len(df_geo),
-            'merged_records': total_records,
-            'coverage': coverage_percentage,
-            'new_columns': len(new_cols),
-            'missing_matches': missing_geo
+            "original_records": len(df_original),
+            "geographic_records": len(df_geo),
+            "merged_records": total_records,
+            "coverage": coverage_percentage,
+            "new_columns": len(new_cols),
+            "missing_matches": missing_geo,
         }
 
         warnings = []
@@ -780,7 +807,7 @@ class ENAHOGeoMerger:
             coverage_percentage=coverage_percentage,
             errors=[],
             warnings=warnings,
-            quality_metrics=quality_metrics
+            quality_metrics=quality_metrics,
         )
 
     # =====================================================
@@ -790,224 +817,178 @@ class ENAHOGeoMerger:
     @log_performance
     def merge_multiple_modules(self,
                                modules_dict: Dict[str, pd.DataFrame],
-                               base_module: str = "34",
-                               merge_config: Optional[ModuleMergeConfig] = None,
-                               validate_compatibility: bool = True) -> ModuleMergeResult:
+                               base_module: str,
+                               config: Optional[ModuleMergeConfig] = None) -> ModuleMergeResult:
         """
-        Fusiona múltiples módulos ENAHO con validaciones.
+        Fusiona múltiples módulos ENAHO con corrección del bug
 
         Args:
-            modules_dict: Diccionario {código_módulo: DataFrame}
+            modules_dict: Diccionario con módulos {código: DataFrame}
             base_module: Módulo base para el merge
-            merge_config: Configuración específica del merge
-            validate_compatibility: Si validar compatibilidad antes del merge
+            config: Configuración opcional
 
         Returns:
-            ModuleMergeResult con DataFrame fusionado y métricas
-
-        Raises:
-            ValueError: Si los módulos están vacíos o el base_module no existe
-            ModuleMergeError: Si hay errores durante el merge
-
-        Example:
-            >>> modules = {"34": df_mod34, "01": df_mod01}
-            >>> result = merger.merge_multiple_modules(modules, base_module="34")
-            >>> print(f"Módulos fusionados: {result.modules_merged}")
+            ModuleMergeResult con el resultado del merge
         """
-        # Validaciones de entrada
-        if not modules_dict:
-            raise ValueError("modules_dict no puede estar vacío")
+        start_time = datetime.now()
+        config = config or self.module_config
 
-        if base_module not in modules_dict:
-            raise ValueError(
-                f"Módulo base '{base_module}' no encontrado. "
-                f"Módulos disponibles: {list(modules_dict.keys())}"
+        try:
+            # Log inicio
+            self.logger.info(f"Iniciando merge de {len(modules_dict)} módulos con base '{base_module}'")
+
+            # Validar módulos
+            self._validate_modules(modules_dict, base_module)
+
+            # Ordenar módulos para merge
+            merge_order = self._determine_merge_order(modules_dict, base_module)
+            self.logger.info(f"Orden de merge: {' → '.join(merge_order)}")
+
+            # Inicializar resultado base
+            base_df = modules_dict[base_module].copy()
+            merged_df = base_df
+
+            # Acumuladores para el reporte
+            all_warnings = []
+            all_conflicts = 0
+            all_unmatched_left = 0
+            all_unmatched_right = 0
+            merge_reports = []
+
+            # Fusionar módulos uno por uno
+            for module_code in merge_order[1:]:  # Excluir el base que ya tenemos
+                self.logger.info(f"Agregando módulo {module_code}")
+
+                try:
+                    # Realizar merge individual
+                    result = self.module_merger.merge_modules(
+                        merged_df,
+                        modules_dict[module_code],
+                        base_module if merged_df is base_df else "merged",
+                        module_code
+                    )
+
+                    # Actualizar DataFrame fusionado
+                    merged_df = result.merged_df
+
+                    # ✅ CORRECCIÓN DEL BUG: usar validation_warnings en lugar de warnings
+                    all_warnings.extend(result.validation_warnings)  # AQUÍ ESTABA EL BUG
+
+                    # Acumular estadísticas
+                    all_conflicts += result.conflicts_resolved
+                    all_unmatched_left += result.unmatched_left
+                    all_unmatched_right += result.unmatched_right
+
+                    # Guardar reporte individual
+                    merge_reports.append({
+                        'module': module_code,
+                        'report': result.merge_report,
+                        'quality_score': result.quality_score
+                    })
+
+                    self.logger.info(
+                        f"Merge completado: {len(merged_df)} registros finales "
+                        f"(Calidad: {result.quality_score:.1%})"
+                    )
+
+                except Exception as e:
+                    self.logger.error(f"Error fusionando módulo {module_code}: {str(e)}")
+                    raise MergeValidationError(f"Fallo en merge de módulo {module_code}: {str(e)}")
+
+            # Calcular calidad total
+            total_quality = self._calculate_total_quality(merge_reports)
+
+            # Crear reporte consolidado
+            elapsed_time = (datetime.now() - start_time).total_seconds()
+
+            merge_report = {
+                'modules_merged': list(modules_dict.keys()),
+                'base_module': base_module,
+                'merge_order': merge_order,
+                'total_records': len(merged_df),
+                'individual_reports': merge_reports,
+                'elapsed_time': elapsed_time,
+                'timestamp': datetime.now().isoformat()
+            }
+
+            # Crear resultado final
+            final_result = ModuleMergeResult(
+                merged_df=merged_df,
+                merge_report=merge_report,
+                conflicts_resolved=all_conflicts,
+                unmatched_left=all_unmatched_left,
+                unmatched_right=all_unmatched_right,
+                validation_warnings=all_warnings,  # Usar el nombre correcto del atributo
+                quality_score=total_quality
             )
 
-        # Validar que ningún módulo esté vacío
-        for module_code, df in modules_dict.items():
-            if df is None or df.empty:
-                raise ValueError(f"Módulo '{module_code}' está vacío")
+            self.logger.info(
+                f"merge_multiple_modules completado en {elapsed_time:.2f}s "
+                f"con calidad total: {total_quality:.1%}"
+            )
 
-        config = merge_config or self.module_config
-        self.logger.info(f"🔗 Iniciando merge de {len(modules_dict)} módulos con base '{base_module}'")
+            return final_result
 
-        # Validar compatibilidad si está configurado
-        if validate_compatibility:
-            compatibility = self.validate_module_compatibility(modules_dict, config.merge_level.value)
-            if not compatibility['is_compatible']:
-                raise ModuleMergeError(
-                    f"Módulos incompatibles: {compatibility['errors']}",
-                    modules=list(modules_dict.keys()),
-                    compatibility_info=compatibility
-                )
+        except Exception as e:
+            elapsed_time = (datetime.now() - start_time).total_seconds()
+            self.logger.error(
+                f"merge_multiple_modules falló después de {elapsed_time:.2f}s: {str(e)}"
+            )
+            raise
 
-        # Ordenar módulos para merge secuencial
-        merge_order = self._determine_merge_order(modules_dict, base_module)
-        self.logger.info(f"📋 Orden de merge: {' → '.join(merge_order)}")
+    def _validate_modules(self, modules_dict: Dict[str, pd.DataFrame], base_module: str):
+        """Valida que los módulos sean compatibles para merge"""
+        self.logger.info(f"Validando compatibilidad de {len(modules_dict)} módulos")
 
-        # Iniciar con el módulo base
-        result_df = modules_dict[base_module].copy()
-        merge_report = {
-            'modules_sequence': [base_module],
-            'merge_steps': [],
-            'warnings': [],
-            'conflicts_resolved': 0
-        }
+        if base_module not in modules_dict:
+            raise ValueError(f"Módulo base '{base_module}' no encontrado")
 
-        # Realizar merges secuenciales
-        for module_code in merge_order:
-            if module_code == base_module:
-                continue
+        if len(modules_dict) < 2:
+            raise ValueError("Se requieren al menos 2 módulos para fusionar")
 
-            self.logger.info(f"➕ Agregando módulo {module_code}")
-
-            try:
-                merge_result = self.module_merger.merge_modules(
-                    left_df=result_df,
-                    right_df=modules_dict[module_code],
-                    left_module=base_module,
-                    right_module=module_code,
-                    merge_config=config
-                )
-
-                result_df = merge_result.merged_df
-                merge_report['modules_sequence'].append(module_code)
-                merge_report['merge_steps'].append({
-                    'module': module_code,
-                    'records_before': len(result_df),
-                    'records_after': len(merge_result.merged_df),
-                    'warnings': merge_result.warnings,
-                    'conflicts': merge_result.conflicts_found
-                })
-                merge_report['conflicts_resolved'] += merge_result.conflicts_resolved
-
-            except Exception as e:
-                self.logger.error(f"❌ Error fusionando módulo {module_code}: {str(e)}")
-                if config.continue_on_error:
-                    merge_report['warnings'].append(f"Módulo {module_code} omitido: {str(e)}")
-                    continue
-                else:
-                    raise
-
-        # Generar resultado final
-        final_result = ModuleMergeResult(
-            merged_df=result_df,
-            modules_merged=merge_report['modules_sequence'],
-            merge_level=config.merge_level.value,
-            merge_strategy=config.merge_strategy.value,
-            conflicts_found=merge_report['conflicts_resolved'],
-            conflicts_resolved=merge_report['conflicts_resolved'],
-            warnings=merge_report['warnings'],
-            merge_report=merge_report,
-            quality_metrics=self._calculate_module_quality_metrics(result_df, modules_dict)
-        )
-
-        self.logger.info(
-            f"✅ Merge de módulos completado: {len(result_df)} registros, "
-            f"{len(merge_report['modules_sequence'])} módulos fusionados"
-        )
-
-        return final_result
+        # Validar que todos sean DataFrames
+        for code, df in modules_dict.items():
+            if not isinstance(df, pd.DataFrame):
+                raise TypeError(f"Módulo {code} no es un DataFrame")
+            if df.empty:
+                raise ValueError(f"Módulo {code} está vacío")
 
     def _determine_merge_order(self,
                                modules_dict: Dict[str, pd.DataFrame],
                                base_module: str) -> List[str]:
         """
-        Determina el orden óptimo de merge de módulos.
-
-        Args:
-            modules_dict: Diccionario de módulos
-            base_module: Módulo base
-
-        Returns:
-            Lista ordenada de códigos de módulos
+        Determina el orden óptimo de merge
+        Prioriza: base → sumaria → otros módulos por tamaño
         """
-        # Orden preferido basado en estructura ENAHO
-        preferred_order = [
-            "34",  # Sumaria (base típica)
-            "01",  # Características de la vivienda
-            "02",  # Características de los miembros
-            "03",  # Educación
-            "04",  # Salud
-            "05",  # Empleo
-            "07",  # Gastos
-            "08",  # Ingresos
-            "37"   # Programas sociales
-        ]
+        modules = list(modules_dict.keys())
+        modules.remove(base_module)
 
-        # Filtrar solo módulos presentes
-        available_modules = list(modules_dict.keys())
+        # Ordenar por prioridad y tamaño
+        def get_priority(module_code):
+            priorities = {'34': 1, '02': 2, '01': 3}  # sumaria, personas, hogar
+            return priorities.get(module_code, 99)
 
-        # Ordenar según preferencia
-        ordered = []
+        modules.sort(key=lambda x: (get_priority(x), -len(modules_dict[x])))
 
-        # Primero el base
-        if base_module in available_modules:
-            ordered.append(base_module)
-            available_modules.remove(base_module)
+        return [base_module] + modules
 
-        # Luego según orden preferido
-        for module in preferred_order:
-            if module in available_modules:
-                ordered.append(module)
-                available_modules.remove(module)
+    def _calculate_total_quality(self, merge_reports: List[Dict]) -> float:
+        """Calcula la calidad promedio ponderada de todos los merges"""
+        if not merge_reports:
+            return 0.0
 
-        # Finalmente cualquier módulo restante
-        ordered.extend(sorted(available_modules))
-
-        return ordered
-
-    def _calculate_module_quality_metrics(self,
-                                          result_df: pd.DataFrame,
-                                          original_modules: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
-        """
-        Calcula métricas de calidad del merge de módulos.
-
-        Args:
-            result_df: DataFrame resultado
-            original_modules: Módulos originales
-
-        Returns:
-            Diccionario con métricas de calidad
-        """
-        metrics = {
-            'total_records': len(result_df),
-            'total_columns': result_df.shape[1],
-            'modules_integrated': len(original_modules),
-            'data_completeness': {},
-            'key_integrity': {}
-        }
-
-        # Analizar completitud por módulo
-        for module_code in original_modules:
-            module_cols = [col for col in result_df.columns
-                          if col.startswith(f"mod_{module_code}_") or
-                          col in original_modules[module_code].columns]
-
-            if module_cols:
-                completeness = result_df[module_cols].notna().mean().mean() * 100
-                metrics['data_completeness'][f"module_{module_code}"] = round(completeness, 2)
-
-        # Verificar integridad de llaves
-        key_columns = ['conglome', 'vivienda', 'hogar', 'codperso']
-        for key in key_columns:
-            if key in result_df.columns:
-                metrics['key_integrity'][key] = {
-                    'present': True,
-                    'null_count': result_df[key].isna().sum(),
-                    'unique_count': result_df[key].nunique()
-                }
-
-        return metrics
+        total_score = sum(r['quality_score'] for r in merge_reports)
+        return total_score / len(merge_reports)
 
     @log_performance
-    def merge_modules_with_geography(self,
-                                     modules_dict: Dict[str, pd.DataFrame],
-                                     df_geografia: pd.DataFrame,
-                                     base_module: str = "34",
-                                     merge_config: Optional[ModuleMergeConfig] = None,
-                                     geo_config: Optional[GeoMergeConfiguration] = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def merge_modules_with_geography(
+        self,
+        modules_dict: Dict[str, pd.DataFrame],
+        df_geografia: pd.DataFrame,
+        base_module: str = "34",
+        merge_config: Optional[ModuleMergeConfig] = None,
+        geo_config: Optional[GeoMergeConfiguration] = None,
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """
         Combina merge de módulos con información geográfica.
 
@@ -1044,10 +1025,7 @@ class ENAHOGeoMerger:
 
         # 1. Merge entre módulos
         module_result = self.merge_multiple_modules(
-            modules_dict,
-            base_module,
-            merge_config,
-            validate_compatibility=True
+            modules_dict, base_module, merge_config, validate_compatibility=True
         )
 
         self.logger.info(f"📊 Módulos combinados: {len(module_result.merged_df)} registros")
@@ -1062,7 +1040,7 @@ class ENAHOGeoMerger:
             geo_result, geo_validation = self.merge_geographic_data(
                 df_principal=module_result.merged_df,
                 df_geografia=df_geografia,
-                validate_before_merge=True
+                validate_before_merge=True,
             )
         finally:
             # Restaurar configuración original
@@ -1070,25 +1048,29 @@ class ENAHOGeoMerger:
 
         # 3. Combinar reportes
         combined_report = {
-            'module_merge': {
-                'modules_processed': module_result.modules_merged,
-                'conflicts_resolved': module_result.conflicts_resolved,
-                'warnings': module_result.warnings,
-                'quality_metrics': module_result.quality_metrics
+            "module_merge": {
+                "modules_processed": module_result.modules_merged,
+                "conflicts_resolved": module_result.conflicts_resolved,
+                "warnings": module_result.warnings,
+                "quality_metrics": module_result.quality_metrics,
             },
-            'geographic_merge': {
-                'validation': geo_validation.to_dict() if hasattr(geo_validation, 'to_dict') else vars(geo_validation),
-                'final_records': len(geo_result),
-                'coverage': geo_validation.coverage_percentage
+            "geographic_merge": {
+                "validation": (
+                    geo_validation.to_dict()
+                    if hasattr(geo_validation, "to_dict")
+                    else vars(geo_validation)
+                ),
+                "final_records": len(geo_result),
+                "coverage": geo_validation.coverage_percentage,
             },
-            'overall_quality': self._assess_combined_quality(geo_result, module_result),
-            'processing_summary': {
-                'modules_processed': len(modules_dict),
-                'base_module': base_module,
-                'final_shape': geo_result.shape,
-                'merge_sequence': ' → '.join(module_result.modules_merged),
-                'geographic_coverage': geo_validation.coverage_percentage
-            }
+            "overall_quality": self._assess_combined_quality(geo_result, module_result),
+            "processing_summary": {
+                "modules_processed": len(modules_dict),
+                "base_module": base_module,
+                "final_shape": geo_result.shape,
+                "merge_sequence": " → ".join(module_result.modules_merged),
+                "geographic_coverage": geo_validation.coverage_percentage,
+            },
         }
 
         self.logger.info(
@@ -1098,9 +1080,9 @@ class ENAHOGeoMerger:
 
         return geo_result, combined_report
 
-    def _assess_combined_quality(self,
-                                 final_df: pd.DataFrame,
-                                 module_result: ModuleMergeResult) -> Dict[str, Any]:
+    def _assess_combined_quality(
+        self, final_df: pd.DataFrame, module_result: ModuleMergeResult
+    ) -> Dict[str, Any]:
         """
         Evalúa la calidad general del merge combinado.
 
@@ -1112,8 +1094,7 @@ class ENAHOGeoMerger:
             Diccionario con métricas de calidad combinadas
         """
         # Calcular completitud general
-        completeness = (final_df.notna().sum().sum() /
-                       (final_df.shape[0] * final_df.shape[1]) * 100)
+        completeness = final_df.notna().sum().sum() / (final_df.shape[0] * final_df.shape[1]) * 100
 
         # Detectar columnas con alta proporción de NaN
         high_nan_cols = []
@@ -1134,12 +1115,12 @@ class ENAHOGeoMerger:
         quality_score = max(0, min(100, quality_score))  # Limitar entre 0 y 100
 
         return {
-            'overall_score': round(quality_score, 2),
-            'data_completeness': round(completeness, 2),
-            'high_nan_columns': high_nan_cols[:10],  # Top 10 columnas con más NaN
-            'total_conflicts': module_result.conflicts_found,
-            'warnings_count': len(module_result.warnings),
-            'recommendation': self._get_quality_recommendation(quality_score)
+            "overall_score": round(quality_score, 2),
+            "data_completeness": round(completeness, 2),
+            "high_nan_columns": high_nan_cols[:10],  # Top 10 columnas con más NaN
+            "total_conflicts": module_result.conflicts_found,
+            "warnings_count": len(module_result.warnings),
+            "recommendation": self._get_quality_recommendation(quality_score),
         }
 
     def _get_quality_recommendation(self, score: float) -> str:
@@ -1163,9 +1144,9 @@ class ENAHOGeoMerger:
         else:
             return "Calidad crítica. Se requiere limpieza de datos exhaustiva."
 
-    def validate_module_compatibility(self,
-                                      modules_dict: Dict[str, pd.DataFrame],
-                                      merge_level: str = "hogar") -> Dict[str, Any]:
+    def validate_module_compatibility(
+        self, modules_dict: Dict[str, pd.DataFrame], merge_level: str = "hogar"
+    ) -> Dict[str, Any]:
         """
         Valida compatibilidad entre múltiples módulos.
 
@@ -1179,45 +1160,43 @@ class ENAHOGeoMerger:
         self.logger.info(f"🔍 Validando compatibilidad de {len(modules_dict)} módulos")
 
         compatibility = {
-            'is_compatible': True,
-            'merge_level': merge_level,
-            'errors': [],
-            'warnings': [],
-            'module_analysis': {}
+            "is_compatible": True,
+            "merge_level": merge_level,
+            "errors": [],
+            "warnings": [],
+            "module_analysis": {},
         }
 
         # Verificar llaves requeridas según nivel
         if merge_level == "hogar":
-            required_keys = ['conglome', 'vivienda', 'hogar']
+            required_keys = ["conglome", "vivienda", "hogar"]
         else:  # persona
-            required_keys = ['conglome', 'vivienda', 'hogar', 'codperso']
+            required_keys = ["conglome", "vivienda", "hogar", "codperso"]
 
         for module_code, df in modules_dict.items():
             module_info = {
-                'has_required_keys': True,
-                'missing_keys': [],
-                'record_count': len(df),
-                'column_count': df.shape[1]
+                "has_required_keys": True,
+                "missing_keys": [],
+                "record_count": len(df),
+                "column_count": df.shape[1],
             }
 
             # Verificar llaves
             for key in required_keys:
                 if key not in df.columns:
-                    module_info['has_required_keys'] = False
-                    module_info['missing_keys'].append(key)
-                    compatibility['errors'].append(
-                        f"Módulo {module_code}: falta llave '{key}'"
-                    )
-                    compatibility['is_compatible'] = False
+                    module_info["has_required_keys"] = False
+                    module_info["missing_keys"].append(key)
+                    compatibility["errors"].append(f"Módulo {module_code}: falta llave '{key}'")
+                    compatibility["is_compatible"] = False
                 elif df[key].isna().all():
-                    compatibility['warnings'].append(
+                    compatibility["warnings"].append(
                         f"Módulo {module_code}: llave '{key}' completamente nula"
                     )
 
-            compatibility['module_analysis'][module_code] = module_info
+            compatibility["module_analysis"][module_code] = module_info
 
         # Verificar consistencia de llaves entre módulos
-        if compatibility['is_compatible']:
+        if compatibility["is_compatible"]:
             base_module = list(modules_dict.keys())[0]
             base_df = modules_dict[base_module]
 
@@ -1226,15 +1205,17 @@ class ENAHOGeoMerger:
                     continue
 
                 # Crear llaves compuestas
-                base_keys = base_df[required_keys].apply(lambda x: '_'.join(x.astype(str)), axis=1)
-                module_keys = df[required_keys].apply(lambda x: '_'.join(x.astype(str)), axis=1)
+                base_keys = base_df[required_keys].apply(lambda x: "_".join(x.astype(str)), axis=1)
+                module_keys = df[required_keys].apply(lambda x: "_".join(x.astype(str)), axis=1)
 
                 # Calcular overlap
                 common_keys = set(base_keys) & set(module_keys)
-                overlap_percentage = (len(common_keys) / len(base_keys) * 100) if len(base_keys) > 0 else 0
+                overlap_percentage = (
+                    (len(common_keys) / len(base_keys) * 100) if len(base_keys) > 0 else 0
+                )
 
                 if overlap_percentage < 50:
-                    compatibility['warnings'].append(
+                    compatibility["warnings"].append(
                         f"Bajo overlap entre {base_module} y {module_code}: {overlap_percentage:.1f}%"
                     )
 

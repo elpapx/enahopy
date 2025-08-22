@@ -10,8 +10,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from ..config import GeoMergeConfiguration, TipoManejoDuplicados
 from ..exceptions import DuplicateHandlingError
@@ -24,8 +24,9 @@ class DuplicateHandlingStrategy(ABC):
         self.logger = logger
 
     @abstractmethod
-    def handle_duplicates(self, df: pd.DataFrame, columna_union: str,
-                          config: GeoMergeConfiguration) -> pd.DataFrame:
+    def handle_duplicates(
+        self, df: pd.DataFrame, columna_union: str, config: GeoMergeConfiguration
+    ) -> pd.DataFrame:
         """
         Maneja duplicados según la estrategia específica
 
@@ -52,40 +53,42 @@ class DuplicateHandlingStrategy(ABC):
         duplicates_mask = df[columna_union].duplicated(keep=False)
 
         return {
-            'total_records': len(df),
-            'duplicate_records': duplicates_mask.sum(),
-            'unique_keys': df[columna_union].nunique(),
-            'duplicate_keys': len(df[duplicates_mask][columna_union].unique())
+            "total_records": len(df),
+            "duplicate_records": duplicates_mask.sum(),
+            "unique_keys": df[columna_union].nunique(),
+            "duplicate_keys": len(df[duplicates_mask][columna_union].unique()),
         }
 
 
 class FirstLastStrategy(DuplicateHandlingStrategy):
     """Estrategia para mantener first/last registro"""
 
-    def handle_duplicates(self, df: pd.DataFrame, columna_union: str,
-                          config: GeoMergeConfiguration) -> pd.DataFrame:
+    def handle_duplicates(
+        self, df: pd.DataFrame, columna_union: str, config: GeoMergeConfiguration
+    ) -> pd.DataFrame:
         """Mantiene primer o último registro por clave"""
         self._validate_inputs(df, columna_union)
 
         duplicate_info = self._get_duplicate_info(df, columna_union)
 
-        if duplicate_info['duplicate_records'] == 0:
+        if duplicate_info["duplicate_records"] == 0:
             self.logger.info("No hay duplicados para manejar")
             return df
 
-        keep_value = 'first' if config.manejo_duplicados == TipoManejoDuplicados.FIRST else 'last'
+        keep_value = "first" if config.manejo_duplicados == TipoManejoDuplicados.FIRST else "last"
 
         # Preparar DataFrame para procesamiento
         df_to_process = df.copy()
 
         # Ordenar si se especifica columna de orden
         if config.columna_orden_duplicados and config.columna_orden_duplicados in df.columns:
-            ascending = keep_value == 'first'
+            ascending = keep_value == "first"
             df_to_process = df_to_process.sort_values(
-                [columna_union, config.columna_orden_duplicados],
-                ascending=[True, ascending]
+                [columna_union, config.columna_orden_duplicados], ascending=[True, ascending]
             )
-            self.logger.info(f"Datos ordenados por '{config.columna_orden_duplicados}' para estrategia {keep_value}")
+            self.logger.info(
+                f"Datos ordenados por '{config.columna_orden_duplicados}' para estrategia {keep_value}"
+            )
 
         # Eliminar duplicados
         result = df_to_process.drop_duplicates(subset=[columna_union], keep=keep_value)
@@ -95,7 +98,9 @@ class FirstLastStrategy(DuplicateHandlingStrategy):
 
         # Reporte detallado si hay muchos duplicados
         if removed > len(df) * 0.1:  # Más del 10%
-            self.logger.warning(f"Se eliminó {removed / len(df) * 100:.1f}% de registros por duplicados")
+            self.logger.warning(
+                f"Se eliminó {removed / len(df) * 100:.1f}% de registros por duplicados"
+            )
 
         return result
 
@@ -108,12 +113,14 @@ class FirstLastStrategy(DuplicateHandlingStrategy):
             return pd.DataFrame()
 
         # Agrupar por la columna de unión para ver detalles
-        summary = duplicados.groupby(columna_union).agg({
-            columna_union: 'count'
-        }).rename(columns={columna_union: 'count_duplicates'})
+        summary = (
+            duplicados.groupby(columna_union)
+            .agg({columna_union: "count"})
+            .rename(columns={columna_union: "count_duplicates"})
+        )
 
         summary = summary.reset_index()
-        summary = summary.sort_values('count_duplicates', ascending=False)
+        summary = summary.sort_values("count_duplicates", ascending=False)
 
         return summary
 
@@ -121,20 +128,21 @@ class FirstLastStrategy(DuplicateHandlingStrategy):
 class AggregateStrategy(DuplicateHandlingStrategy):
     """Estrategia para agregar duplicados usando funciones"""
 
-    def handle_duplicates(self, df: pd.DataFrame, columna_union: str,
-                          config: GeoMergeConfiguration) -> pd.DataFrame:
+    def handle_duplicates(
+        self, df: pd.DataFrame, columna_union: str, config: GeoMergeConfiguration
+    ) -> pd.DataFrame:
         """Agrega duplicados usando funciones de agregación"""
         self._validate_inputs(df, columna_union)
 
         if not config.funciones_agregacion:
             raise DuplicateHandlingError(
                 "Se requieren funciones_agregacion para estrategia AGGREGATE",
-                duplicates_info={'strategy': 'aggregate', 'config_missing': 'funciones_agregacion'}
+                duplicates_info={"strategy": "aggregate", "config_missing": "funciones_agregacion"},
             )
 
         duplicate_info = self._get_duplicate_info(df, columna_union)
 
-        if duplicate_info['duplicate_records'] == 0:
+        if duplicate_info["duplicate_records"] == 0:
             return df
 
         # Preparar diccionario de agregación
@@ -145,13 +153,14 @@ class AggregateStrategy(DuplicateHandlingStrategy):
 
             # Aplanar nombres de columnas si es necesario
             if isinstance(result.columns, pd.MultiIndex):
-                result.columns = [col[0] if col[1] == '' else f"{col[0]}_{col[1]}"
-                                  for col in result.columns]
+                result.columns = [
+                    col[0] if col[1] == "" else f"{col[0]}_{col[1]}" for col in result.columns
+                ]
 
         except Exception as e:
             raise DuplicateHandlingError(
                 f"Error en agregación: {str(e)}",
-                duplicates_info={'strategy': 'aggregate', 'agg_dict': agg_dict}
+                duplicates_info={"strategy": "aggregate", "agg_dict": agg_dict},
             )
 
         removed = len(df) - len(result)
@@ -159,8 +168,9 @@ class AggregateStrategy(DuplicateHandlingStrategy):
 
         return result
 
-    def _prepare_aggregation_dict(self, df: pd.DataFrame, columna_union: str,
-                                  funciones_usuario: Dict[str, str]) -> Dict[str, str]:
+    def _prepare_aggregation_dict(
+        self, df: pd.DataFrame, columna_union: str, funciones_usuario: Dict[str, str]
+    ) -> Dict[str, str]:
         """Prepara diccionario de agregación inteligente"""
         agg_dict = {}
 
@@ -183,49 +193,50 @@ class AggregateStrategy(DuplicateHandlingStrategy):
         if pd.api.types.is_numeric_dtype(dtype):
             # Para numéricos, preferir mean, pero usar sum si valores son conteos
             if serie.min() >= 0 and serie.max() < 1000:  # Posibles conteos
-                return 'sum'
+                return "sum"
             else:
-                return 'mean'
+                return "mean"
         elif pd.api.types.is_datetime64_any_dtype(dtype):
-            return 'first'  # Para fechas, mantener la primera
+            return "first"  # Para fechas, mantener la primera
         else:
             # Para categóricas/strings, preferir el más frecuente
-            return 'first'
+            return "first"
 
 
 class BestQualityStrategy(DuplicateHandlingStrategy):
     """Estrategia para mantener el registro de mejor calidad"""
 
-    def handle_duplicates(self, df: pd.DataFrame, columna_union: str,
-                          config: GeoMergeConfiguration) -> pd.DataFrame:
+    def handle_duplicates(
+        self, df: pd.DataFrame, columna_union: str, config: GeoMergeConfiguration
+    ) -> pd.DataFrame:
         """Mantiene registro con mejor score de calidad"""
         self._validate_inputs(df, columna_union)
 
         if not config.columna_calidad:
             raise DuplicateHandlingError(
                 "Se requiere columna_calidad para estrategia BEST_QUALITY",
-                duplicates_info={'strategy': 'best_quality', 'config_missing': 'columna_calidad'}
+                duplicates_info={"strategy": "best_quality", "config_missing": "columna_calidad"},
             )
 
         if config.columna_calidad not in df.columns:
             raise DuplicateHandlingError(
                 f"Columna de calidad '{config.columna_calidad}' no encontrada",
-                duplicates_info={'strategy': 'best_quality', 'missing_column': config.columna_calidad}
+                duplicates_info={
+                    "strategy": "best_quality",
+                    "missing_column": config.columna_calidad,
+                },
             )
 
         duplicate_info = self._get_duplicate_info(df, columna_union)
 
-        if duplicate_info['duplicate_records'] == 0:
+        if duplicate_info["duplicate_records"] == 0:
             return df
 
         # Ordenar por UBIGEO y calidad (descendente para obtener mejor calidad primero)
-        df_sorted = df.sort_values(
-            [columna_union, config.columna_calidad],
-            ascending=[True, False]
-        )
+        df_sorted = df.sort_values([columna_union, config.columna_calidad], ascending=[True, False])
 
         # Mantener primer registro (mejor calidad) de cada grupo
-        result = df_sorted.drop_duplicates(subset=[columna_union], keep='first')
+        result = df_sorted.drop_duplicates(subset=[columna_union], keep="first")
 
         removed = len(df) - len(result)
         self.logger.info(f"Mantenidos registros de mejor calidad, eliminados {removed} duplicados")
@@ -241,65 +252,68 @@ class BestQualityStrategy(DuplicateHandlingStrategy):
 
         return result
 
-    def analyze_quality_distribution(self, df: pd.DataFrame,
-                                     columna_union: str, columna_calidad: str) -> Dict[str, float]:
+    def analyze_quality_distribution(
+        self, df: pd.DataFrame, columna_union: str, columna_calidad: str
+    ) -> Dict[str, float]:
         """Analiza distribución de calidad en duplicados"""
         duplicates_mask = df[columna_union].duplicated(keep=False)
 
         if not duplicates_mask.any():
-            return {'message': 'No hay duplicados para analizar'}
+            return {"message": "No hay duplicados para analizar"}
 
         duplicados = df[duplicates_mask]
 
         # Estadísticas por grupo de duplicados
-        stats_por_grupo = duplicados.groupby(columna_union)[columna_calidad].agg([
-            'count', 'mean', 'std', 'min', 'max'
-        ])
+        stats_por_grupo = duplicados.groupby(columna_union)[columna_calidad].agg(
+            ["count", "mean", "std", "min", "max"]
+        )
 
         return {
-            'grupos_con_duplicados': len(stats_por_grupo),
-            'calidad_promedio_duplicados': stats_por_grupo['mean'].mean(),
-            'variabilidad_promedio': stats_por_grupo['std'].mean(),
-            'rango_calidad_promedio': stats_por_grupo['max'].mean() - stats_por_grupo['min'].mean()
+            "grupos_con_duplicados": len(stats_por_grupo),
+            "calidad_promedio_duplicados": stats_por_grupo["mean"].mean(),
+            "variabilidad_promedio": stats_por_grupo["std"].mean(),
+            "rango_calidad_promedio": stats_por_grupo["max"].mean() - stats_por_grupo["min"].mean(),
         }
 
 
 class KeepAllStrategy(DuplicateHandlingStrategy):
     """Estrategia para mantener todos los duplicados con identificadores únicos"""
 
-    def handle_duplicates(self, df: pd.DataFrame, columna_union: str,
-                          config: GeoMergeConfiguration) -> pd.DataFrame:
+    def handle_duplicates(
+        self, df: pd.DataFrame, columna_union: str, config: GeoMergeConfiguration
+    ) -> pd.DataFrame:
         """Mantiene todos los registros, modificando claves duplicadas"""
         self._validate_inputs(df, columna_union)
 
         duplicate_info = self._get_duplicate_info(df, columna_union)
 
-        if duplicate_info['duplicate_records'] == 0:
+        if duplicate_info["duplicate_records"] == 0:
             return df
 
         result = df.copy()
 
         # Agregar identificador de orden para duplicados
-        result['_orden_duplicado'] = result.groupby(columna_union).cumcount() + 1
+        result["_orden_duplicado"] = result.groupby(columna_union).cumcount() + 1
 
         # Modificar clave para duplicados (excepto el primero)
-        mask_duplicados = result['_orden_duplicado'] > 1
+        mask_duplicados = result["_orden_duplicado"] > 1
 
         if mask_duplicados.any():
             nuevas_claves = (
-                    result.loc[mask_duplicados, columna_union].astype(str) +
-                    config.sufijo_duplicados +
-                    result.loc[mask_duplicados, '_orden_duplicado'].astype(str)
+                result.loc[mask_duplicados, columna_union].astype(str)
+                + config.sufijo_duplicados
+                + result.loc[mask_duplicados, "_orden_duplicado"].astype(str)
             )
 
             result.loc[mask_duplicados, columna_union] = nuevas_claves
 
         # Limpiar columna auxiliar
-        result = result.drop('_orden_duplicado', axis=1)
+        result = result.drop("_orden_duplicado", axis=1)
 
         n_duplicados = mask_duplicados.sum()
         self.logger.info(
-            f"Mantenidos todos los registros, {n_duplicados} marcados con sufijo '{config.sufijo_duplicados}'")
+            f"Mantenidos todos los registros, {n_duplicados} marcados con sufijo '{config.sufijo_duplicados}'"
+        )
 
         # Advertir si hay muchos duplicados
         if n_duplicados > len(df) * 0.2:  # Más del 20%
@@ -314,8 +328,9 @@ class KeepAllStrategy(DuplicateHandlingStrategy):
 class MostRecentStrategy(DuplicateHandlingStrategy):
     """Estrategia para mantener el registro más reciente"""
 
-    def handle_duplicates(self, df: pd.DataFrame, columna_union: str,
-                          config: GeoMergeConfiguration) -> pd.DataFrame:
+    def handle_duplicates(
+        self, df: pd.DataFrame, columna_union: str, config: GeoMergeConfiguration
+    ) -> pd.DataFrame:
         """Mantiene el registro más reciente basado en columna de fecha/timestamp"""
         self._validate_inputs(df, columna_union)
 
@@ -325,22 +340,24 @@ class MostRecentStrategy(DuplicateHandlingStrategy):
         if not fecha_col:
             raise DuplicateHandlingError(
                 "No se encontró columna de fecha para estrategia MOST_RECENT",
-                duplicates_info={'strategy': 'most_recent', 'available_columns': list(df.columns)}
+                duplicates_info={"strategy": "most_recent", "available_columns": list(df.columns)},
             )
 
         duplicate_info = self._get_duplicate_info(df, columna_union)
 
-        if duplicate_info['duplicate_records'] == 0:
+        if duplicate_info["duplicate_records"] == 0:
             return df
 
         # Ordenar por fecha descendente (más reciente primero)
         df_sorted = df.sort_values([columna_union, fecha_col], ascending=[True, False])
 
         # Mantener primer registro (más reciente) de cada grupo
-        result = df_sorted.drop_duplicates(subset=[columna_union], keep='first')
+        result = df_sorted.drop_duplicates(subset=[columna_union], keep="first")
 
         removed = len(df) - len(result)
-        self.logger.info(f"Mantenidos registros más recientes usando '{fecha_col}', eliminados {removed} duplicados")
+        self.logger.info(
+            f"Mantenidos registros más recientes usando '{fecha_col}', eliminados {removed} duplicados"
+        )
 
         return result
 
@@ -359,7 +376,7 @@ class MostRecentStrategy(DuplicateHandlingStrategy):
                     pass
 
         # Buscar automáticamente
-        date_patterns = ['fecha', 'date', 'timestamp', 'time', 'created', 'updated', 'modified']
+        date_patterns = ["fecha", "date", "timestamp", "time", "created", "updated", "modified"]
 
         for col in df.columns:
             col_lower = col.lower()
@@ -380,6 +397,7 @@ class MostRecentStrategy(DuplicateHandlingStrategy):
 # FACTORY DE ESTRATEGIAS
 # =====================================================
 
+
 class DuplicateStrategyFactory:
     """Factory para crear estrategias de manejo de duplicados"""
 
@@ -389,12 +407,13 @@ class DuplicateStrategyFactory:
         TipoManejoDuplicados.AGGREGATE: AggregateStrategy,
         TipoManejoDuplicados.BEST_QUALITY: BestQualityStrategy,
         TipoManejoDuplicados.KEEP_ALL: KeepAllStrategy,
-        TipoManejoDuplicados.MOST_RECENT: MostRecentStrategy
+        TipoManejoDuplicados.MOST_RECENT: MostRecentStrategy,
     }
 
     @classmethod
-    def create_strategy(cls, tipo: TipoManejoDuplicados,
-                        logger: logging.Logger) -> DuplicateHandlingStrategy:
+    def create_strategy(
+        cls, tipo: TipoManejoDuplicados, logger: logging.Logger
+    ) -> DuplicateHandlingStrategy:
         """
         Crea instancia de estrategia según el tipo
 
@@ -408,7 +427,7 @@ class DuplicateStrategyFactory:
         if tipo not in cls._strategies:
             raise DuplicateHandlingError(
                 f"Estrategia no soportada: {tipo}",
-                duplicates_info={'available_strategies': list(cls._strategies.keys())}
+                duplicates_info={"available_strategies": list(cls._strategies.keys())},
             )
 
         strategy_class = cls._strategies[tipo]
@@ -428,7 +447,7 @@ class DuplicateStrategyFactory:
             TipoManejoDuplicados.AGGREGATE: "Agrega duplicados usando funciones de agregación",
             TipoManejoDuplicados.BEST_QUALITY: "Mantiene el registro con mejor score de calidad",
             TipoManejoDuplicados.KEEP_ALL: "Mantiene todos los registros con sufijos únicos",
-            TipoManejoDuplicados.MOST_RECENT: "Mantiene el registro más reciente por fecha"
+            TipoManejoDuplicados.MOST_RECENT: "Mantiene el registro más reciente por fecha",
         }
 
         requirements = {
@@ -437,11 +456,11 @@ class DuplicateStrategyFactory:
             TipoManejoDuplicados.AGGREGATE: "Requerido: funciones_agregacion",
             TipoManejoDuplicados.BEST_QUALITY: "Requerido: columna_calidad",
             TipoManejoDuplicados.KEEP_ALL: "Opcional: sufijo_duplicados",
-            TipoManejoDuplicados.MOST_RECENT: "Opcional: columna_orden_duplicados (fecha)"
+            TipoManejoDuplicados.MOST_RECENT: "Opcional: columna_orden_duplicados (fecha)",
         }
 
         return {
-            'description': descriptions.get(tipo, "Descripción no disponible"),
-            'requirements': requirements.get(tipo, "Sin requisitos especiales"),
-            'class_name': cls._strategies[tipo].__name__
+            "description": descriptions.get(tipo, "Descripción no disponible"),
+            "requirements": requirements.get(tipo, "Sin requisitos especiales"),
+            "class_name": cls._strategies[tipo].__name__,
         }

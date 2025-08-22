@@ -2,12 +2,14 @@
 Estrategia de análisis básico de valores nulos
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
-from ..config import NullAnalysisConfig, MissingDataMetrics, MissingDataPattern
+import numpy as np
+import pandas as pd
+
+from ..config import MissingDataMetrics, MissingDataPattern, NullAnalysisConfig
+
 
 class INullAnalysisStrategy(ABC):
     """Interfaz para estrategias de análisis de nulos"""
@@ -26,6 +28,7 @@ class INullAnalysisStrategy(ABC):
         """Genera recomendaciones basadas en el análisis"""
         pass
 
+
 class BasicNullAnalysis(INullAnalysisStrategy):
     """Análisis básico de valores nulos - rápido y eficiente"""
 
@@ -37,13 +40,15 @@ class BasicNullAnalysis(INullAnalysisStrategy):
         missing_percentage = (missing_count / len(df)) * 100
 
         # DataFrame de resumen
-        summary_df = pd.DataFrame({
-            'variable': missing_count.index,
-            'missing_count': missing_count.values,
-            'missing_percentage': missing_percentage.values,
-            'complete_count': len(df) - missing_count.values,
-            'completeness': 100 - missing_percentage.values
-        }).sort_values('missing_percentage', ascending=False)
+        summary_df = pd.DataFrame(
+            {
+                "variable": missing_count.index,
+                "missing_count": missing_count.values,
+                "missing_percentage": missing_percentage.values,
+                "complete_count": len(df) - missing_count.values,
+                "completeness": 100 - missing_percentage.values,
+            }
+        ).sort_values("missing_percentage", ascending=False)
 
         # Análisis por grupos si se especifica
         group_analysis = None
@@ -66,31 +71,40 @@ class BasicNullAnalysis(INullAnalysisStrategy):
             missing_pattern_count=0,
             most_common_pattern="Not analyzed",
             missing_data_pattern=MissingDataPattern.UNKNOWN,
-            data_quality_score=self._calculate_basic_quality_score(missing_percentage)
+            data_quality_score=self._calculate_basic_quality_score(missing_percentage),
         )
 
         return {
-            'analysis_type': 'basic',
-            'summary': summary_df,
-            'group_analysis': group_analysis,
-            'metrics': metrics,
-            'execution_time': 0
+            "analysis_type": "basic",
+            "summary": summary_df,
+            "group_analysis": group_analysis,
+            "metrics": metrics,
+            "execution_time": 0,
         }
 
     def _analyze_by_groups(self, df: pd.DataFrame, group_by: str) -> pd.DataFrame:
         """Análisis de nulos por grupos"""
-        group_missing = df.groupby(group_by).apply(
-            lambda x: pd.Series({
-                col: (x[col].isnull().sum() / len(x)) * 100
-                for col in x.columns if col != group_by
-            })
-        ).reset_index()
+        group_missing = (
+            df.groupby(group_by)
+            .apply(
+                lambda x: pd.Series(
+                    {
+                        col: (x[col].isnull().sum() / len(x)) * 100
+                        for col in x.columns
+                        if col != group_by
+                    }
+                )
+            )
+            .reset_index()
+        )
 
-        group_stats = df.groupby(group_by).agg({
-            df.columns[0]: 'count'
-        }).rename(columns={df.columns[0]: 'group_size'})
+        group_stats = (
+            df.groupby(group_by)
+            .agg({df.columns[0]: "count"})
+            .rename(columns={df.columns[0]: "group_size"})
+        )
 
-        return group_missing.merge(group_stats, on=group_by, how='left')
+        return group_missing.merge(group_stats, on=group_by, how="left")
 
     def _calculate_basic_quality_score(self, missing_percentages: pd.Series) -> float:
         """Calcula score básico de calidad de datos"""
@@ -100,9 +114,9 @@ class BasicNullAnalysis(INullAnalysisStrategy):
     def get_recommendations(self, analysis_result: Dict[str, Any]) -> List[str]:
         """Recomendaciones básicas"""
         recommendations = []
-        summary = analysis_result['summary']
+        summary = analysis_result["summary"]
 
-        high_missing = summary[summary['missing_percentage'] > 50]
+        high_missing = summary[summary["missing_percentage"] > 50]
         if not high_missing.empty:
             recommendations.append(
                 f"⚠️  {len(high_missing)} variables tienen >50% de valores faltantes. "
@@ -110,8 +124,7 @@ class BasicNullAnalysis(INullAnalysisStrategy):
             )
 
         moderate_missing = summary[
-            (summary['missing_percentage'] > 10) &
-            (summary['missing_percentage'] <= 50)
+            (summary["missing_percentage"] > 10) & (summary["missing_percentage"] <= 50)
         ]
         if not moderate_missing.empty:
             recommendations.append(
@@ -119,7 +132,7 @@ class BasicNullAnalysis(INullAnalysisStrategy):
                 f"Evalúe técnicas de imputación."
             )
 
-        if analysis_result['metrics'].complete_cases_percentage < 20:
+        if analysis_result["metrics"].complete_cases_percentage < 20:
             recommendations.append(
                 "❌ Menos del 20% de casos completos. Dataset requiere limpieza intensiva."
             )

@@ -6,15 +6,17 @@ Interfaces y clases base para el sistema de I/O.
 Define contratos para lectores, validadores y otros componentes.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Dict, Any, Union, Iterator
-import logging
+from typing import Any, Dict, Iterator, List, Union
+
 import pandas as pd
 
 # Imports opcionales
 try:
     import dask.dataframe as dd
+
     DASK_AVAILABLE = True
 except ImportError:
     DASK_AVAILABLE = False
@@ -33,7 +35,9 @@ class IReader(ABC):
         pass
 
     @abstractmethod
-    def read_in_chunks(self, columns: List[str], chunk_size: int) -> Union[dd.DataFrame, Iterator[pd.DataFrame]]:
+    def read_in_chunks(
+        self, columns: List[str], chunk_size: int
+    ) -> Union[dd.DataFrame, Iterator[pd.DataFrame]]:
         """Lee columnas específicas en chunks y devuelve un DataFrame de Dask o iterador."""
         pass
 
@@ -48,7 +52,4 @@ class IReader(ABC):
         pass
 
 
-__all__ = [
-    'IReader',
-    'DASK_AVAILABLE'
-]
+__all__ = ["IReader", "DASK_AVAILABLE"]

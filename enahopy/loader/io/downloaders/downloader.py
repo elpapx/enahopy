@@ -11,16 +11,15 @@ import hashlib
 import logging
 import zipfile
 from pathlib import Path
-from urllib.parse import urljoin
 from typing import Optional
+from urllib.parse import urljoin
+
 import requests
 from tqdm import tqdm
 
-from ...core.config import ENAHOConfig
 from ...core.cache import CacheManager
-from ...core.exceptions import (
-    ENAHODownloadError, ENAHOIntegrityError, ENAHOTimeoutError
-)
+from ...core.config import ENAHOConfig
+from ...core.exceptions import ENAHODownloadError, ENAHOIntegrityError, ENAHOTimeoutError
 from .network import NetworkUtils
 
 
@@ -49,7 +48,7 @@ class ENAHODownloader:
     def _validate_zip_integrity(self, file_path: Path) -> bool:
         """Valida la integridad de un archivo ZIP"""
         try:
-            with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            with zipfile.ZipFile(file_path, "r") as zip_ref:
                 # Test the zip file
                 zip_ref.testzip()
                 return True
@@ -58,7 +57,7 @@ class ENAHODownloader:
 
     def _download_with_progress(self, url: str, file_path: Path, verbose: bool) -> None:
         """Descarga un archivo con barra de progreso y validación"""
-        temp_path = file_path.with_suffix(file_path.suffix + '.tmp')
+        temp_path = file_path.with_suffix(file_path.suffix + ".tmp")
 
         try:
             # Verificar que la URL existe
@@ -68,17 +67,19 @@ class ENAHODownloader:
             # Obtener tamaño del archivo
             file_size = self.network.get_file_size(url)
 
-            with self.network.session.get(url, stream=True, timeout=self.config.timeout) as response:
+            with self.network.session.get(
+                url, stream=True, timeout=self.config.timeout
+            ) as response:
                 response.raise_for_status()
 
-                total_size = file_size or int(response.headers.get('content-length', 0))
+                total_size = file_size or int(response.headers.get("content-length", 0))
 
-                with open(temp_path, 'wb') as file, tqdm(
-                        total=total_size,
-                        unit='iB',
-                        unit_scale=True,
-                        desc=f"Descargando {file_path.name}",
-                        disable=not verbose
+                with open(temp_path, "wb") as file, tqdm(
+                    total=total_size,
+                    unit="iB",
+                    unit_scale=True,
+                    desc=f"Descargando {file_path.name}",
+                    disable=not verbose,
                 ) as progress_bar:
 
                     for chunk in response.iter_content(chunk_size=self.config.chunk_size):
@@ -99,7 +100,7 @@ class ENAHODownloader:
                 checksum = self._calculate_checksum(file_path)
                 self.cache_manager.set_metadata(
                     f"checksum_{file_path.name}",
-                    {"checksum": checksum, "size": file_path.stat().st_size}
+                    {"checksum": checksum, "size": file_path.stat().st_size},
                 )
 
         except requests.exceptions.RequestException as e:
@@ -111,13 +112,9 @@ class ENAHODownloader:
             temp_path.unlink(missing_ok=True)
             raise
 
-    def download_file(self,
-                      year: str,
-                      module: str,
-                      code: int,
-                      output_dir: Path,
-                      overwrite: bool,
-                      verbose: bool) -> Path:
+    def download_file(
+        self, year: str, module: str, code: int, output_dir: Path, overwrite: bool, verbose: bool
+    ) -> Path:
         """
         Descarga un archivo individual con manejo mejorado de errores
 
@@ -163,17 +160,18 @@ class ENAHODownloader:
 
         except Exception as e:
             # Log detallado del error
-            self.logger.error(f"Error descargando {filename}: {str(e)}", extra={
-                'context': {
-                    'url': url,
-                    'year': year,
-                    'module': module,
-                    'output_path': str(file_path)
-                }
-            })
+            self.logger.error(
+                f"Error descargando {filename}: {str(e)}",
+                extra={
+                    "context": {
+                        "url": url,
+                        "year": year,
+                        "module": module,
+                        "output_path": str(file_path),
+                    }
+                },
+            )
             raise
 
 
-__all__ = [
-    'ENAHODownloader'
-]
+__all__ = ["ENAHODownloader"]

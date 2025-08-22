@@ -8,7 +8,7 @@ y mapeo automático de nombres similares.
 """
 
 import logging
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 from .results import ColumnValidationResult
 
@@ -19,10 +19,12 @@ class ColumnValidator:
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def validate_columns(self,
-                         requested_columns: List[str],
-                         available_columns: List[str],
-                         case_sensitive: bool = False) -> ColumnValidationResult:
+    def validate_columns(
+        self,
+        requested_columns: List[str],
+        available_columns: List[str],
+        case_sensitive: bool = False,
+    ) -> ColumnValidationResult:
         """
         Valida columnas solicitadas contra las disponibles
 
@@ -43,7 +45,9 @@ class ColumnValidator:
             available_map = {col.lower(): col for col in available_columns}
 
         for requested_col in requested_columns:
-            found_col = self._find_column(requested_col, available_columns, available_map, case_sensitive)
+            found_col = self._find_column(
+                requested_col, available_columns, available_map, case_sensitive
+            )
 
             if found_col:
                 found_columns.append(found_col)
@@ -53,11 +57,13 @@ class ColumnValidator:
 
         return ColumnValidationResult(found_columns, missing_columns, mapped_columns)
 
-    def _find_column(self,
-                     requested_col: str,
-                     available_columns: List[str],
-                     available_map: Dict[str, str],
-                     case_sensitive: bool) -> Optional[str]:
+    def _find_column(
+        self,
+        requested_col: str,
+        available_columns: List[str],
+        available_map: Dict[str, str],
+        case_sensitive: bool,
+    ) -> Optional[str]:
         """Busca una columna con diferentes estrategias"""
 
         # Búsqueda exacta
@@ -71,6 +77,4 @@ class ColumnValidator:
         return None
 
 
-__all__ = [
-    'ColumnValidator'
-]
+__all__ = ["ColumnValidator"]

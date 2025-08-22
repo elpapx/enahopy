@@ -7,12 +7,12 @@ Validadores especializados para códigos UBIGEO y consistencia territorial.
 
 import logging
 from functools import lru_cache
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from ..config import TipoValidacionUbigeo, DEPARTAMENTOS_VALIDOS
-from ..exceptions import UbigeoValidationError, TerritorialInconsistencyError
+from ..config import DEPARTAMENTOS_VALIDOS, TipoValidacionUbigeo
+from ..exceptions import TerritorialInconsistencyError, UbigeoValidationError
 
 
 class UbigeoValidator:
@@ -52,18 +52,19 @@ class UbigeoValidator:
 
         # Validar provincia (01-99)
         prov = ubigeo_norm[2:4]
-        if not ('01' <= prov <= '99'):
+        if not ("01" <= prov <= "99"):
             return False, f"Provincia inválida: {prov}"
 
         # Validar distrito (01-99)
         dist = ubigeo_norm[4:6]
-        if not ('01' <= dist <= '99'):
+        if not ("01" <= dist <= "99"):
             return False, f"Distrito inválido: {dist}"
 
         return True, "Válido"
 
-    def validar_serie_ubigeos(self, serie: pd.Series,
-                              tipo_validacion: TipoValidacionUbigeo) -> Tuple[pd.Series, List[str]]:
+    def validar_serie_ubigeos(
+        self, serie: pd.Series, tipo_validacion: TipoValidacionUbigeo
+    ) -> Tuple[pd.Series, List[str]]:
         """
         Valida una serie completa de UBIGEOs
 
@@ -81,8 +82,7 @@ class UbigeoValidator:
 
         if tipo_validacion == TipoValidacionUbigeo.BASIC:
             # Solo validar formato básico
-            mask_valido = serie_norm.str.match(r'^\d{6}'
-                                               , na=False)
+            mask_valido = serie_norm.str.match(r"^\d{6}", na=False)
 
         elif tipo_validacion == TipoValidacionUbigeo.STRUCTURAL:
             # Validar estructura jerárquica
@@ -97,7 +97,9 @@ class UbigeoValidator:
 
         else:
             # Para EXISTENCE y TEMPORAL necesitaríamos catálogos externos
-            self.logger.warning(f"Tipo de validación {tipo_validacion} no implementado, usando STRUCTURAL")
+            self.logger.warning(
+                f"Tipo de validación {tipo_validacion} no implementado, usando STRUCTURAL"
+            )
             return self.validar_serie_ubigeos(serie, TipoValidacionUbigeo.STRUCTURAL)
 
         return mask_valido, errores
@@ -114,18 +116,22 @@ class UbigeoValidator:
         """
         serie_norm = serie.astype(str).str.zfill(6)
 
-        componentes = pd.DataFrame({
-            'ubigeo': serie_norm,
-            'departamento': serie_norm.str[:2],
-            'provincia': serie_norm.str[:4],
-            'distrito': serie_norm.str[:6],
-            'nombre_departamento': serie_norm.str[:2].map(DEPARTAMENTOS_VALIDOS)
-        }, index=serie.index)
+        componentes = pd.DataFrame(
+            {
+                "ubigeo": serie_norm,
+                "departamento": serie_norm.str[:2],
+                "provincia": serie_norm.str[:4],
+                "distrito": serie_norm.str[:6],
+                "nombre_departamento": serie_norm.str[:2].map(DEPARTAMENTOS_VALIDOS),
+            },
+            index=serie.index,
+        )
 
         return componentes
 
-    def get_validation_summary(self, serie: pd.Series,
-                               tipo_validacion: TipoValidacionUbigeo) -> Dict[str, int]:
+    def get_validation_summary(
+        self, serie: pd.Series, tipo_validacion: TipoValidacionUbigeo
+    ) -> Dict[str, int]:
         """
         Obtiene resumen de validación de UBIGEOs
 
@@ -139,17 +145,16 @@ class UbigeoValidator:
         mask_validos, errores = self.validar_serie_ubigeos(serie, tipo_validacion)
 
         return {
-            'total_records': len(serie),
-            'valid_ubigeos': mask_validos.sum(),
-            'invalid_ubigeos': len(serie) - mask_validos.sum(),
-            'null_values': serie.isnull().sum(),
-            'unique_ubigeos': serie.nunique(),
-            'duplicate_ubigeos': serie.duplicated().sum(),
-            'error_count': len(errores)
+            "total_records": len(serie),
+            "valid_ubigeos": mask_validos.sum(),
+            "invalid_ubigeos": len(serie) - mask_validos.sum(),
+            "null_values": serie.isnull().sum(),
+            "unique_ubigeos": serie.nunique(),
+            "duplicate_ubigeos": serie.duplicated().sum(),
+            "error_count": len(errores),
         }
 
-    def validate_ubigeo_consistency(self, df: pd.DataFrame,
-                                    ubigeo_col: str) -> List[str]:
+    def validate_ubigeo_consistency(self, df: pd.DataFrame, ubigeo_col: str) -> List[str]:
         """
         Valida consistencia interna de UBIGEOs en un DataFrame
 
@@ -170,17 +175,12 @@ class UbigeoValidator:
 
         # Verificar que no haya UBIGEOs con diferentes departamentos
         # para el mismo código de departamento
-        dep_inconsistencies = (
-            componentes.groupby('departamento')['nombre_departamento']
-            .nunique()
-        )
+        dep_inconsistencies = componentes.groupby("departamento")["nombre_departamento"].nunique()
 
         problematic_deps = dep_inconsistencies[dep_inconsistencies > 1]
 
         if not problematic_deps.empty:
-            inconsistencias.append(
-                f"Inconsistencias en {len(problematic_deps)} departamentos"
-            )
+            inconsistencias.append(f"Inconsistencias en {len(problematic_deps)} departamentos")
 
         return inconsistencias
 
@@ -191,8 +191,9 @@ class TerritorialValidator:
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def validar_jerarquia_territorial(self, df: pd.DataFrame,
-                                      columnas_territoriales: Dict[str, str]) -> List[str]:
+    def validar_jerarquia_territorial(
+        self, df: pd.DataFrame, columnas_territoriales: Dict[str, str]
+    ) -> List[str]:
         """
         Valida la consistencia jerárquica territorial
 
@@ -206,17 +207,20 @@ class TerritorialValidator:
         inconsistencias = []
 
         # Verificar que distrito pertenezca a provincia correcta
-        if 'distrito' in columnas_territoriales and 'provincia' in columnas_territoriales:
-            col_distrito = columnas_territoriales['distrito']
-            col_provincia = columnas_territoriales['provincia']
+        if "distrito" in columnas_territoriales and "provincia" in columnas_territoriales:
+            col_distrito = columnas_territoriales["distrito"]
+            col_provincia = columnas_territoriales["provincia"]
 
             if col_distrito in df.columns and col_provincia in df.columns:
                 # Extraer provincia del código de distrito
                 provincia_from_distrito = df[col_distrito].astype(str).str[:4]
                 provincia_declarada = df[col_provincia].astype(str).str.zfill(4)
 
-                mask_inconsistente = (provincia_from_distrito != provincia_declarada) & \
-                                     df[col_distrito].notna() & df[col_provincia].notna()
+                mask_inconsistente = (
+                    (provincia_from_distrito != provincia_declarada)
+                    & df[col_distrito].notna()
+                    & df[col_provincia].notna()
+                )
 
                 if mask_inconsistente.any():
                     n_inconsistentes = mask_inconsistente.sum()
@@ -225,17 +229,20 @@ class TerritorialValidator:
                     )
 
         # Verificar que provincia pertenezca a departamento correcto
-        if 'provincia' in columnas_territoriales and 'departamento' in columnas_territoriales:
-            col_provincia = columnas_territoriales['provincia']
-            col_departamento = columnas_territoriales['departamento']
+        if "provincia" in columnas_territoriales and "departamento" in columnas_territoriales:
+            col_provincia = columnas_territoriales["provincia"]
+            col_departamento = columnas_territoriales["departamento"]
 
             if col_provincia in df.columns and col_departamento in df.columns:
                 # Extraer departamento del código de provincia
                 dep_from_provincia = df[col_provincia].astype(str).str[:2]
                 dep_declarado = df[col_departamento].astype(str).str.zfill(2)
 
-                mask_inconsistente = (dep_from_provincia != dep_declarado) & \
-                                     df[col_provincia].notna() & df[col_departamento].notna()
+                mask_inconsistente = (
+                    (dep_from_provincia != dep_declarado)
+                    & df[col_provincia].notna()
+                    & df[col_departamento].notna()
+                )
 
                 if mask_inconsistente.any():
                     n_inconsistentes = mask_inconsistente.sum()
@@ -245,9 +252,9 @@ class TerritorialValidator:
 
         return inconsistencias
 
-    def validate_coordinate_consistency(self, df: pd.DataFrame,
-                                        coord_cols: Dict[str, str],
-                                        ubigeo_col: Optional[str] = None) -> List[str]:
+    def validate_coordinate_consistency(
+        self, df: pd.DataFrame, coord_cols: Dict[str, str], ubigeo_col: Optional[str] = None
+    ) -> List[str]:
         """
         Valida consistencia de coordenadas geográficas
 
@@ -261,11 +268,11 @@ class TerritorialValidator:
         """
         problemas = []
 
-        if 'x' not in coord_cols or 'y' not in coord_cols:
+        if "x" not in coord_cols or "y" not in coord_cols:
             return ["Especificar columnas 'x' e 'y' en coord_cols"]
 
-        lon_col = coord_cols['x']
-        lat_col = coord_cols['y']
+        lon_col = coord_cols["x"]
+        lat_col = coord_cols["y"]
 
         if lon_col not in df.columns:
             problemas.append(f"Columna de longitud '{lon_col}' no encontrada")
@@ -282,19 +289,19 @@ class TerritorialValidator:
         lat_min, lat_max = -18.5, 0.2
 
         # Coordenadas fuera de rango
-        out_of_range_lon = (
-                                   (df[lon_col] < lon_min) | (df[lon_col] > lon_max)
-                           ) & df[lon_col].notna()
+        out_of_range_lon = ((df[lon_col] < lon_min) | (df[lon_col] > lon_max)) & df[lon_col].notna()
 
-        out_of_range_lat = (
-                                   (df[lat_col] < lat_min) | (df[lat_col] > lat_max)
-                           ) & df[lat_col].notna()
+        out_of_range_lat = ((df[lat_col] < lat_min) | (df[lat_col] > lat_max)) & df[lat_col].notna()
 
         if out_of_range_lon.any():
-            problemas.append(f"{out_of_range_lon.sum()} coordenadas de longitud fuera de rango para Perú")
+            problemas.append(
+                f"{out_of_range_lon.sum()} coordenadas de longitud fuera de rango para Perú"
+            )
 
         if out_of_range_lat.any():
-            problemas.append(f"{out_of_range_lat.sum()} coordenadas de latitud fuera de rango para Perú")
+            problemas.append(
+                f"{out_of_range_lat.sum()} coordenadas de latitud fuera de rango para Perú"
+            )
 
         # Coordenadas nulas
         null_coords = df[[lon_col, lat_col]].isnull().any(axis=1)
@@ -309,9 +316,9 @@ class TerritorialValidator:
 
         return problemas
 
-    def check_territorial_coverage(self, df: pd.DataFrame,
-                                   ubigeo_col: str,
-                                   expected_departments: Optional[List[str]] = None) -> Dict[str, int]:
+    def check_territorial_coverage(
+        self, df: pd.DataFrame, ubigeo_col: str, expected_departments: Optional[List[str]] = None
+    ) -> Dict[str, int]:
         """
         Verifica cobertura territorial de los datos
 
@@ -324,7 +331,7 @@ class TerritorialValidator:
             Diccionario con estadísticas de cobertura
         """
         if ubigeo_col not in df.columns:
-            return {'error': 'Columna UBIGEO no encontrada'}
+            return {"error": "Columna UBIGEO no encontrada"}
 
         # Extraer departamentos de UBIGEOs
         departamentos = df[ubigeo_col].astype(str).str[:2]
@@ -332,45 +339,40 @@ class TerritorialValidator:
 
         # Mapear a nombres
         deps_con_nombres = {
-            dep: DEPARTAMENTOS_VALIDOS.get(dep, 'DESCONOCIDO')
-            for dep in departamentos_unicos if pd.notna(dep) and dep != 'na'
+            dep: DEPARTAMENTOS_VALIDOS.get(dep, "DESCONOCIDO")
+            for dep in departamentos_unicos
+            if pd.notna(dep) and dep != "na"
         }
 
         cobertura = {
-            'departamentos_presentes': len(deps_con_nombres),
-            'departamentos_total_peru': len(DEPARTAMENTOS_VALIDOS),
-            'departamentos_encontrados': list(deps_con_nombres.values()),
-            'cobertura_porcentual': len(deps_con_nombres) / len(DEPARTAMENTOS_VALIDOS) * 100
+            "departamentos_presentes": len(deps_con_nombres),
+            "departamentos_total_peru": len(DEPARTAMENTOS_VALIDOS),
+            "departamentos_encontrados": list(deps_con_nombres.values()),
+            "cobertura_porcentual": len(deps_con_nombres) / len(DEPARTAMENTOS_VALIDOS) * 100,
         }
 
         # Departamentos faltantes
         deps_faltantes = [
-            dep for dep in DEPARTAMENTOS_VALIDOS.keys()
-            if dep not in departamentos_unicos
+            dep for dep in DEPARTAMENTOS_VALIDOS.keys() if dep not in departamentos_unicos
         ]
 
-        cobertura['departamentos_faltantes'] = [
+        cobertura["departamentos_faltantes"] = [
             DEPARTAMENTOS_VALIDOS[dep] for dep in deps_faltantes
         ]
 
         # Si se especifican departamentos esperados
         if expected_departments:
             expected_codes = [
-                code for code, name in DEPARTAMENTOS_VALIDOS.items()
-                if name in expected_departments
+                code for code, name in DEPARTAMENTOS_VALIDOS.items() if name in expected_departments
             ]
 
-            missing_expected = [
-                dep for dep in expected_codes
-                if dep not in departamentos_unicos
-            ]
+            missing_expected = [dep for dep in expected_codes if dep not in departamentos_unicos]
 
-            cobertura['expected_missing'] = [
-                DEPARTAMENTOS_VALIDOS[dep] for dep in missing_expected
-            ]
-            cobertura['expected_coverage'] = (
+            cobertura["expected_missing"] = [DEPARTAMENTOS_VALIDOS[dep] for dep in missing_expected]
+            cobertura["expected_coverage"] = (
                 (len(expected_codes) - len(missing_expected)) / len(expected_codes) * 100
-                if expected_codes else 100
+                if expected_codes
+                else 100
             )
 
         return cobertura
@@ -384,9 +386,12 @@ class GeoDataQualityValidator:
         self.ubigeo_validator = UbigeoValidator(logger)
         self.territorial_validator = TerritorialValidator(logger)
 
-    def comprehensive_validation(self, df: pd.DataFrame,
-                                 geo_columns: Dict[str, str],
-                                 validation_config: Dict[str, bool] = None) -> Dict[str, any]:
+    def comprehensive_validation(
+        self,
+        df: pd.DataFrame,
+        geo_columns: Dict[str, str],
+        validation_config: Dict[str, bool] = None,
+    ) -> Dict[str, any]:
         """
         Validación integral de datos geográficos
 
@@ -399,63 +404,63 @@ class GeoDataQualityValidator:
             Diccionario con resultados de todas las validaciones
         """
         config = validation_config or {
-            'ubigeo_structure': True,
-            'territorial_hierarchy': True,
-            'coordinate_consistency': True,
-            'coverage_analysis': True
+            "ubigeo_structure": True,
+            "territorial_hierarchy": True,
+            "coordinate_consistency": True,
+            "coverage_analysis": True,
         }
 
         results = {
-            'timestamp': pd.Timestamp.now().isoformat(),
-            'total_records': len(df),
-            'validation_config': config,
-            'results': {}
+            "timestamp": pd.Timestamp.now().isoformat(),
+            "total_records": len(df),
+            "validation_config": config,
+            "results": {},
         }
 
         # Validación de estructura UBIGEO
-        if config.get('ubigeo_structure') and 'ubigeo' in geo_columns:
-            ubigeo_col = geo_columns['ubigeo']
+        if config.get("ubigeo_structure") and "ubigeo" in geo_columns:
+            ubigeo_col = geo_columns["ubigeo"]
             ubigeo_summary = self.ubigeo_validator.get_validation_summary(
                 df[ubigeo_col], TipoValidacionUbigeo.STRUCTURAL
             )
-            results['results']['ubigeo_validation'] = ubigeo_summary
+            results["results"]["ubigeo_validation"] = ubigeo_summary
 
         # Validación de jerarquía territorial
-        if config.get('territorial_hierarchy'):
+        if config.get("territorial_hierarchy"):
             territorial_issues = self.territorial_validator.validar_jerarquia_territorial(
                 df, geo_columns
             )
-            results['results']['territorial_hierarchy'] = {
-                'issues_found': len(territorial_issues),
-                'issues': territorial_issues
+            results["results"]["territorial_hierarchy"] = {
+                "issues_found": len(territorial_issues),
+                "issues": territorial_issues,
             }
 
         # Validación de coordenadas
-        if config.get('coordinate_consistency'):
+        if config.get("coordinate_consistency"):
             coord_cols = {}
-            if 'coordenada_x' in geo_columns:
-                coord_cols['x'] = geo_columns['coordenada_x']
-            if 'coordenada_y' in geo_columns:
-                coord_cols['y'] = geo_columns['coordenada_y']
+            if "coordenada_x" in geo_columns:
+                coord_cols["x"] = geo_columns["coordenada_x"]
+            if "coordenada_y" in geo_columns:
+                coord_cols["y"] = geo_columns["coordenada_y"]
 
             if coord_cols:
                 coord_issues = self.territorial_validator.validate_coordinate_consistency(
-                    df, coord_cols, geo_columns.get('ubigeo')
+                    df, coord_cols, geo_columns.get("ubigeo")
                 )
-                results['results']['coordinate_validation'] = {
-                    'issues_found': len(coord_issues),
-                    'issues': coord_issues
+                results["results"]["coordinate_validation"] = {
+                    "issues_found": len(coord_issues),
+                    "issues": coord_issues,
                 }
 
         # Análisis de cobertura territorial
-        if config.get('coverage_analysis') and 'ubigeo' in geo_columns:
+        if config.get("coverage_analysis") and "ubigeo" in geo_columns:
             coverage = self.territorial_validator.check_territorial_coverage(
-                df, geo_columns['ubigeo']
+                df, geo_columns["ubigeo"]
             )
-            results['results']['territorial_coverage'] = coverage
+            results["results"]["territorial_coverage"] = coverage
 
         # Calcular score de calidad general
-        results['overall_quality_score'] = self._calculate_quality_score(results['results'])
+        results["overall_quality_score"] = self._calculate_quality_score(results["results"])
 
         return results
 
@@ -464,27 +469,27 @@ class GeoDataQualityValidator:
         score = 100.0
 
         # Penalizar por problemas de UBIGEO
-        if 'ubigeo_validation' in validation_results:
-            ubigeo_data = validation_results['ubigeo_validation']
-            if ubigeo_data['total_records'] > 0:
-                invalid_rate = ubigeo_data['invalid_ubigeos'] / ubigeo_data['total_records']
+        if "ubigeo_validation" in validation_results:
+            ubigeo_data = validation_results["ubigeo_validation"]
+            if ubigeo_data["total_records"] > 0:
+                invalid_rate = ubigeo_data["invalid_ubigeos"] / ubigeo_data["total_records"]
                 score -= invalid_rate * 30  # Hasta 30 puntos menos
 
         # Penalizar por problemas territoriales
-        if 'territorial_hierarchy' in validation_results:
-            if validation_results['territorial_hierarchy']['issues_found'] > 0:
+        if "territorial_hierarchy" in validation_results:
+            if validation_results["territorial_hierarchy"]["issues_found"] > 0:
                 score -= 20  # 20 puntos menos por inconsistencias territoriales
 
         # Penalizar por problemas de coordenadas
-        if 'coordinate_validation' in validation_results:
-            if validation_results['coordinate_validation']['issues_found'] > 0:
+        if "coordinate_validation" in validation_results:
+            if validation_results["coordinate_validation"]["issues_found"] > 0:
                 score -= 15  # 15 puntos menos por problemas de coordenadas
 
         # Bonificar por buena cobertura territorial
-        if 'territorial_coverage' in validation_results:
-            coverage_data = validation_results['territorial_coverage']
-            if 'cobertura_porcentual' in coverage_data:
-                if coverage_data['cobertura_porcentual'] > 90:
+        if "territorial_coverage" in validation_results:
+            coverage_data = validation_results["territorial_coverage"]
+            if "cobertura_porcentual" in coverage_data:
+                if coverage_data["cobertura_porcentual"] > 90:
                     score += 5  # Bonus por excelente cobertura
 
         return max(0, min(100, score))
