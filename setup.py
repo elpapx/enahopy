@@ -18,7 +18,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="enahopy",
-    version="0.1.0",
+    version="0.1.2",
     author="Alonso Camacho Abadie",
     author_email="pcamacho447@gmail.com",
     description="Librería Python para análisis de microdatos ENAHO del INEI (Perú)",

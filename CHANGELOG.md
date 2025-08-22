@@ -5,13 +5,9 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-01-XX
+## [0.1.2] - 2025-22-08
 
-### 🎉 Lanzamiento Inicial
-
-Primera versión estable de ENAHOPY disponible en PyPI.
-
-#### ✨ Características Principales
+### ✨ Características Principales
 
 **Módulo Loader:**
 - Descarga automática desde servidores oficiales del INEI
@@ -42,6 +38,10 @@ Primera versión estable de ENAHOPY disponible en PyPI.
 - **Extensibilidad**: Arquitectura modular y pluggable
 - **Testing**: Cobertura completa de tests unitarios e integración
 - **Documentación**: README detallado y ejemplos prácticos
+
+### Fixed - 2025/08/22
+
+- Optmización core merger
 
 #### 📦 Dependencias
 

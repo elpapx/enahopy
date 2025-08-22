@@ -1,12 +1,94 @@
+# MANIFEST.in - Especifica archivos adicionales para incluir en el paquete
+# ============================================================================
+
+# Documentación esencial
 include README.md
 include LICENSE
 include CHANGELOG.md
+include CONTRIBUTING.md
+
+# Archivos de configuración del proyecto
+include pyproject.toml
+include setup.py
 include requirements.txt
 include requirements-dev.txt
+
+# Documentación adicional
+recursive-include docs *.md *.rst *.txt
+recursive-include docs *.py
+recursive-include docs *.yml *.yaml
+
+# Ejemplos y notebooks
+recursive-include examples *.py *.ipynb *.md
+recursive-include examples *.csv *.json
+exclude examples/data/raw/*  # Excluir datos grandes
+
+# Archivos de configuración
+include .gitignore
+include .github/workflows/*.yml
+include tox.ini
+include .flake8
+include .isort.cfg
+
+# Scripts utilitarios
+include scripts/*.py
+include scripts/*.sh
+
+# Datos de prueba pequeños (no incluir datasets grandes)
+recursive-include tests/test_data *.csv *.json
+recursive-include tests/test_data *.txt
+exclude tests/test_data/large/*  # Excluir archivos grandes de test
+
+# Archivos de configuración de herramientas de desarrollo
+include .pre-commit-config.yaml
+include Makefile
+
+# Excluir archivos innecesarios
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude *.dylib
+global-exclude .git*
+global-exclude .pytest_cache
+global-exclude .tox
+global-exclude .coverage
+global-exclude .mypy_cache
+global-exclude *.egg-info
+global-exclude build
+global-exclude dist
+global-exclude .env
+global-exclude .venv
+global-exclude env
+global-exclude venv
+
+# Excluir directorios temporales
+prune temp*
+prune tmp*
+prune .pytest_cache
+prune .tox
+prune build
+prune dist
+prune *.egg-info
+
+# Excluir archivos de desarrollo específicos
+exclude .coveragerc
+exclude pytest.ini
+exclude setup.cfg
+
+# Incluir archivos de tipo específicos en el paquete principal
 recursive-include enahopy *.py
-recursive-include docs *.md *.rst
-recursive-include examples *.py *.ipynb
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
-recursive-exclude tests *
-global-exclude *.dta *.sav *.csv *.parquet
+recursive-include enahopy *.json
+recursive-include enahopy *.yml *.yaml
+recursive-include enahopy *.txt
+
+# Incluir templates y recursos si los hay
+recursive-include enahopy/templates *.html *.css *.js
+recursive-include enahopy/static *.css *.js *.png *.jpg
+
+# Datos de referencia pequeños (mapeos, códigos, etc.)
+recursive-include enahopy/data *.json *.csv *.txt
+exclude enahopy/data/cache/*  # Excluir cache
+
+# Configuraciones por defecto
+recursive-include enahopy/config *.yml *.yaml *.json

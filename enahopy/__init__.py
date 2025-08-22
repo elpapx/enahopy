@@ -8,7 +8,7 @@ Estadística e Informática (INEI) del Perú.
 """
 
 # Version info
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __version_info__ = (0, 1, 0)
 __author__ = "Paul Camacho"
 __email__ = "pcamacho447@gmail.com"
