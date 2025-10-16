@@ -13,6 +13,8 @@ Optimizations (DE-2):
 - Native Parquet filtering support
 """
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Union

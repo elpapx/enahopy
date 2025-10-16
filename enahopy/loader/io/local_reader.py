@@ -7,6 +7,8 @@ Supports multiple formats, column validation,
 metadata extraction, and data export.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path

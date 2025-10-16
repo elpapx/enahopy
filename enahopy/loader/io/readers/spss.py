@@ -13,6 +13,8 @@ Optimizations (DE-2):
 - Selective column loading
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
 from pathlib import Path

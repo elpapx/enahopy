@@ -6,10 +6,12 @@ Interfaces y clases base para el sistema de I/O.
 Define contratos para lectores, validadores y otros componentes.
 """
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Union
+from typing import TYPE_CHECKING, Dict, Iterator, List, Union
 
 import pandas as pd
 
