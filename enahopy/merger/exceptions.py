@@ -407,6 +407,27 @@ def _get_error_recommendations(exception: Exception) -> list:
     ]
 
 
+# =====================================================
+# EXCEPCIONES DE VALIDACIÓN DE MERGE
+# =====================================================
+
+
+class MergeValidationError(ModuleMergeError):
+    """Error de validación durante el proceso de merge"""
+
+    def __init__(
+        self,
+        message: str,
+        validation_type: str = None,
+        failed_checks: list = None,
+        **context,
+    ):
+        super().__init__(message)
+        self.validation_type = validation_type
+        self.failed_checks = failed_checks or []
+        self.context = context
+
+
 # Alias para compatibilidad
 
 

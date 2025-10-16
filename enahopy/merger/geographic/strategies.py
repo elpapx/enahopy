@@ -52,11 +52,16 @@ class DuplicateHandlingStrategy(ABC):
         """Obtiene información sobre duplicados"""
         duplicates_mask = df[columna_union].duplicated(keep=False)
 
+        # Bug fix: Call .unique() on Series, not DataFrame
+        duplicate_keys_series = df[duplicates_mask][columna_union]
+
         return {
             "total_records": len(df),
             "duplicate_records": duplicates_mask.sum(),
             "unique_keys": df[columna_union].nunique(),
-            "duplicate_keys": len(df[duplicates_mask][columna_union].unique()),
+            "duplicate_keys": (
+                len(duplicate_keys_series.unique()) if len(duplicate_keys_series) > 0 else 0
+            ),
         }
 
 

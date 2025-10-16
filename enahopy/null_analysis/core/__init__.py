@@ -2,6 +2,6 @@
 Core components for null analysis
 """
 
-from .analyzer import ENAHONullAnalyzer
+from .analyzer import NullAnalyzer
 
-__all__ = ["ENAHONullAnalyzer"]
+__all__ = ["NullAnalyzer"]

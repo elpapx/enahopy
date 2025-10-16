@@ -5,37 +5,38 @@ Tests corregidos para el módulo loader basados en la implementación real.
 Guardar como: tests/test_loader_corrected.py
 """
 
-import unittest
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from pathlib import Path
-import pandas as pd
-import numpy as np
-import tempfile
-import shutil
-import json
-import zipfile
 import io
-from datetime import datetime, timedelta
-import sys
-import os
+import json
 import logging
+import os
+import shutil
+import sys
+import tempfile
+import unittest
+import zipfile
+from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
+import numpy as np
+import pandas as pd
 
 # Agregar path para imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from enahopy.loader import (
+    CacheManager,
+    ENAHOConfig,
     ENAHODataDownloader,
+    ENAHODownloadError,
+    ENAHOError,
     ENAHOLocalReader,
+    ENAHOUtils,
+    ENAHOValidationError,
+    ENAHOValidator,
+    ReaderFactory,
     download_enaho_data,
     read_enaho_file,
-    ENAHOUtils,
-    ENAHOConfig,
-    ENAHOError,
-    ENAHODownloadError,
-    ENAHOValidationError,
-    ReaderFactory,
-    CacheManager,
-    ENAHOValidator
 )
 
 # Importar la excepción específica
@@ -65,7 +66,9 @@ class TestENAHOConfig(unittest.TestCase):
         config = ENAHOConfig()
 
         # La URL real termina en STATA/
-        self.assertEqual(config.base_url, "https://proyectos.inei.gob.pe/iinei/srienaho/descarga/STATA/")
+        self.assertEqual(
+            config.base_url, "https://proyectos.inei.gob.pe/iinei/srienaho/descarga/STATA/"
+        )
         # Verificar atributos que realmente existen
         self.assertEqual(config.max_retries, 3)
         self.assertEqual(config.timeout, 30)
@@ -73,11 +76,7 @@ class TestENAHOConfig(unittest.TestCase):
     def test_custom_config(self):
         """Verifica configuración personalizada - CORREGIDO"""
         # Solo usar parámetros que existen realmente
-        config = ENAHOConfig(
-            cache_dir="custom_cache",
-            max_retries=5,
-            timeout=60
-        )
+        config = ENAHOConfig(cache_dir="custom_cache", max_retries=5, timeout=60)
 
         self.assertEqual(config.cache_dir, "custom_cache")
         self.assertEqual(config.max_retries, 5)
@@ -117,14 +116,14 @@ class TestCacheManager(unittest.TestCase):
         test_data = {"test": "data"}
 
         # Guardar datos directamente
-        with open(cache_file, 'w') as f:
+        with open(cache_file, "w") as f:
             json.dump(test_data, f)
 
         # Verificar que existe
         self.assertTrue(cache_file.exists())
 
         # Leer datos
-        with open(cache_file, 'r') as f:
+        with open(cache_file, "r") as f:
             loaded_data = json.load(f)
 
         self.assertEqual(loaded_data, test_data)
@@ -186,12 +185,14 @@ class TestENAHOLocalReader(unittest.TestCase):
 
         # Crear archivo CSV de prueba
         self.test_csv = Path(self.temp_dir) / "test.csv"
-        pd.DataFrame({
-            'conglome': ['001', '002', '003'],
-            'vivienda': ['01', '02', '03'],
-            'hogar': ['1', '1', '1'],
-            'value': [100, 200, 300]
-        }).to_csv(self.test_csv, index=False)
+        pd.DataFrame(
+            {
+                "conglome": ["001", "002", "003"],
+                "vivienda": ["01", "02", "03"],
+                "hogar": ["1", "1", "1"],
+                "value": [100, 200, 300],
+            }
+        ).to_csv(self.test_csv, index=False)
 
     def tearDown(self):
         """Limpiar archivos temporales"""
@@ -204,7 +205,7 @@ class TestENAHOLocalReader(unittest.TestCase):
 
         # Verificar el metodo real - podría ser read() o algo similar
         # Primero verifiquemos qué métodos tiene
-        methods = [method for method in dir(reader) if not method.startswith('_')]
+        methods = [method for method in dir(reader) if not method.startswith("_")]
         print(f"Métodos disponibles en ENAHOLocalReader: {methods}")
 
         # Intentar con el metodo más probable
@@ -220,7 +221,7 @@ class TestENAHOLocalReader(unittest.TestCase):
 
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(len(df), 3)
-        self.assertIn('conglome', df.columns)
+        self.assertIn("conglome", df.columns)
 
     def test_read_nonexistent_file(self):
         """Verifica manejo de archivo inexistente - CORREGIDO"""
@@ -250,7 +251,7 @@ class TestENAHODataDownloader(unittest.TestCase):
         """Limpieza"""
         shutil.rmtree(self.temp_dir)
 
-    @patch('enahopy.loader.io.downloaders.downloader.ENAHODownloader.download_file')
+    @patch("enahopy.loader.io.downloaders.downloader.ENAHODownloader.download_file")
     def test_download_mocked(self, mock_download):
         """Test de descarga con mock completo - CORREGIDO"""
         # Simular descarga exitosa - crear un resultado mock
@@ -260,10 +261,7 @@ class TestENAHODataDownloader(unittest.TestCase):
 
         # Intentar descarga
         result = self.downloader.download(
-            modules=['01'],
-            years=['2023'],
-            output_dir=self.temp_dir,
-            decompress=False
+            modules=["01"], years=["2023"], output_dir=self.temp_dir, decompress=False
         )
 
         # Verificar que se llamó al metodo
@@ -273,13 +271,13 @@ class TestENAHODataDownloader(unittest.TestCase):
         """Test obtener años disponibles"""
         years = self.downloader.get_available_years(is_panel=False)
         self.assertIsInstance(years, list)
-        self.assertIn('2023', years)
+        self.assertIn("2023", years)
 
     def test_get_available_modules(self):
         """Test obtener módulos disponibles"""
         modules = self.downloader.get_available_modules()
         self.assertIsInstance(modules, dict)
-        self.assertIn('01', modules)
+        self.assertIn("01", modules)
 
 
 class TestENAHOValidator(unittest.TestCase):
@@ -290,17 +288,19 @@ class TestENAHOValidator(unittest.TestCase):
         # ENAHOValidator requiere config
         config = ENAHOConfig()
         self.validator = ENAHOValidator(config=config)
-        self.test_df = pd.DataFrame({
-            'conglome': ['001', '002', None, '004'],
-            'vivienda': ['01', '02', '03', '04'],
-            'hogar': ['1', '1', '1', '1'],
-            'factor07': [1.5, 2.0, None, 3.5],
-            'ingreso': [1000, 2000, 3000, None]
-        })
+        self.test_df = pd.DataFrame(
+            {
+                "conglome": ["001", "002", None, "004"],
+                "vivienda": ["01", "02", "03", "04"],
+                "hogar": ["1", "1", "1", "1"],
+                "factor07": [1.5, 2.0, None, 3.5],
+                "ingreso": [1000, 2000, 3000, None],
+            }
+        )
 
     def test_validate_file_exists(self):
         """Verifica validación de existencia de archivo"""
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tf:
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tf:
             temp_path = tf.name
 
         Path(temp_path).touch()
@@ -321,7 +321,7 @@ class TestENAHOValidator(unittest.TestCase):
 class TestConvenienceFunctions(unittest.TestCase):
     """Tests para funciones de conveniencia - CORREGIDOS"""
 
-    @patch('enahopy.loader.utils.io_utils.ENAHODataDownloader')
+    @patch("enahopy.loader.utils.io_utils.ENAHODataDownloader")
     def test_download_function_integration(self, mock_class):
         """Test integración de función download - CORREGIDO"""
         # Mock de la clase completa
@@ -334,11 +334,7 @@ class TestConvenienceFunctions(unittest.TestCase):
         # Importar después del mock
         from enahopy.loader.utils.io_utils import download_enaho_data
 
-        result = download_enaho_data(
-            modules=['01'],
-            years=['2023'],
-            output_dir='test_dir'
-        )
+        result = download_enaho_data(modules=["01"], years=["2023"], output_dir="test_dir")
 
         # Verificar que se llamó download
         mock_instance.download.assert_called_once()
@@ -346,9 +342,9 @@ class TestConvenienceFunctions(unittest.TestCase):
 
     def test_read_file_function_with_existing_file(self):
         """Test lectura con archivo existente - CORREGIDO"""
-        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as tf:
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tf:
             # Crear archivo temporal
-            df_test = pd.DataFrame({'a': [1, 2, 3]})
+            df_test = pd.DataFrame({"a": [1, 2, 3]})
             df_test.to_csv(tf.name, index=False)
             temp_path = tf.name
 
@@ -391,7 +387,7 @@ class TestENAHOUtils(unittest.TestCase):
     def test_basic_operations(self):
         """Test operaciones básicas disponibles"""
         # Verificar que tiene métodos básicos
-        self.assertTrue(hasattr(self.utils, '__class__'))
+        self.assertTrue(hasattr(self.utils, "__class__"))
 
 
 class TestErrorHandling(unittest.TestCase):
@@ -447,7 +443,7 @@ class TestIntegration(unittest.TestCase):
             ReaderFactory,
             ENAHOError,
             ENAHODownloadError,
-            ENAHOValidationError
+            ENAHOValidationError,
         ]
 
         for component in components:
@@ -472,6 +468,6 @@ def run_corrected_tests():
     return result.wasSuccessful()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = run_corrected_tests()
     sys.exit(0 if success else 1)

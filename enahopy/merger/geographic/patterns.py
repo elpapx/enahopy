@@ -11,12 +11,9 @@ Detector automático de columnas geográficas y patrones territoriales.
 """
 
 import logging
-
 from typing import Dict, List, Optional, Tuple
 
-
 import pandas as pd
-
 
 from ..config import PATRONES_GEOGRAFICOS, NivelTerritorial
 

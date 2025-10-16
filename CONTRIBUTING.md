@@ -49,19 +49,32 @@ venv\Scripts\activate
 pip install -e .[dev]
 ```
 
-### 3. Verificar Instalación
+### 3. Instalar Pre-commit Hooks
 
 ```bash
-# Ejecutar tests
-pytest
+# Instalar pre-commit (incluido en dev dependencies)
+pre-commit install
+
+# (Opcional) Ejecutar en todos los archivos
+pre-commit run --all-files
+```
+
+### 4. Verificar Instalación
+
+```bash
+# Ejecutar tests rápidos (excluye tests lentos)
+pytest tests/ -m "not slow"
+
+# Ejecutar todos los tests
+pytest tests/ -v
 
 # Verificar estilo de código
-black --check .
-flake8 .
-isort --check-only .
+black --check enahopy/ tests/
+flake8 enahopy/
+isort --check-only enahopy/ tests/
 
 # Tests con cobertura
-pytest --cov=enahopy --cov-report=html
+pytest tests/ --cov=enahopy --cov-report=html --cov-report=term-missing
 ```
 
 ## 📋 Proceso de Desarrollo
@@ -368,6 +381,40 @@ Cualquier contexto adicional sobre el problema.
 - 🔗 **API REST**: Servicio web para análisis remoto
 - 📊 **Dashboard**: Interface web con Streamlit
 - 🔧 **CLI**: Herramientas de línea de comandos
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions
+
+Cada push y pull request ejecuta automáticamente:
+
+1. **Quality Checks** - Formateo, imports, linting
+2. **Tests Matrix** - Tests en Python 3.8-3.12 × Ubuntu/Windows/macOS
+3. **Coverage** - Validación de cobertura mínima (16%)
+4. **Integration** - Tests de integración end-to-end
+5. **Build** - Verificación de empaquetado
+
+### Verificar Estado del CI
+
+- Ver badge en README.md
+- Revisar checks en tu PR
+- Los PRs deben pasar todos los checks antes de merge
+
+### Ejecución Local del CI
+
+Simula el CI localmente antes de push:
+
+```bash
+# Ejecutar todos los checks de calidad
+pre-commit run --all-files
+
+# Ejecutar tests como en CI
+pytest tests/ -v -m "not slow" --cov=enahopy --cov-fail-under=16
+
+# Verificar build
+python -m build
+twine check dist/*
+```
 
 ## 🤝 Código de Conducta
 

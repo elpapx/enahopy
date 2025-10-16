@@ -13,20 +13,69 @@ de módulos ENAHO.
 """
 
 import logging
-
 from typing import Any, Dict, List, Optional
-
 
 import pandas as pd
 
-
 from ..config import ModuleMergeConfig, ModuleMergeLevel, ModuleType
-
 from ..exceptions import IncompatibleModulesError, ModuleValidationError
 
 
 class ModuleValidator:
-    """Validador especializado para módulos ENAHO"""
+    """Specialized validator for ENAHO survey module structure and compatibility.
+
+    Provides comprehensive validation of ENAHO module structure, data quality,
+    and inter-module compatibility before merge operations. Performs module-specific
+    validations based on known ENAHO module characteristics, including required
+    keys, data types, value ranges, and logical consistency checks.
+
+    This validator is designed specifically for ENAHO survey data and understands
+    the structural differences between household-level modules (e.g., sumaria,
+    vivienda) and person-level modules (e.g., demographics, education).
+
+    Attributes:
+        config: Module merge configuration containing validation rules, required
+            keys by module, and quality thresholds.
+        logger: Logger for validation warnings, errors, and diagnostic information.
+
+    Examples:
+        Basic validator initialization:
+
+        >>> from enahopy.merger.config import ModuleMergeConfig
+        >>> from enahopy.merger.modules.validator import ModuleValidator
+        >>> import logging
+        >>> config = ModuleMergeConfig()
+        >>> logger = logging.getLogger('enaho')
+        >>> validator = ModuleValidator(config, logger)
+
+        Validating module structure:
+
+        >>> warnings = validator.validate_module_structure(df_sumaria, '34')
+        >>> if warnings:
+        ...     for warning in warnings:
+        ...         print(f"Warning: {warning}")
+
+        Checking module compatibility:
+
+        >>> compat = validator.check_module_compatibility(
+        ...     df_sumaria, df_vivienda, '34', '01', ModuleMergeLevel.HOGAR
+        ... )
+        >>> if compat['compatible']:
+        ...     print(f"Match rate: {compat['match_rate_module1']:.1f}%")
+        ... else:
+        ...     print(f"Error: {compat['error']}")
+
+    Note:
+        - Validator is stateless: can be reused for multiple validations
+        - Module-specific rules are defined in config.module_validations
+        - Intermediate merged modules are automatically detected and validated leniently
+        - Validation is non-destructive: never modifies input DataFrames
+
+    See Also:
+        - :class:`~enahopy.merger.config.ModuleMergeConfig`: Configuration with validation rules
+        - :class:`~enahopy.merger.modules.merger.ENAHOModuleMerger`: Uses validator before merges
+        - :exc:`~enahopy.merger.exceptions.ModuleValidationError`: Raised for validation failures
+    """
 
     def __init__(self, config: ModuleMergeConfig, logger: logging.Logger):
 
@@ -56,6 +105,12 @@ class ModuleValidator:
         """
 
         warnings = []
+
+        # ====== FIX: Permitir módulos intermedios ("merged", "combined", etc.) ======
+        # Los módulos intermedios no requieren validación estricta
+        if module_code.startswith(("merged", "combined", "+")) or "+" in module_code:
+            self.logger.debug(f"Módulo intermedio '{module_code}' - omitiendo validación estricta")
+            return warnings  # Sin advertencias para módulos intermedios
 
         if module_code not in self.config.module_validations:
 
@@ -312,7 +367,10 @@ class ModuleValidator:
 
         """
 
-        if "+" in module1 or module1.isdigit():  # modulo compuesto
+        # ====== FIX: Detectar módulos intermedios/compuestos ======
+        if (
+            "+" in module1 or module1.isdigit() or module1.startswith(("merged", "combined"))
+        ):  # modulo compuesto o intermedio
 
             return {"compatible": True}
 

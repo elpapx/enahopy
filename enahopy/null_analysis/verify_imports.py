@@ -16,9 +16,7 @@ python verify_imports.py
 
 
 import os
-
 import sys
-
 from pathlib import Path
 
 

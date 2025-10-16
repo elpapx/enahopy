@@ -44,7 +44,9 @@ def download_enaho_data(
     low_memory: bool = True,
     chunksize: Optional[int] = None,
     progress_callback: Optional[Callable[[str, int, int], None]] = None,
-) -> Optional[Dict[Tuple[str, str], Dict[str, pd.DataFrame]]]:
+) -> Optional[
+    Union[pd.DataFrame, Dict[str, pd.DataFrame], Dict[Tuple[str, str], Dict[str, pd.DataFrame]]]
+]:
     """
     Función de conveniencia para descargar datos ENAHO
 
@@ -65,8 +67,9 @@ def download_enaho_data(
         progress_callback: Función callback para reportar progreso (task_name, completed, total)
 
     Returns:
-        Diccionario con DataFrames organizados por (año, módulo) si load_dta=True,
-        None en caso contrario
+        - Si load_dta=False: None
+        - Si 1 año, 1 módulo: pd.DataFrame directamente (siempre)
+        - Si múltiples años/módulos: Dict[(año, módulo), Dict[str, pd.DataFrame]]
 
     Raises:
         ENAHOValidationError: Si los parámetros no son válidos
@@ -74,7 +77,7 @@ def download_enaho_data(
         ENAHOError: Para otros errores relacionados con ENAHO
     """
     downloader = ENAHODataDownloader(verbose=verbose)
-    return downloader.download(
+    result = downloader.download(
         modules=modules,
         years=years,
         output_dir=output_dir,
@@ -90,6 +93,45 @@ def download_enaho_data(
         chunksize=chunksize,
         progress_callback=progress_callback,
     )
+
+    # Si no se cargaron datos, devolver None
+    if not result or not load_dta:
+        return None
+
+    # Simplificar el resultado para facilitar el uso
+    # Si solo hay 1 año y 1 módulo, SIEMPRE devolver un DataFrame
+    if len(years) == 1 and len(modules) == 1:
+        # Buscar la clave correcta en el resultado
+        # Las claves pueden estar normalizadas (ej: '02' en lugar de '2')
+        found_key = None
+        for key in result.keys():
+            year_key, module_key = key
+            # Comparar año exacto y módulo normalizado
+            if year_key == years[0] and module_key.zfill(2) == modules[0].zfill(2):
+                found_key = key
+                break
+
+        if found_key:
+            files_dict = result[found_key]
+
+            # Si solo hay 1 archivo, devolver el DataFrame directamente
+            if len(files_dict) == 1:
+                return list(files_dict.values())[0]
+
+            # Si hay múltiples archivos, buscar el principal o devolver el primero
+            file_names = list(files_dict.keys())
+
+            # Buscar archivo principal (el que contiene el número del módulo)
+            module_normalized = modules[0].zfill(2)
+            for fname in file_names:
+                if module_normalized in fname.lower():
+                    return files_dict[fname]
+
+            # Si no se encuentra, devolver el primer DataFrame
+            return list(files_dict.values())[0]
+
+    # Para múltiples años/módulos, devolver estructura completa
+    return result
 
 
 def read_enaho_file(

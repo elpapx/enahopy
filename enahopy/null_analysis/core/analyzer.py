@@ -50,20 +50,24 @@ class NullAnalyzer:
 
     def analyze(self, df: pd.DataFrame) -> Dict[str, Any]:
         """
-        Realiza análisis básico de valores nulos
+        Realiza análisis básico de valores nulos con operaciones vectorizadas.
 
         Args:
             df: DataFrame a analizar
 
         Returns:
             Diccionario con estadísticas de valores nulos
+
+        Note:
+            Optimizado usando operaciones vectorizadas de pandas para mejor
+            performance en DataFrames grandes (especialmente con muchas columnas).
         """
         self.logger.info(f"Analizando DataFrame de forma {df.shape}")
 
         results = {
             "shape": df.shape,
             "total_values": df.size,
-            "null_values": df.isnull().sum().sum(),
+            "null_values": 0,
             "null_percentage": 0.0,
             "columns_analysis": {},
             "row_analysis": {},
@@ -71,32 +75,49 @@ class NullAnalyzer:
             "severity": "none",
         }
 
-        # Calcular porcentaje global
-        if results["total_values"] > 0:
-            results["null_percentage"] = (results["null_values"] / results["total_values"]) * 100
+        # Cálculos vectorizados para todas las columnas de una vez
+        null_counts = df.isnull().sum()  # Serie con conteos por columna
+        total_rows = len(df)
 
-        # Análisis por columnas
+        # Calcular porcentaje global usando la serie
+        total_nulls = null_counts.sum()
+        results["null_values"] = int(total_nulls)
+
+        if results["total_values"] > 0:
+            results["null_percentage"] = float(total_nulls / results["total_values"] * 100)
+
+        # Calcular porcentajes vectorizadamente
+        null_percentages = (
+            (null_counts / total_rows * 100) if total_rows > 0 else pd.Series(0, index=df.columns)
+        )
+        non_null_counts = total_rows - null_counts
+
+        # Obtener tipos una sola vez
+        dtypes = df.dtypes.astype(str)
+
+        # Construir análisis por columnas usando valores pre-calculados
         for col in df.columns:
-            null_count = df[col].isnull().sum()
-            total_count = len(df[col])
-            null_pct = (null_count / total_count * 100) if total_count > 0 else 0
+            null_pct = null_percentages[col]
 
             results["columns_analysis"][col] = {
-                "null_count": int(null_count),
+                "null_count": int(null_counts[col]),
                 "null_percentage": float(null_pct),
-                "non_null_count": int(total_count - null_count),
-                "dtype": str(df[col].dtype),
+                "non_null_count": int(non_null_counts[col]),
+                "dtype": dtypes[col],
                 "severity": self._classify_severity(null_pct),
             }
 
-        # Análisis por filas
-        rows_with_nulls = df.isnull().any(axis=1).sum()
-        complete_rows = (~df.isnull().any(axis=1)).sum()
+        # Análisis por filas (vectorizado)
+        null_mask = df.isnull().any(axis=1)
+        rows_with_nulls = null_mask.sum()
+        complete_rows = (~null_mask).sum()
 
         results["row_analysis"] = {
             "rows_with_nulls": int(rows_with_nulls),
             "complete_rows": int(complete_rows),
-            "percentage_incomplete": float(rows_with_nulls / len(df) * 100) if len(df) > 0 else 0,
+            "percentage_incomplete": (
+                float(rows_with_nulls / total_rows * 100) if total_rows > 0 else 0.0
+            ),
         }
 
         # Determinar severidad global
@@ -247,6 +268,98 @@ class NullAnalyzer:
                 candidates.append(col)
 
         return candidates
+
+    def impute_advanced(
+        self,
+        df: pd.DataFrame,
+        strategy: str = "auto",
+        categorical_cols: Optional[List[str]] = None,
+        compare_strategies: bool = False,
+        assess_quality: bool = True,
+        **kwargs,
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Advanced imputation with ML strategies.
+
+        Args:
+            df: DataFrame with missing values
+            strategy: Imputation strategy ('auto', 'mice', 'knn', 'missforest', 'random_forest')
+            categorical_cols: List of categorical column names
+            compare_strategies: Whether to compare multiple strategies
+            assess_quality: Whether to assess imputation quality
+            **kwargs: Additional arguments passed to imputation methods
+
+        Returns:
+            Tuple of (imputed_df, quality_report)
+        """
+        try:
+            from ..strategies.imputation_quality_assessment import (
+                QualityAssessmentConfig,
+                assess_imputation_quality,
+            )
+            from ..strategies.ml_imputation import create_ml_imputation_manager, quick_ml_imputation
+        except ImportError:
+            self.logger.error("ML imputation modules not available")
+            raise ImportError(
+                "Advanced ML imputation requires scikit-learn. "
+                "Install with: pip install scikit-learn scipy"
+            )
+
+        self.logger.info(f"Starting advanced imputation with strategy: {strategy}")
+
+        quality_report = {
+            "strategy_used": strategy,
+            "comparison_results": None,
+            "quality_assessment": None,
+        }
+
+        # Compare strategies if requested
+        if compare_strategies:
+            self.logger.info("Comparing multiple imputation strategies...")
+            manager = create_ml_imputation_manager()
+            comparison_results = manager.compare_strategies(df, test_size=0.2)
+            quality_report["comparison_results"] = comparison_results
+
+            # Select best strategy if auto
+            if strategy == "auto":
+                best_strategy = manager.get_best_strategy(comparison_results)
+                strategy = best_strategy or "knn"
+                self.logger.info(f"Auto-selected strategy: {strategy}")
+                quality_report["strategy_used"] = strategy
+
+        # Perform imputation
+        if strategy == "auto" and not compare_strategies:
+            # Quick auto mode without comparison
+            imputed_df = quick_ml_imputation(df, strategy="auto")
+        else:
+            # Use specified strategy
+            manager = create_ml_imputation_manager()
+            manager.fit_strategy(strategy, df)
+            imputed_df = manager.impute(strategy, df)
+
+        # Assess quality if requested
+        if assess_quality:
+            self.logger.info("Assessing imputation quality...")
+            config = QualityAssessmentConfig()
+            missing_mask = df.isnull()
+
+            quality_result = assess_imputation_quality(
+                original_df=df,
+                imputed_df=imputed_df,
+                missing_mask=missing_mask,
+                categorical_cols=categorical_cols,
+                config=config,
+            )
+
+            quality_report["quality_assessment"] = {
+                "overall_score": quality_result.overall_score,
+                "metric_scores": quality_result.metric_scores,
+                "recommendations": quality_result.recommendations,
+            }
+
+            self.logger.info(f"Imputation quality score: {quality_result.overall_score:.2f}")
+
+        return imputed_df, quality_report
 
     def generate_recommendations(self, analysis_results: Dict[str, Any]) -> List[str]:
         """

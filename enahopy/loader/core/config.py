@@ -48,6 +48,7 @@ class ENAHOConfig:
     # Mapeos actualizados con más años
     YEAR_MAP_TRANSVERSAL: Dict[str, int] = field(
         default_factory=lambda: {
+            "2024": 966,
             "2023": 906,
             "2022": 784,
             "2021": 759,
@@ -76,6 +77,7 @@ class ENAHOConfig:
 
     YEAR_MAP_PANEL: Dict[str, int] = field(
         default_factory=lambda: {
+            "2024": 978,
             "2023": 912,
             "2022": 845,
             "2021": 763,
@@ -97,11 +99,11 @@ class ENAHOConfig:
             "03": "Educación",
             "04": "Salud",
             "05": "Empleo e Ingresos",
-            "07": "Ingresos del Hogar",
-            "08": "Gastos del Hogar",
-            "09": "Programas Sociales",
-            "34": "Sumaria (Resumen del Hogar)",
-            "37": "Gobierno Electrónico",
+            "07": "Gastos en Alimentos y bebidas",
+            "08": "Instituciones Beneficas",
+            "09": "Mantenimiento de Viviendas",
+            "34": "Sumarias ( Variables Calculadas )",
+            "37": "Programas Sociales",
         }
     )
 

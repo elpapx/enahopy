@@ -31,22 +31,13 @@ Correcciones aplicadas:
 """
 
 import logging
-
 import warnings
-
 from datetime import datetime
-
 from pathlib import Path
-
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-
 import numpy as np
-
 import pandas as pd
-
-
-# Import seguro para evitar circularidad
 
 from .config import (
     GeoMergeConfiguration,
@@ -58,8 +49,11 @@ from .config import (
     TipoManejoErrores,
     TipoValidacionUbigeo,
 )
-
 from .exceptions import ConfigurationError, DataQualityError, ValidationThresholdError
+
+# Import seguro para evitar circularidad
+
+
 
 
 # =====================================================

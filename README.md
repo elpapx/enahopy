@@ -2,6 +2,9 @@
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![CI Pipeline](https://github.com/elpapx/enahopy/actions/workflows/ci.yml/badge.svg)](https://github.com/elpapx/enahopy/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/elpapx/enahopy/branch/main/graph/badge.svg)](https://codecov.io/gh/elpapx/enahopy)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
 **Librería integral para análisis de microdatos del INEI (Perú)**
@@ -174,24 +177,40 @@ El repositorio incluye notebooks con ejemplos completos:
 
 ## 🤝 Contribuir
 
-¡Las contribuciones son bienvenidas! Ver [CONTRIBUTING.md](CONTRIBUTING.md) para detalles.
+¡Las contribuciones son bienvenidas! Ver [CONTRIBUTING.md](CONTRIBUTING.md) para detalles completos.
 
 ### Proceso de desarrollo:
 ```bash
 # Clonar repositorio
 git clone https://github.com/elpapx/enahopy
-cd enaho-analyzer
+cd enahopy
 
-# Instalar en modo desarrollo
+# Instalar en modo desarrollo con dependencias
 pip install -e .[dev]
 
-# Ejecutar tests
-pytest
+# Instalar pre-commit hooks
+pre-commit install
+
+# Ejecutar tests rápidos
+pytest tests/ -m "not slow"
 
 # Verificar estilo de código
-black .
-flake8 .
+black --check enahopy/ tests/
+flake8 enahopy/
+isort --check-only enahopy/ tests/
+
+# Ejecutar suite completa con cobertura
+pytest tests/ --cov=enahopy --cov-report=html
 ```
+
+### Estado del CI/CD
+
+Todos los PRs son automáticamente validados por:
+- ✅ **Quality Checks**: black, flake8, isort
+- ✅ **Multi-platform Tests**: Ubuntu, Windows, macOS
+- ✅ **Python Matrix**: 3.8, 3.9, 3.10, 3.11, 3.12
+- ✅ **Coverage**: Cobertura mínima 40% (objetivo: 60%)
+- ✅ **Build Validation**: Empaquetado PyPI
 
 ## 📈 Roadmap
 

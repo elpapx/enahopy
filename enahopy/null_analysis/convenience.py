@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
+from ..validation import validate_dataframe_not_empty
 from .config import MissingDataPattern  # Agregar si se usa en detect_missing_patterns_automatically
 from .config import AnalysisComplexity, ExportFormat, NullAnalysisConfig, VisualizationType
-from .core.analyzer import ENAHONullAnalyzer
 from .exceptions import NullAnalysisError
 
 
@@ -19,6 +19,8 @@ def quick_null_analysis(
     df: pd.DataFrame, group_by: Optional[str] = None, complexity: str = "standard"
 ) -> Dict[str, Any]:
     """Análisis rápido de nulos con validación mejorada."""
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer
 
     # Validar y convertir complexity de forma segura
     valid_complexities = {c.value for c in AnalysisComplexity}
@@ -42,6 +44,9 @@ def get_data_quality_score(
     """
     Función de conveniencia para obtener score rápido de calidad de datos.
     """
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer
+
     analyzer = ENAHONullAnalyzer(verbose=False)
     return analyzer.get_data_quality_score(df, detailed=detailed)
 
@@ -149,8 +154,10 @@ def compare_null_patterns(
 
     # Analizar cada dataset
     for name, df in datasets.items():
-        if df is None or df.empty:
-            results[name] = {"error": "Dataset vacío o None"}
+        try:
+            validate_dataframe_not_empty(df, name=f"Dataset '{name}'")
+        except Exception as e:
+            results[name] = {"error": str(e)}
             continue
 
         analysis = analyzer.analyze_null_patterns(df, group_by=group_by)
@@ -216,10 +223,12 @@ def validate_data_completeness(
     """
     Valida si un DataFrame cumple con requisitos de completitud.
     """
-    if df is None or df.empty:
+    try:
+        validate_dataframe_not_empty(df, name="DataFrame de completitud")
+    except Exception as e:
         return {
             "is_valid": False,
-            "reason": "DataFrame vacío o None",
+            "reason": str(e),
             "completeness_score": 0.0,
             "missing_variables": required_variables or [],
             "recommendations": ["Cargar datos antes de validar"],

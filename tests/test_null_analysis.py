@@ -8,19 +8,20 @@ Nota: Los tests están diseñados para ser robustos ante la ausencia
 de componentes opcionales (core.analyzer, patterns, reports, etc.)
 """
 
-import pytest
-import pandas as pd
-import numpy as np
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pandas as pd
+import pytest
+
 from enahopy.null_analysis import (
     ENAHONullAnalyzer,
+    NullAnalysisConfig,
+    NullAnalysisError,
     analyze_null_patterns,
     generate_null_report,
-    NullAnalysisConfig,
-    NullAnalysisError
 )
 
 
@@ -28,9 +29,9 @@ def is_core_analyzer_available():
     """Helper para verificar si el core analyzer está disponible"""
     try:
         analyzer = ENAHONullAnalyzer()
-        test_df = pd.DataFrame({'col': [1, np.nan]})
+        test_df = pd.DataFrame({"col": [1, np.nan]})
         result = analyzer.analyze(test_df, generate_report=False)
-        return 'error' not in result.get('summary', {})
+        return "error" not in result.get("summary", {})
     except:
         return False
 
@@ -42,20 +43,26 @@ class TestENAHONullAnalyzer:
     def sample_df(self):
         """DataFrame de prueba con patrones conocidos"""
         np.random.seed(42)
-        return pd.DataFrame({
-            'ubigeo': [f"{i:06d}" for i in np.random.randint(10101, 250199, 100)],
-            'p207': np.where(np.random.random(100) > 0.95, np.nan,
-                             np.random.choice([1, 2], 100)),  # Sexo
-            'p208': np.where(np.random.random(100) > 0.90, np.nan,
-                             np.random.randint(0, 100, 100)),  # Edad
-            'ingreso': np.where(np.random.random(100) > 0.70, np.nan,
-                                np.random.lognormal(7, 1.5, 100)),
-            'gasto': np.where(np.random.random(100) > 0.75, np.nan,
-                              np.random.lognormal(6, 1.2, 100)),
-            'departamento': np.random.choice(['01', '02', '03'], 100),
-            'complete_col': range(100),
-            'mostly_null': [np.nan] * 90 + list(range(10))
-        })
+        return pd.DataFrame(
+            {
+                "ubigeo": [f"{i:06d}" for i in np.random.randint(10101, 250199, 100)],
+                "p207": np.where(
+                    np.random.random(100) > 0.95, np.nan, np.random.choice([1, 2], 100)
+                ),  # Sexo
+                "p208": np.where(
+                    np.random.random(100) > 0.90, np.nan, np.random.randint(0, 100, 100)
+                ),  # Edad
+                "ingreso": np.where(
+                    np.random.random(100) > 0.70, np.nan, np.random.lognormal(7, 1.5, 100)
+                ),
+                "gasto": np.where(
+                    np.random.random(100) > 0.75, np.nan, np.random.lognormal(6, 1.2, 100)
+                ),
+                "departamento": np.random.choice(["01", "02", "03"], 100),
+                "complete_col": range(100),
+                "mostly_null": [np.nan] * 90 + list(range(10)),
+            }
+        )
 
     @pytest.fixture
     def empty_df(self):
@@ -65,20 +72,18 @@ class TestENAHONullAnalyzer:
     @pytest.fixture
     def no_nulls_df(self):
         """DataFrame sin nulos"""
-        return pd.DataFrame({
-            'col1': range(50),
-            'col2': list('ABCDE' * 10),
-            'col3': np.random.randn(50)
-        })
+        return pd.DataFrame(
+            {"col1": range(50), "col2": list("ABCDE" * 10), "col3": np.random.randn(50)}
+        )
 
     def test_initialization_default(self):
         """Test inicialización por defecto"""
         analyzer = ENAHONullAnalyzer()
 
         assert analyzer is not None
-        assert hasattr(analyzer, 'config')
-        assert hasattr(analyzer, 'last_analysis')
-        assert hasattr(analyzer, 'last_report')
+        assert hasattr(analyzer, "config")
+        assert hasattr(analyzer, "last_analysis")
+        assert hasattr(analyzer, "last_report")
 
     def test_initialization_with_config(self):
         """Test inicialización con configuración"""
@@ -95,13 +100,13 @@ class TestENAHONullAnalyzer:
         result = analyzer.analyze(sample_df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
-        assert isinstance(result['summary'], dict)
+        assert "summary" in result
+        assert isinstance(result["summary"], dict)
 
         # Verificar métricas básicas (manejar caso de NullAnalyzer no disponible)
-        summary = result['summary']
-        if 'error' not in summary:
-            assert 'total_values' in summary or 'null_values' in summary
+        summary = result["summary"]
+        if "error" not in summary:
+            assert "total_values" in summary or "null_values" in summary
         else:
             # Si hay error, al menos debe ser un dict con información del error
             assert isinstance(summary, dict)
@@ -112,7 +117,7 @@ class TestENAHONullAnalyzer:
         result = analyzer.analyze(sample_df, generate_report=True)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
         # El reporte puede no generarse si faltan componentes
         # pero el análisis básico debe funcionar
@@ -126,10 +131,8 @@ class TestENAHONullAnalyzer:
             result = analyzer.analyze(empty_df)
             # Si no lanza excepción, debe indicar error o resultado vacío
             if isinstance(result, dict):
-                summary = result.get('summary', {})
-                assert ('error' in str(result).lower() or
-                        'error' in summary or
-                        len(summary) == 0)
+                summary = result.get("summary", {})
+                assert "error" in str(result).lower() or "error" in summary or len(summary) == 0
         except (NullAnalysisError, ValueError, Exception):
             # Comportamiento esperado para DataFrame vacío
             pass
@@ -140,13 +143,13 @@ class TestENAHONullAnalyzer:
         result = analyzer.analyze(no_nulls_df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
         # Verificar que detecta correctamente ausencia de nulos (si analyzer disponible)
-        summary = result['summary']
-        if 'error' not in summary:
-            null_percentage = summary.get('null_percentage', -1)
-            null_values = summary.get('null_values', -1)
+        summary = result["summary"]
+        if "error" not in summary:
+            null_percentage = summary.get("null_percentage", -1)
+            null_values = summary.get("null_values", -1)
             assert null_percentage == 0 or null_values == 0
         else:
             # Si hay error en core analyzer, verificar que al menos funciona el fallback
@@ -154,43 +157,44 @@ class TestENAHONullAnalyzer:
 
     def test_analyze_single_column(self):
         """Test con DataFrame de una columna"""
-        df = pd.DataFrame({'col1': [1, np.nan, 3, np.nan, 5]})
+        df = pd.DataFrame({"col1": [1, np.nan, 3, np.nan, 5]})
 
         analyzer = ENAHONullAnalyzer()
         result = analyzer.analyze(df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
     def test_analyze_mixed_types(self):
         """Test con tipos de datos mixtos"""
-        df = pd.DataFrame({
-            'int_col': [1, 2, np.nan, 4, 5],
-            'str_col': ['a', 'b', np.nan, 'd', 'e'],
-            'float_col': [1.1, np.nan, 3.3, 4.4, 5.5],
-            'bool_col': [True, False, np.nan, True, False]
-        })
+        df = pd.DataFrame(
+            {
+                "int_col": [1, 2, np.nan, 4, 5],
+                "str_col": ["a", "b", np.nan, "d", "e"],
+                "float_col": [1.1, np.nan, 3.3, 4.4, 5.5],
+                "bool_col": [True, False, np.nan, True, False],
+            }
+        )
 
         analyzer = ENAHONullAnalyzer()
         result = analyzer.analyze(df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
-    @pytest.mark.skipif(not is_core_analyzer_available(),
-                        reason="Core analyzer not available")
+    @pytest.mark.skipif(not is_core_analyzer_available(), reason="Core analyzer not available")
     def test_analyze_detailed_metrics(self, sample_df):
         """Test métricas detalladas cuando core analyzer está disponible"""
         analyzer = ENAHONullAnalyzer()
         result = analyzer.analyze(sample_df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
-        summary = result['summary']
+        assert "summary" in result
+        summary = result["summary"]
 
         # Con core analyzer disponible, debe tener métricas detalladas
-        assert 'total_values' in summary or 'null_values' in summary
-        assert 'null_percentage' in summary
+        assert "total_values" in summary or "null_values" in summary
+        assert "null_percentage" in summary
 
 
 class TestConvenienceFunctions:
@@ -199,12 +203,14 @@ class TestConvenienceFunctions:
     @pytest.fixture
     def test_df(self):
         """DataFrame simple para tests"""
-        return pd.DataFrame({
-            'col1': [1, 2, np.nan, 4, 5],
-            'col2': [np.nan, 2, 3, np.nan, 5],
-            'col3': range(5),
-            'col4': ['A', 'B', np.nan, 'D', 'E']
-        })
+        return pd.DataFrame(
+            {
+                "col1": [1, 2, np.nan, 4, 5],
+                "col2": [np.nan, 2, 3, np.nan, 5],
+                "col3": range(5),
+                "col4": ["A", "B", np.nan, "D", "E"],
+            }
+        )
 
     def test_analyze_null_patterns_basic(self, test_df):
         """Test función analyze_null_patterns"""
@@ -225,10 +231,7 @@ class TestConvenienceFunctions:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_report"
 
-            result = generate_null_report(
-                test_df,
-                output_path=str(output_path)
-            )
+            result = generate_null_report(test_df, output_path=str(output_path))
 
             # Verificar que se ejecutó sin errores
             assert result is not None
@@ -238,11 +241,7 @@ class TestConvenienceFunctions:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "report.html"
 
-            result = generate_null_report(
-                test_df,
-                output_path=str(output_path),
-                format='html'
-            )
+            result = generate_null_report(test_df, output_path=str(output_path), format="html")
 
             assert result is not None
 
@@ -253,19 +252,21 @@ class TestUtilityFunctions:
     @pytest.fixture
     def utility_df(self):
         """DataFrame para tests de utilidades"""
-        return pd.DataFrame({
-            'full_col': range(10),
-            'partial_nulls': [1, np.nan, 3, np.nan, 5, 6, np.nan, 8, 9, 10],
-            'mostly_nulls': [np.nan] * 8 + [1, 2],
-            'all_nulls': [np.nan] * 10
-        })
+        return pd.DataFrame(
+            {
+                "full_col": range(10),
+                "partial_nulls": [1, np.nan, 3, np.nan, 5, 6, np.nan, 8, 9, 10],
+                "mostly_nulls": [np.nan] * 8 + [1, 2],
+                "all_nulls": [np.nan] * 10,
+            }
+        )
 
     def test_calculate_null_percentage(self, utility_df):
         """Test cálculo de porcentaje de nulos"""
         from enahopy.null_analysis import calculate_null_percentage
 
         # Test por columna
-        percentage = calculate_null_percentage(utility_df, 'partial_nulls')
+        percentage = calculate_null_percentage(utility_df, "partial_nulls")
         assert isinstance(percentage, (int, float))
         assert 0 <= percentage <= 100
 
@@ -280,10 +281,10 @@ class TestUtilityFunctions:
         columns = find_columns_with_nulls(utility_df)
 
         assert isinstance(columns, list)
-        assert 'partial_nulls' in columns
-        assert 'mostly_nulls' in columns
-        assert 'all_nulls' in columns
-        assert 'full_col' not in columns
+        assert "partial_nulls" in columns
+        assert "mostly_nulls" in columns
+        assert "all_nulls" in columns
+        assert "full_col" not in columns
 
     def test_get_null_summary(self, utility_df):
         """Test resumen de nulos"""
@@ -297,23 +298,23 @@ class TestUtilityFunctions:
         assert len(summary) <= len(utility_df.columns)  # No más que el total de columnas
 
         # Verificar columnas esperadas
-        expected_cols = ['column', 'null_count', 'null_percentage']
+        expected_cols = ["column", "null_count", "null_percentage"]
         for col in expected_cols:
-            assert any(col in c or c.endswith(col.split('_')[-1]) for c in summary.columns)
+            assert any(col in c or c.endswith(col.split("_")[-1]) for c in summary.columns)
 
     def test_safe_dict_merge(self):
         """Test fusión segura de diccionarios"""
         from enahopy.null_analysis import safe_dict_merge
 
-        dict1 = {'a': 1, 'b': {'x': 1}}
-        dict2 = {'b': {'y': 2}, 'c': 3}
+        dict1 = {"a": 1, "b": {"x": 1}}
+        dict2 = {"b": {"y": 2}, "c": 3}
 
         result = safe_dict_merge(dict1, dict2)
 
         assert isinstance(result, dict)
-        assert 'a' in result
-        assert 'c' in result
-        assert isinstance(result.get('b'), dict)
+        assert "a" in result
+        assert "c" in result
+        assert isinstance(result.get("b"), dict)
 
 
 class TestIntegrationWorkflows:
@@ -325,29 +326,34 @@ class TestIntegrationWorkflows:
         np.random.seed(42)
         n = 500
 
-        return pd.DataFrame({
-            'ubigeo': [f"{dept:02d}{prov:02d}{dist:02d}"
-                       for dept, prov, dist in zip(
-                    np.random.randint(1, 26, n),
-                    np.random.randint(1, 10, n),
-                    np.random.randint(1, 20, n)
-                )],
-            'conglome': np.random.randint(1, 9999, n),
-            'vivienda': np.random.randint(1, 99, n),
-            'hogar': np.random.randint(1, 5, n),
-            'p207': np.where(np.random.random(n) > 0.98, np.nan,
-                             np.random.choice([1, 2], n)),
-            'p208': np.where(np.random.random(n) > 0.92, np.nan,
-                             np.random.randint(0, 100, n)),
-            'p301a': np.where(np.random.random(n) > 0.85, np.nan,
-                              np.random.choice([1, 2, 3, 4, 5, 6], n)),
-            'ingreso': np.where(np.random.random(n) > 0.60, np.nan,
-                                np.random.lognormal(6.5, 1.5, n)),
-            'gasto': np.where(np.random.random(n) > 0.65, np.nan,
-                              np.random.lognormal(6.2, 1.3, n)),
-            'departamento': np.random.choice(['01', '02', '03', '04', '05'], n),
-            'area': np.random.choice(['1', '2'], n, p=[0.7, 0.3])
-        })
+        return pd.DataFrame(
+            {
+                "ubigeo": [
+                    f"{dept:02d}{prov:02d}{dist:02d}"
+                    for dept, prov, dist in zip(
+                        np.random.randint(1, 26, n),
+                        np.random.randint(1, 10, n),
+                        np.random.randint(1, 20, n),
+                    )
+                ],
+                "conglome": np.random.randint(1, 9999, n),
+                "vivienda": np.random.randint(1, 99, n),
+                "hogar": np.random.randint(1, 5, n),
+                "p207": np.where(np.random.random(n) > 0.98, np.nan, np.random.choice([1, 2], n)),
+                "p208": np.where(np.random.random(n) > 0.92, np.nan, np.random.randint(0, 100, n)),
+                "p301a": np.where(
+                    np.random.random(n) > 0.85, np.nan, np.random.choice([1, 2, 3, 4, 5, 6], n)
+                ),
+                "ingreso": np.where(
+                    np.random.random(n) > 0.60, np.nan, np.random.lognormal(6.5, 1.5, n)
+                ),
+                "gasto": np.where(
+                    np.random.random(n) > 0.65, np.nan, np.random.lognormal(6.2, 1.3, n)
+                ),
+                "departamento": np.random.choice(["01", "02", "03", "04", "05"], n),
+                "area": np.random.choice(["1", "2"], n, p=[0.7, 0.3]),
+            }
+        )
 
     def test_complete_analysis_workflow(self, enaho_like_df):
         """Test flujo completo de análisis"""
@@ -356,7 +362,7 @@ class TestIntegrationWorkflows:
         result = analyzer.analyze(enaho_like_df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
         # 2. Análisis con funciones de conveniencia
         quick_result = analyze_null_patterns(enaho_like_df)
@@ -377,10 +383,7 @@ class TestIntegrationWorkflows:
 
             # 2. Generar reporte independiente
             report_path = Path(tmpdir) / "integration_report"
-            report_result = generate_null_report(
-                enaho_like_df,
-                output_path=str(report_path)
-            )
+            report_result = generate_null_report(enaho_like_df, output_path=str(report_path))
 
             assert report_result is not None
 
@@ -391,18 +394,18 @@ class TestIntegrationWorkflows:
         result = analyzer.analyze(enaho_like_df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
         # Los ubigeos no deberían tener nulos (son identificadores)
-        summary = result['summary']
+        summary = result["summary"]
         # Verificar que el análisis se completó exitosamente
         assert isinstance(summary, dict)
 
     def test_comparative_analysis(self, enaho_like_df):
         """Test análisis comparativo entre subconjuntos"""
         # Dividir por área urbano/rural
-        urban_df = enaho_like_df[enaho_like_df['area'] == '1']
-        rural_df = enaho_like_df[enaho_like_df['area'] == '2']
+        urban_df = enaho_like_df[enaho_like_df["area"] == "1"]
+        rural_df = enaho_like_df[enaho_like_df["area"] == "2"]
 
         # Análisis independientes
         analyzer = ENAHONullAnalyzer()
@@ -412,8 +415,8 @@ class TestIntegrationWorkflows:
 
         assert isinstance(urban_result, dict)
         assert isinstance(rural_result, dict)
-        assert 'summary' in urban_result
-        assert 'summary' in rural_result
+        assert "summary" in urban_result
+        assert "summary" in rural_result
 
 
 class TestErrorHandling:
@@ -435,12 +438,13 @@ class TestErrorHandling:
         """Test con DataFrame muy grande"""
         # Crear DataFrame moderadamente grande
         n = 10000
-        large_df = pd.DataFrame({
-            'col1': np.random.randn(n),
-            'col2': np.where(np.random.random(n) > 0.8, np.nan,
-                             np.random.randint(1, 100, n)),
-            'col3': np.random.choice(['A', 'B', 'C'], n)
-        })
+        large_df = pd.DataFrame(
+            {
+                "col1": np.random.randn(n),
+                "col2": np.where(np.random.random(n) > 0.8, np.nan, np.random.randint(1, 100, n)),
+                "col3": np.random.choice(["A", "B", "C"], n),
+            }
+        )
 
         analyzer = ENAHONullAnalyzer()
 
@@ -450,32 +454,33 @@ class TestErrorHandling:
 
     def test_unicode_column_names(self):
         """Test con nombres de columnas en español/unicode"""
-        df = pd.DataFrame({
-            'año': [2020, 2021, np.nan, 2023],
-            'región': ['Lima', 'Cusco', np.nan, 'Arequipa'],
-            'niños_menores_5años': [1, 0, np.nan, 1],
-            'ingreso_soles': [1000, np.nan, 1500, 2000]
-        })
+        df = pd.DataFrame(
+            {
+                "año": [2020, 2021, np.nan, 2023],
+                "región": ["Lima", "Cusco", np.nan, "Arequipa"],
+                "niños_menores_5años": [1, 0, np.nan, 1],
+                "ingreso_soles": [1000, np.nan, 1500, 2000],
+            }
+        )
 
         analyzer = ENAHONullAnalyzer()
         result = analyzer.analyze(df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
     def test_extreme_null_percentages(self):
         """Test con porcentajes extremos de nulos"""
         # DataFrame con 95% de nulos
-        df_high_nulls = pd.DataFrame({
-            'mostly_null': [np.nan] * 95 + list(range(5)),
-            'some_data': range(100)
-        })
+        df_high_nulls = pd.DataFrame(
+            {"mostly_null": [np.nan] * 95 + list(range(5)), "some_data": range(100)}
+        )
 
         analyzer = ENAHONullAnalyzer()
         result = analyzer.analyze(df_high_nulls, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
 
 class TestPatternDetection:
@@ -490,17 +495,19 @@ class TestPatternDetection:
         # Crear patrón correlacionado: si falta ingreso, falta gasto
         base_missing = np.random.random(n) > 0.7
 
-        return pd.DataFrame({
-            'id': range(n),
-            'ingreso': np.where(base_missing, np.nan,
-                                np.random.lognormal(7, 1.5, n)),
-            'gasto': np.where(base_missing | (np.random.random(n) > 0.9), np.nan,
-                              np.random.lognormal(6.5, 1.2, n)),
-            'edad': np.where(np.random.random(n) > 0.95, np.nan,
-                             np.random.randint(18, 80, n)),
-            'sexo': np.where(np.random.random(n) > 0.98, np.nan,
-                             np.random.choice([1, 2], n))
-        })
+        return pd.DataFrame(
+            {
+                "id": range(n),
+                "ingreso": np.where(base_missing, np.nan, np.random.lognormal(7, 1.5, n)),
+                "gasto": np.where(
+                    base_missing | (np.random.random(n) > 0.9),
+                    np.nan,
+                    np.random.lognormal(6.5, 1.2, n),
+                ),
+                "edad": np.where(np.random.random(n) > 0.95, np.nan, np.random.randint(18, 80, n)),
+                "sexo": np.where(np.random.random(n) > 0.98, np.nan, np.random.choice([1, 2], n)),
+            }
+        )
 
     def test_correlated_missing_detection(self, pattern_df):
         """Test detección de missing correlacionado"""
@@ -508,11 +515,11 @@ class TestPatternDetection:
         result = analyzer.analyze(pattern_df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
         # Si hay detección de patrones disponible, debería estar en el resultado
-        if 'patterns' in result and result['patterns'] != {'error': str}:
-            assert isinstance(result['patterns'], dict)
+        if "patterns" in result and result["patterns"] != {"error": str}:
+            assert isinstance(result["patterns"], dict)
 
         # El análisis básico debe funcionar independientemente
 
@@ -524,17 +531,19 @@ class TestPatternDetection:
         missing_b = missing_a | (np.random.random(n) > 0.7)
         missing_c = missing_b | (np.random.random(n) > 0.6)
 
-        df = pd.DataFrame({
-            'var_a': np.where(missing_a, np.nan, np.random.randn(n)),
-            'var_b': np.where(missing_b, np.nan, np.random.randn(n)),
-            'var_c': np.where(missing_c, np.nan, np.random.randn(n))
-        })
+        df = pd.DataFrame(
+            {
+                "var_a": np.where(missing_a, np.nan, np.random.randn(n)),
+                "var_b": np.where(missing_b, np.nan, np.random.randn(n)),
+                "var_c": np.where(missing_c, np.nan, np.random.randn(n)),
+            }
+        )
 
         analyzer = ENAHONullAnalyzer()
         result = analyzer.analyze(df, generate_report=False)
 
         assert isinstance(result, dict)
-        assert 'summary' in result
+        assert "summary" in result
 
 
 if __name__ == "__main__":

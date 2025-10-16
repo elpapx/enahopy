@@ -13,11 +13,8 @@ y merge entre módulos ENAHO.
 """
 
 from dataclasses import dataclass, field
-
 from enum import Enum
-
 from typing import Any, Dict, List, Optional, Tuple, Union
-
 
 # =====================================================
 
@@ -27,7 +24,61 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class TipoManejoDuplicados(Enum):
-    """Estrategias para manejar duplicados geográficos"""
+    """Strategies for handling duplicate geographic records in UBIGEO-based merges.
+
+    Defines different approaches to resolve situations where multiple records share
+    the same UBIGEO code during geographic data fusion. The choice of strategy
+    significantly impacts merge results and should align with data quality goals.
+
+    Attributes:
+        FIRST: Keep the first occurrence encountered and discard subsequent duplicates.
+            Fast and deterministic but may not preserve the best quality record.
+        LAST: Keep the last occurrence encountered and discard previous duplicates.
+            Useful when later records represent updated or corrected information.
+        ERROR: Raise GeoMergeError when duplicates are detected. Use this for strict
+            validation when duplicates are unexpected and indicate data quality issues.
+        KEEP_ALL: Retain all duplicate records without deduplication. Results in
+            a one-to-many relationship that may inflate record counts.
+        AGGREGATE: Combine duplicate records using specified aggregation functions.
+            Requires funciones_agregacion configuration. Ideal for numerical data.
+        MOST_RECENT: Select the most recent record based on a date/timestamp column.
+            Requires columna_orden_duplicados configuration pointing to date field.
+        BEST_QUALITY: Select the record with the best quality score. Requires
+            columna_calidad configuration with numeric quality indicator.
+
+    Examples:
+        Using FIRST strategy (default):
+
+        >>> from enahopy.merger.config import (
+        ...     GeoMergeConfiguration,
+        ...     TipoManejoDuplicados
+        ... )
+        >>> config = GeoMergeConfiguration(
+        ...     manejo_duplicados=TipoManejoDuplicados.FIRST
+        ... )
+
+        Using AGGREGATE with custom functions:
+
+        >>> config = GeoMergeConfiguration(
+        ...     manejo_duplicados=TipoManejoDuplicados.AGGREGATE,
+        ...     funciones_agregacion={
+        ...         'poblacion': 'sum',
+        ...         'ingreso': 'mean',
+        ...         'area': 'first'
+        ...     }
+        ... )
+
+        Using BEST_QUALITY with quality column:
+
+        >>> config = GeoMergeConfiguration(
+        ...     manejo_duplicados=TipoManejoDuplicados.BEST_QUALITY,
+        ...     columna_calidad='quality_score'
+        ... )
+
+    See Also:
+        - :class:`GeoMergeConfiguration`: Configuration containing duplicate strategy
+        - :class:`~enahopy.merger.geographic.strategies.DuplicateStrategyFactory`: Strategy implementation
+    """
 
     FIRST = "first"
 
@@ -90,7 +141,59 @@ class TipoValidacionUbigeo(Enum):
 
 
 class ModuleMergeLevel(Enum):
-    """Niveles de merge entre módulos ENAHO"""
+    """Hierarchical levels for merging ENAHO survey modules.
+
+    Defines the granularity level at which ENAHO modules should be merged,
+    determining which identification keys are required and how records are matched.
+    The choice of merge level depends on the analytical objective and the structure
+    of the modules being combined.
+
+    Attributes:
+        HOGAR: Household level merge using keys ['conglome', 'vivienda', 'hogar'].
+            Use for combining household-level modules like sumaria (34), housing
+            characteristics (01), or household expenditures (07). Results in one
+            record per household.
+        PERSONA: Person level merge using keys ['conglome', 'vivienda', 'hogar', 'codperso'].
+            Use for combining person-level modules like demographics (02), education
+            (03), health (04), or employment (05). Results in one record per person
+            within each household.
+        VIVIENDA: Dwelling level merge using keys ['conglome', 'vivienda'].
+            Use for combining dwelling-level data that may span multiple households
+            within the same physical structure. Less commonly used than HOGAR or PERSONA.
+
+    Examples:
+        Household-level merge:
+
+        >>> from enahopy.merger import ENAHOGeoMerger
+        >>> from enahopy.merger.config import (
+        ...     ModuleMergeConfig,
+        ...     ModuleMergeLevel
+        ... )
+        >>> config = ModuleMergeConfig(
+        ...     merge_level=ModuleMergeLevel.HOGAR
+        ... )
+        >>> merger = ENAHOGeoMerger(module_config=config)
+        >>> # Merge sumaria + housing modules at household level
+
+        Person-level merge:
+
+        >>> config = ModuleMergeConfig(
+        ...     merge_level=ModuleMergeLevel.PERSONA
+        ... )
+        >>> merger = ENAHOGeoMerger(module_config=config)
+        >>> # Merge demographics + education modules at person level
+
+    Note:
+        - Household-level modules cannot be directly merged at person level without
+          first aggregating or broadcasting the household data
+        - Person-level modules can be aggregated to household level using groupby
+        - The merge level must be compatible with all modules being merged
+
+    See Also:
+        - :class:`ModuleMergeConfig`: Configuration including merge level
+        - :class:`ModuleType`: Module structural types (HOGAR_LEVEL vs PERSONA_LEVEL)
+        - :meth:`~enahopy.merger.ENAHOGeoMerger.validate_module_compatibility`: Check level compatibility
+    """
 
     HOGAR = "hogar"  # Merge a nivel hogar
 
@@ -100,7 +203,72 @@ class ModuleMergeLevel(Enum):
 
 
 class ModuleMergeStrategy(Enum):
-    """Estrategias para manejar conflictos en merge de módulos"""
+    """Strategies for resolving column name conflicts during module merges.
+
+    When merging ENAHO modules, column name conflicts occur if both modules contain
+    columns with the same name (other than merge keys). This enum defines strategies
+    to automatically resolve these conflicts, determining which values to keep in
+    the final merged DataFrame.
+
+    Attributes:
+        KEEP_LEFT: Preserve values from the left (base) DataFrame and discard right values.
+            Use when the left module has priority or more authoritative data.
+        KEEP_RIGHT: Preserve values from the right DataFrame and discard left values.
+            Use when the right module contains updated or more reliable information.
+        COALESCE: Combine values by preferring non-null values: use left value if present,
+            otherwise use right value. Ideal for filling gaps where modules have
+            complementary coverage (left module: 70% complete, right module: fills remaining 30%).
+        AVERAGE: Calculate the arithmetic mean of numeric values from both columns.
+            Non-numeric columns fall back to COALESCE. Use when both modules provide
+            independent measurements of the same variable.
+        CONCATENATE: Concatenate string values with " | " separator when values differ.
+            Use for textual fields where combining information is valuable (e.g., comments).
+            Numeric columns fall back to COALESCE.
+        ERROR: Raise ConflictResolutionError if any conflicts are detected. Use for
+            strict validation when conflicts indicate data quality issues or require
+            manual resolution.
+
+    Examples:
+        Using COALESCE (default) to fill gaps:
+
+        >>> from enahopy.merger.config import (
+        ...     ModuleMergeConfig,
+        ...     ModuleMergeStrategy
+        ... )
+        >>> config = ModuleMergeConfig(
+        ...     merge_strategy=ModuleMergeStrategy.COALESCE
+        ... )
+        >>> # Left module has ingreso=2000, area=NaN
+        >>> # Right module has ingreso=NaN, area=50
+        >>> # Result: ingreso=2000, area=50
+
+        Using AVERAGE for numerical reconciliation:
+
+        >>> config = ModuleMergeConfig(
+        ...     merge_strategy=ModuleMergeStrategy.AVERAGE
+        ... )
+        >>> # Left module has gasto=1000
+        >>> # Right module has gasto=1200
+        >>> # Result: gasto=1100
+
+        Strict validation with ERROR:
+
+        >>> config = ModuleMergeConfig(
+        ...     merge_strategy=ModuleMergeStrategy.ERROR
+        ... )
+        >>> # Any conflict raises ConflictResolutionError
+
+    Note:
+        - Conflict resolution only applies to overlapping column names
+        - Merge keys are never considered conflicts
+        - Strategy applies globally to all conflicting columns
+        - AVERAGE and CONCATENATE have type-specific fallback behavior
+
+    See Also:
+        - :class:`ModuleMergeConfig`: Configuration including conflict strategy
+        - :exc:`~enahopy.merger.exceptions.ConflictResolutionError`: Raised by ERROR strategy
+        - :meth:`~enahopy.merger.modules.merger.ENAHOModuleMerger.merge_modules`: Uses strategy
+    """
 
     KEEP_LEFT = "keep_left"  # Mantener valores del DataFrame izquierdo
 
@@ -136,7 +304,124 @@ class ModuleType(Enum):
 
 @dataclass
 class GeoMergeConfiguration:
-    """Configuración completa para operaciones de fusión geográfica"""
+    """Complete configuration for geographic data fusion operations.
+
+    Comprehensive configuration dataclass controlling all aspects of geographic
+    merging including UBIGEO validation, duplicate handling, territorial
+    consistency checks, and performance optimization. Provides fine-grained
+    control over merge behavior and data quality requirements.
+
+    Attributes:
+        columna_union: Name of the column containing UBIGEO codes for joining
+            geographic and survey data. Must exist in both DataFrames. Defaults
+            to "ubigeo".
+        manejo_duplicados: Strategy for handling duplicate UBIGEOs in geographic
+            data. See TipoManejoDuplicados for options. Defaults to FIRST (keep
+            first occurrence).
+        manejo_errores: Error handling strategy when validation fails. COERCE
+            attempts to fix issues, RAISE stops execution, IGNORE continues with
+            warnings. Defaults to COERCE.
+        valor_faltante: Value to use for missing geographic information after merge.
+            Can be string or numeric. Records without geographic match will have
+            this value. Defaults to "DESCONOCIDO".
+        validar_formato_ubigeo: If True, validates UBIGEO format (2/4/6 digits) and
+            structure before merge. Recommended for data quality assurance. Defaults
+            to True.
+        tipo_validacion_ubigeo: Level of UBIGEO validation. BASIC checks format only,
+            STRUCTURAL validates hierarchical consistency, EXISTENCE checks against
+            official catalog. Defaults to STRUCTURAL.
+        validar_consistencia_territorial: If True, validates that province codes
+            belong to departments and districts belong to provinces. Computationally
+            intensive for large datasets. Defaults to True.
+        validar_coordenadas: If True, validates geographic coordinates (lat, lon)
+            for valid ranges and missing values. Only applies if coordinate columns
+            are present. Defaults to False.
+        generar_reporte_calidad: If True, generates detailed quality report including
+            coverage metrics, validation results, and recommendations. Defaults to True.
+        reporte_duplicados: If True, includes duplicate analysis in quality report.
+            Defaults to True.
+        mostrar_estadisticas: If True, displays merge statistics including record
+            counts, coverage percentage, and quality scores. Defaults to True.
+        funciones_agregacion: Dictionary mapping column names to aggregation functions
+            for AGGREGATE duplicate strategy. Example: {'poblacion': 'sum', 'ingreso': 'mean'}.
+            Required when manejo_duplicados is AGGREGATE. Defaults to None.
+        sufijo_duplicados: Suffix to append to duplicate column names. Defaults to "_dup".
+        columna_orden_duplicados: Column name for ordering duplicates when using
+            MOST_RECENT strategy. Must contain sortable values (dates, timestamps).
+            Defaults to None.
+        columna_calidad: Column name containing quality scores for BEST_QUALITY
+            strategy. Must contain numeric values where higher means better quality.
+            Defaults to None.
+        usar_cache: If True, caches validation results and geographic lookups for
+            repeated operations. Improves performance for iterative workflows.
+            Defaults to True.
+        optimizar_memoria: If True, enables memory optimization for large datasets
+            including chunked processing and dtype optimization. Defaults to True.
+        chunk_size: Number of records per chunk when processing large DataFrames.
+            Only used if optimizar_memoria is True. Defaults to 50000.
+        nivel_territorial_objetivo: Target territorial level for merge (DEPARTAMENTO,
+            PROVINCIA, DISTRITO). Determines UBIGEO validation requirements. Defaults
+            to DISTRITO (most granular).
+        incluir_niveles_superiores: If True, includes higher territorial levels
+            (e.g., when merging at distrito level, include provincia and departamento
+            columns). Defaults to True.
+        prefijo_columnas: Prefix to add to geographic column names in result
+            (e.g., "geo_" produces "geo_departamento"). Defaults to "" (no prefix).
+        sufijo_columnas: Suffix to add to geographic column names in result
+            (e.g., "_ref" produces "departamento_ref"). Defaults to "" (no suffix).
+
+    Examples:
+        Basic configuration with defaults:
+
+        >>> from enahopy.merger.config import GeoMergeConfiguration
+        >>> config = GeoMergeConfiguration()
+        >>> # Uses FIRST for duplicates, COERCE for errors, validates UBIGEO
+
+        Custom configuration for aggregation:
+
+        >>> config = GeoMergeConfiguration(
+        ...     columna_union='cod_ubigeo',
+        ...     manejo_duplicados=TipoManejoDuplicados.AGGREGATE,
+        ...     funciones_agregacion={
+        ...         'poblacion_total': 'sum',
+        ...         'ingreso_promedio': 'mean',
+        ...         'area_urbana': 'first'
+        ...     },
+        ...     validar_formato_ubigeo=True,
+        ...     generar_reporte_calidad=True
+        ... )
+
+        Memory-optimized configuration for large datasets:
+
+        >>> config = GeoMergeConfiguration(
+        ...     optimizar_memoria=True,
+        ...     chunk_size=100000,
+        ...     validar_consistencia_territorial=False,  # Skip expensive validation
+        ...     usar_cache=True
+        ... )
+
+        Strict validation configuration:
+
+        >>> config = GeoMergeConfiguration(
+        ...     manejo_duplicados=TipoManejoDuplicados.ERROR,
+        ...     manejo_errores=TipoManejoErrores.RAISE,
+        ...     validar_formato_ubigeo=True,
+        ...     validar_consistencia_territorial=True,
+        ...     validar_coordenadas=True
+        ... )
+
+    Note:
+        - Configuration objects are immutable after creation (frozen dataclass)
+        - Some strategies require additional configuration (e.g., AGGREGATE needs funciones_agregacion)
+        - Validation can be computationally expensive for datasets >100K records
+        - Memory optimization recommended for datasets >500MB
+
+    See Also:
+        - :class:`TipoManejoDuplicados`: Duplicate handling strategies
+        - :class:`TipoManejoErrores`: Error handling modes
+        - :class:`NivelTerritorial`: Territorial levels
+        - :class:`~enahopy.merger.ENAHOGeoMerger`: Main merger using this configuration
+    """
 
     # Configuración básica
 
@@ -208,6 +493,15 @@ class ModuleMergeConfig:
     allow_partial_matches: bool = False
 
     suffix_conflicts: Tuple[str, str] = ("_x", "_y")
+
+    # ====== OPTIMIZACIÓN: Merge type parametrizable ======
+    merge_type: str = "left"  # "left", "outer", "inner", "right"
+
+    # ====== OPTIMIZACIÓN: Validación post-merge ======
+    validate_cardinality: bool = True  # Validar que merge no infle filas inesperadamente
+
+    # ====== OPTIMIZACIÓN: Performance ======
+    use_validation_cache: bool = True  # Cachear validaciones costosas
 
     # Columnas de identificación por nivel
 
@@ -387,6 +681,9 @@ class ModuleMergeResult:
 
     quality_score: float
 
+    # ====== OPTIMIZACIÓN: Métricas de merge ======
+    merge_metrics: Optional[Dict[str, Any]] = None  # Métricas detalladas de performance y calidad
+
     def get_summary_report(self) -> str:
         """Genera reporte resumido del merge de módulos"""
 
@@ -405,6 +702,20 @@ class ModuleMergeResult:
             f"No coincidentes izq: {self.unmatched_left:,}",
             f"No coincidentes der: {self.unmatched_right:,}",
         ]
+
+        # ====== OPTIMIZACIÓN: Mostrar métricas si existen ======
+        if self.merge_metrics:
+            report.append("\n📊 Métricas de Performance:")
+            if "time_elapsed" in self.merge_metrics:
+                report.append(f"  Tiempo: {self.merge_metrics['time_elapsed']:.2f}s")
+            if "memory_peak_mb" in self.merge_metrics:
+                report.append(f"  Memoria pico: {self.merge_metrics['memory_peak_mb']:.1f} MB")
+            if "match_rate" in self.merge_metrics:
+                report.append(f"  Tasa de match: {self.merge_metrics['match_rate']:.1%}")
+            if "cardinality_change" in self.merge_metrics:
+                change = self.merge_metrics["cardinality_change"]
+                symbol = "✅" if abs(change - 1.0) < 0.01 else "⚠️"
+                report.append(f"  Factor de cardinalidad: {change:.2f}x {symbol}")
 
         if self.validation_warnings:
 
