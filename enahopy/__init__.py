@@ -9,7 +9,7 @@ Estadística e Informática (INEI) del Perú.
 Implementa lazy loading para optimizar tiempo de carga inicial.
 """
 
-from typing import Any
+from typing import Any, Dict
 
 # Version info
 __version__ = "0.5.0"
@@ -285,7 +285,7 @@ def show_status(verbose: bool = True) -> None:
         print(f"   - Performance Benchmarks: {'[OK]' if _performance_available else '[X]'}")
 
 
-def get_available_components() -> dict[str, bool]:
+def get_available_components() -> Dict[str, bool]:
     """
     Return status of components.
 

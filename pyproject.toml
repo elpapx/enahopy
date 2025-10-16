@@ -57,6 +57,7 @@ dev = [
     "pytest-timeout>=2.1.0",  # Test timeouts
     "pytest-mock>=3.10.0",  # Mocking utilities
     "responses>=0.22.0",  # HTTP request mocking
+    "psutil>=5.9.0",  # System and process monitoring
 
     # Code quality
     "black>=23.0.0",
