@@ -38,25 +38,18 @@ def check_imports():
     base_path = Path("null_analysis")
 
     if base_path.exists():
-
         for item in base_path.iterdir():
-
             if item.is_file() and item.suffix == ".py":
-
                 print(f"  📄 {item.name}")
 
             elif item.is_dir() and not item.name.startswith("__"):
-
                 print(f"  📁 {item.name}/")
 
                 for subitem in item.iterdir():
-
                     if subitem.suffix == ".py":
-
                         print(f"      📄 {subitem.name}")
 
     else:
-
         print("  ❌ Directorio null_analysis no encontrado")
 
     # 2. Verificar imports principales
@@ -66,63 +59,51 @@ def check_imports():
     print("-" * 40)
 
     try:
-
         from null_analysis import NullAnalysisError
 
         print("  ✅ from null_analysis import NullAnalysisError")
 
     except ImportError as e:
-
         print(f"  ❌ from null_analysis import NullAnalysisError - Error: {e}")
 
     try:
-
         from null_analysis.exceptions import NullAnalysisError
 
         print("  ✅ from null_analysis.exceptions import NullAnalysisError")
 
     except ImportError as e:
-
         print(f"  ❌ from null_analysis.exceptions import NullAnalysisError - Error: {e}")
 
     try:
-
         from null_analysis import InputValidator
 
         print("  ✅ from null_analysis import InputValidator")
 
     except ImportError as e:
-
         print(f"  ❌ from null_analysis import InputValidator - Error: {e}")
 
     try:
-
         from null_analysis.utils import InputValidator
 
         print("  ✅ from null_analysis.utils import InputValidator")
 
     except ImportError as e:
-
         print(f"  ❌ from null_analysis.utils import InputValidator - Error: {e}")
 
     try:
-
         from null_analysis.utils.utils import InputValidator
 
         print("  ✅ from null_analysis.utils.utils import InputValidator")
 
     except ImportError as e:
-
         print(f"  ❌ from null_analysis.utils.utils import InputValidator - Error: {e}")
 
     try:
-
         from null_analysis import safe_dict_merge
 
         print("  ✅ from null_analysis import safe_dict_merge")
 
     except ImportError as e:
-
         print(f"  ❌ from null_analysis import safe_dict_merge - Error: {e}")
 
     # 3. Verificar qué hay en __init__.py principal
@@ -134,9 +115,7 @@ def check_imports():
     init_file = Path("null_analysis/__init__.py")
 
     if init_file.exists():
-
         with open(init_file, "r", encoding="utf-8") as f:
-
             lines = f.readlines()
 
         # Buscar __all__
@@ -144,21 +123,16 @@ def check_imports():
         in_all = False
 
         for line in lines:
-
             if "__all__" in line:
-
                 in_all = True
 
             if in_all:
-
                 print(f"  {line.strip()}")
 
                 if "]" in line:
-
                     break
 
     else:
-
         print("  ❌ Archivo __init__.py no encontrado")
 
     # 4. Verificar ubicación de utils
@@ -172,13 +146,11 @@ def check_imports():
     utils_dir = Path("null_analysis/utils")
 
     if utils_file.exists():
-
         print("  ✅ utils.py está en null_analysis/utils.py")
 
         print("     -> Usar: from null_analysis.utils import ...")
 
     if utils_dir.exists() and utils_dir.is_dir():
-
         print("  ✅ utils/ es un directorio")
 
         utils_init = utils_dir / "__init__.py"
@@ -186,11 +158,9 @@ def check_imports():
         utils_utils = utils_dir / "utils.py"
 
         if utils_init.exists():
-
             print("     📄 utils/__init__.py existe")
 
         if utils_utils.exists():
-
             print("     📄 utils/utils.py existe")
 
             print("     -> Usar: from null_analysis.utils.utils import ...")
@@ -273,42 +243,34 @@ def test_actual_imports():
     ]
 
     for import_str in imports_to_test:
-
         try:
-
             exec(import_str)
 
             working_imports.append(import_str)
 
         except ImportError:
-
             failed_imports.append(import_str)
 
     print("\n✅ IMPORTS QUE FUNCIONAN:")
 
     for imp in working_imports:
-
         print(f"   {imp}")
 
     if failed_imports:
-
         print("\n❌ IMPORTS QUE FALLAN:")
 
         for imp in failed_imports:
-
             print(f"   {imp}")
 
     # Sugerir el import correcto
 
     if working_imports:
-
         print("\n💡 USA ESTE IMPORT EN TUS TESTS:")
 
         print(f"   {working_imports[0]}")
 
 
 if __name__ == "__main__":
-
     # Agregar el directorio actual al path
 
     sys.path.insert(0, os.getcwd())

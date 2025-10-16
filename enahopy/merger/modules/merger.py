@@ -132,7 +132,6 @@ class ENAHOModuleMerger:
     """
 
     def __init__(self, config: ModuleMergeConfig, logger: logging.Logger):
-
         self.config = config
 
         self.logger = logger
@@ -316,11 +315,9 @@ class ENAHOModuleMerger:
         # ====== FIX 1: Validación temprana de DataFrames vacíos ======
 
         if left_df is None or left_df.empty:
-
             self.logger.warning(f"⚠️ Módulo {left_module} está vacío o es None")
 
             if right_df is None or right_df.empty:
-
                 # Ambos vacíos
 
                 return ModuleMergeResult(
@@ -346,7 +343,6 @@ class ENAHOModuleMerger:
             )
 
         if right_df is None or right_df.empty:
-
             self.logger.warning(f"⚠️ Módulo {right_module} está vacío o es None")
 
             # Solo right vacío, retornar left
@@ -406,7 +402,6 @@ class ENAHOModuleMerger:
             )
 
         if not compatibility.get("compatible", False):
-
             raise IncompatibleModulesError(
                 compatibility.get("error", "Módulos incompatibles"),
                 module1=left_module,
@@ -423,7 +418,6 @@ class ENAHOModuleMerger:
         type_issues = self._validate_data_types_compatibility(left_df, right_df, merge_keys)
 
         if type_issues:
-
             validation_warnings.extend([f"Tipo incompatible en {issue}" for issue in type_issues])
 
             # Intentar armonizar tipos
@@ -435,7 +429,6 @@ class ENAHOModuleMerger:
         cardinality_warning = self._detect_and_warn_cardinality(left_df, right_df, merge_keys)
 
         if cardinality_warning:
-
             validation_warnings.append(cardinality_warning)
 
         # 4. Preparar DataFrames para merge (con manejo robusto)
@@ -564,7 +557,6 @@ class ENAHOModuleMerger:
         # Validar módulo base
 
         if base_module not in modules_dict:
-
             # Intentar seleccionar automáticamente
 
             base_module = self._select_best_base_module(modules_dict)
@@ -574,7 +566,6 @@ class ENAHOModuleMerger:
         # Validar que el módulo base no esté vacío
 
         if modules_dict[base_module] is None or modules_dict[base_module].empty:
-
             raise ValueError(f"Módulo base '{base_module}' está vacío")
 
         # Iniciar con módulo base
@@ -598,9 +589,7 @@ class ENAHOModuleMerger:
         # Merge secuencial con gestión de memoria
 
         for module_code in merge_order:
-
             if module_code == base_module:
-
                 continue
 
             self.logger.info(f"🔗 Agregando módulo {module_code}")
@@ -608,7 +597,6 @@ class ENAHOModuleMerger:
             # Verificar si el módulo está vacío
 
             if modules_dict[module_code] is None or modules_dict[module_code].empty:
-
                 self.logger.warning(f"⚠️ Módulo {module_code} vacío, omitiendo")
 
                 all_warnings.append(f"Módulo {module_code} vacío")
@@ -616,7 +604,6 @@ class ENAHOModuleMerger:
                 continue
 
             try:
-
                 # Guardar referencia al DataFrame anterior
 
                 prev_df = result_df
@@ -644,21 +631,17 @@ class ENAHOModuleMerger:
                 del prev_df
 
                 if len(result_df) > 100000:  # Si el dataset es grande
-
                     gc.collect()
 
             except Exception as e:
-
                 self.logger.error(f"❌ Error fusionando módulo {module_code}: {str(e)}")
 
                 all_warnings.append(f"Error en módulo {module_code}: {str(e)}")
 
                 if merge_config and merge_config.continue_on_error:
-
                     continue
 
                 else:
-
                     raise
 
         # Calcular calidad promedio
@@ -699,19 +682,15 @@ class ENAHOModuleMerger:
         """Obtiene llaves de merge según el nivel"""
 
         if level == ModuleMergeLevel.HOGAR:
-
             return self.config.hogar_keys
 
         elif level == ModuleMergeLevel.PERSONA:
-
             return self.config.persona_keys
 
         elif level == ModuleMergeLevel.VIVIENDA:
-
             return self.config.vivienda_keys
 
         else:
-
             raise ValueError(f"Nivel de merge no soportado: {level}")
 
     def _prepare_for_merge_robust(
@@ -735,7 +714,6 @@ class ENAHOModuleMerger:
         missing_keys = [key for key in merge_keys if key not in df_clean.columns]
 
         if missing_keys:
-
             raise MergeKeyError(
                 f"{prefix}: llaves faltantes para merge", missing_keys=missing_keys, invalid_keys=[]
             )
@@ -794,7 +772,6 @@ class ENAHOModuleMerger:
         after_clean = len(df_clean)
 
         if before_clean != after_clean:
-
             self.logger.warning(
                 f"{prefix}: {before_clean - after_clean} registros eliminados "
                 f"por tener todas las llaves nulas"
@@ -806,7 +783,6 @@ class ENAHOModuleMerger:
         """Analiza estadísticas del merge"""
 
         if "_merge" not in merged_df.columns:
-
             return {
                 "both": len(merged_df),
                 "left_only": 0,
@@ -848,25 +824,19 @@ class ENAHOModuleMerger:
         conflict_columns = set()
 
         for pattern in suffix_patterns:
-
             for col in df.columns:
-
                 if col.endswith(pattern[0]):
-
                     base_name = col[: -len(pattern[0])]
 
                     right_col = base_name + pattern[1]
 
                     if right_col in df.columns:
-
                         conflict_columns.add((col, right_col, base_name))
 
         # Resolver cada conflicto
 
         for left_col, right_col, base_name in conflict_columns:
-
             try:
-
                 # ====== FIX: Manejo especial para columnas categóricas ======
                 left_is_categorical = isinstance(df[left_col].dtype, pd.CategoricalDtype)
                 right_is_categorical = isinstance(df[right_col].dtype, pd.CategoricalDtype)
@@ -880,31 +850,24 @@ class ENAHOModuleMerger:
                     self.logger.debug(f"Convertidas columnas categóricas a object: {base_name}")
 
                 if strategy == ModuleMergeStrategy.COALESCE:
-
                     df[base_name] = df[left_col].fillna(df[right_col])
 
                 elif strategy == ModuleMergeStrategy.KEEP_LEFT:
-
                     df[base_name] = df[left_col]
 
                 elif strategy == ModuleMergeStrategy.KEEP_RIGHT:
-
                     df[base_name] = df[right_col]
 
                 elif strategy == ModuleMergeStrategy.AVERAGE:
-
                     if pd.api.types.is_numeric_dtype(df[left_col]):
-
                         # Promedio ignorando NaN
 
                         df[base_name] = df[[left_col, right_col]].mean(axis=1, skipna=True)
 
                     else:
-
                         df[base_name] = df[left_col].fillna(df[right_col])
 
                 elif strategy == ModuleMergeStrategy.CONCATENATE:
-
                     # Concatenar strings no nulos
 
                     left_str = df[left_col].fillna("").astype(str)
@@ -918,7 +881,6 @@ class ENAHOModuleMerger:
                     df[base_name] = combined.str.strip(" |").replace("", np.nan)
 
                 elif strategy == ModuleMergeStrategy.ERROR:
-
                     # Verificar si realmente hay conflictos
 
                     conflicts_mask = (
@@ -928,7 +890,6 @@ class ENAHOModuleMerger:
                     )
 
                     if conflicts_mask.any():
-
                         n_conflicts = conflicts_mask.sum()
 
                         sample_conflicts = df[conflicts_mask][[left_col, right_col]].head(3)
@@ -940,7 +901,6 @@ class ENAHOModuleMerger:
                         )
 
                     else:
-
                         df[base_name] = df[left_col].fillna(df[right_col])
 
                 # Eliminar columnas con sufijos
@@ -950,17 +910,14 @@ class ENAHOModuleMerger:
                 conflicts_resolved += 1
 
             except ConflictResolutionError:  # relanza sin atrapar
-
                 raise
 
             except Exception as e:
-
                 self.logger.error(f"Error resolviendo conflicto en {base_name}: {str(e)}")
 
                 # Mantener columna izquierda como fallback
 
                 if left_col in df.columns:
-
                     df[base_name] = df[left_col]
 
                     df.drop([left_col, right_col], axis=1, inplace=True, errors="ignore")
@@ -975,7 +932,6 @@ class ENAHOModuleMerger:
         # Eliminar columna indicadora
 
         if "_merge" in df_clean.columns:
-
             df_clean.drop("_merge", axis=1, inplace=True)
 
         # Reordenar columnas: llaves primero
@@ -1004,7 +960,6 @@ class ENAHOModuleMerger:
         # FIX: Verificar división por cero
 
         if total == 0:
-
             self.logger.warning("Total de registros es 0, retornando score 0")
 
             return 0.0
@@ -1028,21 +983,17 @@ class ENAHOModuleMerger:
         compatibility_bonus = 0
 
         if compatibility_info:
-
             rate1 = compatibility_info.get("match_rate_module1", 0)
 
             rate2 = compatibility_info.get("match_rate_module2", 0)
 
             if rate1 and rate2:  # Verificar que no sean None
-
                 avg_compatibility = (rate1 + rate2) / 2
 
                 if avg_compatibility > 90:
-
                     compatibility_bonus = 5
 
                 elif avg_compatibility > 70:
-
                     compatibility_bonus = 2
 
         # Calcular score final
@@ -1067,7 +1018,6 @@ class ENAHOModuleMerger:
         # Verificar DataFrame vacío
 
         if df is None or df.empty:
-
             return 0.0
 
         # Verificar dimensiones
@@ -1075,7 +1025,6 @@ class ENAHOModuleMerger:
         n_rows, n_cols = df.shape
 
         if n_rows == 0 or n_cols == 0:
-
             return 0.0
 
         # Calcular completitud
@@ -1093,7 +1042,6 @@ class ENAHOModuleMerger:
         duplicate_penalty = 0
 
         if key_cols and len(df) > 0:
-
             duplicates = df.duplicated(subset=key_cols, keep="first").sum()
 
             duplicate_penalty = (duplicates / len(df)) * 20
@@ -1124,9 +1072,7 @@ class ENAHOModuleMerger:
         incompatible = []
 
         for key in merge_keys:
-
             if key in df1.columns and key in df2.columns:
-
                 type1 = df1[key].dtype
 
                 type2 = df2[key].dtype
@@ -1134,7 +1080,6 @@ class ENAHOModuleMerger:
                 # Verificar compatibilidad básica
 
                 if type1 != type2:
-
                     # Permitir ciertas conversiones automáticas
 
                     compatible_pairs = [
@@ -1148,7 +1093,6 @@ class ENAHOModuleMerger:
                     reverse_pair = (str(type2), str(type1))
 
                     if type_pair not in compatible_pairs and reverse_pair not in compatible_pairs:
-
                         incompatible.append(f"{key} ({type1} vs {type2})")
 
         return incompatible
@@ -1167,19 +1111,15 @@ class ENAHOModuleMerger:
         """
 
         for key in merge_keys:
-
             if key in df1.columns and key in df2.columns:
-
                 type1 = df1[key].dtype
 
                 type2 = df2[key].dtype
 
                 if type1 != type2:
-
                     # Intentar conversión a string como tipo común
 
                     try:
-
                         df1[key] = df1[key].astype(str)
 
                         df2[key] = df2[key].astype(str)
@@ -1187,7 +1127,6 @@ class ENAHOModuleMerger:
                         self.logger.info(f"✅ Tipos armonizados para columna '{key}'")
 
                     except Exception as e:
-
                         self.logger.warning(f"⚠️ No se pudo armonizar tipos para '{key}': {e}")
 
     def _detect_and_warn_cardinality(
@@ -1206,7 +1145,6 @@ class ENAHOModuleMerger:
         """
 
         try:
-
             # Obtener combinaciones únicas de llaves
 
             df1_keys = df1[merge_keys].drop_duplicates()
@@ -1222,19 +1160,15 @@ class ENAHOModuleMerger:
             # Detectar tipo de relación
 
             if is_df1_unique and is_df2_unique:
-
                 return None  # Uno a uno, ideal
 
             elif is_df1_unique and not is_df2_unique:
-
                 return "Relación uno-a-muchos detectada (left único, right duplicado)"
 
             elif not is_df1_unique and is_df2_unique:
-
                 return "Relación muchos-a-uno detectada (left duplicado, right único)"
 
             else:
-
                 # Muchos a muchos - potencialmente problemático
 
                 # ====== OPTIMIZACIÓN DE-3: Sampling inteligente para estimar cardinalidad ======
@@ -1264,7 +1198,6 @@ class ENAHOModuleMerger:
                     common_count = len(common_keys)
 
                 if common_count > 0:
-
                     avg_duplicates_df1 = len(df1) / len(df1_keys)
 
                     avg_duplicates_df2 = len(df2) / len(df2_keys)
@@ -1277,7 +1210,6 @@ class ENAHOModuleMerger:
 
                     # Solo advertir si explosión es significativa (>2x cualquier lado)
                     if estimated_size > len(df1) * 2 or estimated_size > len(df2) * 2:
-
                         return (
                             f"⚠️ Relación muchos-a-muchos detectada. "
                             f"Merge podría resultar en ~{estimated_size:,.0f} registros "
@@ -1287,7 +1219,6 @@ class ENAHOModuleMerger:
                 return "Relación muchos-a-muchos detectada"
 
         except Exception as e:
-
             self.logger.debug(f"Error detectando cardinalidad: {e}")
 
             return None
@@ -1329,13 +1260,11 @@ class ENAHOModuleMerger:
         # Para datasets grandes, usar merge por chunks
 
         if total_size > 500000:
-
             self.logger.info("📊 Usando merge optimizado para dataset grande")
 
             return self._merge_large_datasets(left_df, right_df, merge_keys, suffixes)
 
         else:
-
             # Merge estándar para datasets pequeños
             # ====== OPTIMIZACIÓN: Usar merge_type de configuración ======
             merge_type = self.config.merge_type if hasattr(self.config, "merge_type") else "left"
@@ -1368,15 +1297,12 @@ class ENAHOModuleMerger:
         # Si right_df es pequeño, hacer merge directo por chunks de left_df
 
         if len(right_df) < 100000:
-
             chunks = []
 
             total_chunks = (len(left_df) // chunk_size) + 1
 
             for i, start in enumerate(range(0, len(left_df), chunk_size)):
-
                 if i % 5 == 0:  # Log cada 5 chunks
-
                     self.logger.debug(f"Procesando chunk {i+1}/{total_chunks}")
 
                 chunk = left_df.iloc[start : start + chunk_size]
@@ -1400,7 +1326,6 @@ class ENAHOModuleMerger:
                 result["_merge"] = "both"
 
         else:
-
             # Ambos DataFrames son grandes - usar estrategia diferente
             # ====== OPTIMIZACIÓN: Usar merge_type de configuración ======
 
@@ -1428,13 +1353,10 @@ class ENAHOModuleMerger:
         # Buscar por prioridad
 
         for module in priority_modules:
-
             if module in modules_dict:
-
                 df = modules_dict[module]
 
                 if df is not None and not df.empty:
-
                     return module
 
         # Si no hay módulos prioritarios, usar el más grande
@@ -1442,7 +1364,6 @@ class ENAHOModuleMerger:
         valid_modules = {k: v for k, v in modules_dict.items() if v is not None and not v.empty}
 
         if not valid_modules:
-
             raise ValueError("No hay módulos válidos para merge")
 
         return max(valid_modules.keys(), key=lambda k: len(valid_modules[k]))
@@ -1573,11 +1494,9 @@ class ENAHOModuleMerger:
         # Análisis por módulo
 
         for module, df in modules_dict.items():
-
             # Verificar si el módulo está vacío
 
             if df is None or df.empty:
-
                 analysis["modules_empty"].append(module)
 
                 analysis["potential_issues"].append(f"Módulo {module} está vacío")
@@ -1610,7 +1529,6 @@ class ENAHOModuleMerger:
             missing_keys = [key for key in merge_keys if key not in df.columns]
 
             if missing_keys:
-
                 analysis["potential_issues"].append(
                     f"Módulo {module}: llaves faltantes {missing_keys}"
                 )
@@ -1622,7 +1540,6 @@ class ENAHOModuleMerger:
             # Analizar calidad de llaves si existen
 
             if not missing_keys:
-
                 key_df = df[merge_keys].copy()
 
                 # Analizar nulos en llaves
@@ -1630,7 +1547,6 @@ class ENAHOModuleMerger:
                 null_counts = key_df.isnull().sum()
 
                 if null_counts.any():
-
                     analysis["potential_issues"].append(
                         f"Módulo {module}: valores nulos en llaves {null_counts[null_counts > 0].to_dict()}"
                     )
@@ -1657,7 +1573,6 @@ class ENAHOModuleMerger:
         # Verificar si hay módulos válidos
 
         if valid_modules == 0:
-
             analysis["feasible"] = False
 
             analysis["potential_issues"].append("No hay módulos válidos para merge")
@@ -1675,11 +1590,9 @@ class ENAHOModuleMerger:
         # Generar recomendaciones
 
         if analysis["feasible"]:
-
             # Recomendaciones de memoria
 
             if analysis["memory_estimate_mb"] > 1000:  # Más de 1GB
-
                 analysis["recommendations"].append(
                     f"⚠️ Merge requiere ~{analysis['memory_estimate_mb']:.0f} MB. "
                     f"Considere procesamiento por chunks o liberar memoria antes del merge."
@@ -1692,10 +1605,8 @@ class ENAHOModuleMerger:
             ]
 
             if large_modules:
-
                 analysis["recommendations"].append(
-                    f"📊 Módulos grandes detectados: {large_modules}. "
-                    f"El merge podría ser lento."
+                    f"📊 Módulos grandes detectados: {large_modules}. " f"El merge podría ser lento."
                 )
 
             # Recomendaciones por duplicación
@@ -1707,7 +1618,6 @@ class ENAHOModuleMerger:
             ]
 
             if high_dup_modules:
-
                 analysis["recommendations"].append(
                     f"🔄 Alta duplicación en: {high_dup_modules}. "
                     f"Considere estrategia 'AGGREGATE' o deduplicación previa."
@@ -1716,7 +1626,6 @@ class ENAHOModuleMerger:
             # Recomendación de orden de merge
 
             if valid_modules > 3:
-
                 analysis["recommendations"].append(
                     "💡 Con múltiples módulos, procese del más pequeño al más grande "
                     "para optimizar memoria."
@@ -1725,7 +1634,6 @@ class ENAHOModuleMerger:
             # Advertencia sobre módulos vacíos
 
             if analysis["modules_empty"]:
-
                 analysis["recommendations"].append(
                     f"ℹ️ Módulos vacíos serán omitidos: {analysis['modules_empty']}"
                 )
@@ -1770,13 +1678,11 @@ class ENAHOModuleMerger:
         valid_modules = {k: v for k, v in modules_dict.items() if v is not None and not v.empty}
 
         if not valid_modules:
-
             plan["warnings"].append("No hay módulos válidos para merge")
 
             return plan
 
         if target_module not in valid_modules:
-
             target_module = self._select_best_base_module(valid_modules)
 
             plan["base_module"] = target_module
@@ -1798,7 +1704,6 @@ class ENAHOModuleMerger:
         cumulative_size = len(valid_modules[target_module])
 
         for i, (module, size) in enumerate(other_modules):
-
             step = {
                 "step": i + 1,
                 "action": f"Merge {module} con resultado acumulado",
@@ -1822,17 +1727,14 @@ class ENAHOModuleMerger:
         # Agregar optimizaciones sugeridas
 
         if len(valid_modules) > 5:
-
             plan["optimizations"].append("💡 Considere merge paralelo o por grupos para >5 módulos")
 
         if total_rows > 1000000:
-
             plan["optimizations"].append("📊 Dataset grande: active modo chunk_processing=True")
 
             plan["optimizations"].append("💾 Libere memoria entre merges con gc.collect()")
 
         if any(len(df) > 500000 for df in valid_modules.values()):
-
             plan["optimizations"].append(
                 "⚡ Use format='parquet' para mejor performance con datasets grandes"
             )
@@ -1842,7 +1744,6 @@ class ENAHOModuleMerger:
         modules_empty = [k for k in modules_dict if k not in valid_modules]
 
         if modules_empty:
-
             plan["warnings"].append(f"Módulos vacíos excluidos: {modules_empty}")
 
         return plan

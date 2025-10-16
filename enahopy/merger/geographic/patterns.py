@@ -22,7 +22,6 @@ class GeoPatternDetector:
     """Detector de patrones geográficos en datasets INEI"""
 
     def __init__(self, logger: logging.Logger):
-
         self.logger = logger
 
         self._detection_cache = {}
@@ -55,7 +54,6 @@ class GeoPatternDetector:
         cache_key = f"{id(df)}_{confianza_minima}"
 
         if cache_key in self._detection_cache:
-
             return self._detection_cache[cache_key]
 
         columnas_detectadas = {}
@@ -63,25 +61,20 @@ class GeoPatternDetector:
         df_columns_lower = [col.lower() for col in df.columns]
 
         for tipo_geo, patrones in PATRONES_GEOGRAFICOS.items():
-
             mejor_coincidencia = None
 
             mejor_score = 0
 
             for patron in patrones:
-
                 for i, col_lower in enumerate(df_columns_lower):
-
                     score = self._calculate_similarity_score(patron, col_lower, df, df.columns[i])
 
                     if score > mejor_score and score >= confianza_minima:
-
                         mejor_score = score
 
                         mejor_coincidencia = df.columns[i]
 
             if mejor_coincidencia:
-
                 columnas_detectadas[tipo_geo] = mejor_coincidencia
 
                 self.logger.info(
@@ -126,23 +119,18 @@ class GeoPatternDetector:
         # Score por similitud de nombres
 
         if patron == columna_lower:
-
             base_score = 1.0  # Coincidencia exacta
 
         elif patron in columna_lower:
-
             base_score = 0.9  # Contiene el patrón
 
         elif columna_lower in patron:
-
             base_score = 0.8  # El patrón contiene la columna
 
         elif self._fuzzy_match(patron, columna_lower):
-
             base_score = 0.7  # Coincidencia aproximada
 
         else:
-
             return 0  # Sin coincidencia
 
         # Ajustar score basado en contenido de la columna
@@ -161,7 +149,6 @@ class GeoPatternDetector:
         # Remover caracteres comunes y comparar
 
         def clean_string(s):
-
             return s.replace("_", "").replace("-", "").replace(" ", "")
 
         patron_clean = clean_string(patron)
@@ -194,7 +181,6 @@ class GeoPatternDetector:
         """
 
         if serie.empty or serie.isnull().all():
-
             return 0.0
 
         # Obtener muestra no nula
@@ -202,29 +188,23 @@ class GeoPatternDetector:
         muestra = serie.dropna().head(100)  # Analizar hasta 100 valores
 
         if muestra.empty:
-
             return 0.0
 
         score = 0.0
 
         if tipo_patron == "ubigeo":
-
             score = self._validate_ubigeo_content(muestra)
 
         elif tipo_patron in ["departamento", "provincia", "distrito"]:
-
             score = self._validate_territorial_content(muestra, tipo_patron)
 
         elif tipo_patron == "conglomerado":
-
             score = self._validate_conglomerado_content(muestra)
 
         elif tipo_patron in ["coordenada_x", "coordenada_y"]:
-
             score = self._validate_coordinate_content(muestra, tipo_patron)
 
         else:
-
             score = 0.5  # Score neutral para otros tipos
 
         return score
@@ -270,7 +250,6 @@ class GeoPatternDetector:
         str_muestra = muestra.astype(str)
 
         if tipo == "departamento":
-
             # Verificar longitud típica (2 dígitos o nombres)
 
             longitudes_codigo = str_muestra.str.len().eq(2).mean()
@@ -288,15 +267,12 @@ class GeoPatternDetector:
             score += nombres_validos * 0.4
 
         elif tipo in ["provincia", "distrito"]:
-
             # Verificar longitud típica
 
             if tipo == "provincia":
-
                 longitudes_validas = str_muestra.str.len().between(2, 4).mean()
 
             else:  # distrito
-
                 longitudes_validas = str_muestra.str.len().between(2, 6).mean()
 
             score += longitudes_validas * 0.5
@@ -330,7 +306,6 @@ class GeoPatternDetector:
         score = 0.0
 
         try:
-
             # Intentar convertir a numérico
 
             numericos = pd.to_numeric(muestra, errors="coerce")
@@ -340,9 +315,7 @@ class GeoPatternDetector:
             score += valores_numericos * 0.5
 
             if valores_numericos > 0.5:  # Si la mayoría son numéricos
-
                 if tipo == "coordenada_x":  # Longitud
-
                     # Rango típico para Perú: -81.5 a -68.5
 
                     en_rango = numericos.between(-82, -68).mean()
@@ -350,7 +323,6 @@ class GeoPatternDetector:
                     score += en_rango * 0.5
 
                 elif tipo == "coordenada_y":  # Latitud
-
                     # Rango típico para Perú: -18.5 a 0.2
 
                     en_rango = numericos.between(-19, 1).mean()
@@ -358,7 +330,6 @@ class GeoPatternDetector:
                     score += en_rango * 0.5
 
         except:
-
             pass
 
         return min(1.0, score)
@@ -383,27 +354,21 @@ class GeoPatternDetector:
         """
 
         if "conglomerado" in columnas_detectadas:
-
             return NivelTerritorial.CONGLOMERADO
 
         elif "centro_poblado" in columnas_detectadas:
-
             return NivelTerritorial.CENTRO_POBLADO
 
         elif "distrito" in columnas_detectadas or "ubigeo" in columnas_detectadas:
-
             return NivelTerritorial.DISTRITO
 
         elif "provincia" in columnas_detectadas:
-
             return NivelTerritorial.PROVINCIA
 
         elif "departamento" in columnas_detectadas:
-
             return NivelTerritorial.DEPARTAMENTO
 
         else:
-
             return NivelTerritorial.DISTRITO  # Default
 
     def analyze_geographic_completeness(
@@ -432,9 +397,7 @@ class GeoPatternDetector:
         completitud = {}
 
         for tipo_geo, columna in columnas_detectadas.items():
-
             if columna in df.columns:
-
                 valores_no_nulos = df[columna].notna().sum()
 
                 porcentaje_completo = (valores_no_nulos / len(df)) * 100
@@ -476,7 +439,6 @@ class GeoPatternDetector:
         # Análisis de distribución territorial
 
         if "ubigeo" in columnas_geo and columnas_geo["ubigeo"] in df.columns:
-
             ubigeo_col = columnas_geo["ubigeo"]
 
             # Extraer departamentos
@@ -498,11 +460,9 @@ class GeoPatternDetector:
             # Detectar concentración excesiva
 
             if not dist_departamentos.empty:
-
                 concentracion_max = dist_departamentos.iloc[0] / len(df) * 100
 
                 if concentracion_max > 50:
-
                     patrones["patrones_anomalos"].append(
                         f"Concentración excesiva en un departamento: {concentracion_max:.1f}%"
                     )
@@ -510,9 +470,7 @@ class GeoPatternDetector:
         # Análisis de cobertura por nivel
 
         for nivel, columna in columnas_geo.items():
-
             if columna in df.columns:
-
                 valores_unicos = df[columna].nunique()
 
                 valores_totales = len(df)
@@ -566,7 +524,6 @@ class GeoPatternDetector:
         niveles_comunes = set(columnas_geo1.keys()) & set(columnas_geo2.keys())
 
         if not niveles_comunes:
-
             recomendaciones["problemas_potenciales"].append(
                 "No hay niveles geográficos comunes entre los DataFrames"
             )
@@ -580,23 +537,19 @@ class GeoPatternDetector:
         mejor_score = 0
 
         for nivel in niveles_comunes:
-
             col1 = columnas_geo1[nivel]
 
             col2 = columnas_geo2[nivel]
 
             if col1 in df1.columns and col2 in df2.columns:
-
                 score = self._evaluate_merge_compatibility(df1[col1], df2[col2], nivel)
 
                 if score > mejor_score:
-
                     mejor_score = score
 
                     mejor_nivel = nivel
 
         if mejor_nivel:
-
             recomendaciones["nivel_recomendado"] = mejor_nivel
 
             recomendaciones["columna_union_sugerida"] = columnas_geo1[mejor_nivel]
@@ -610,7 +563,6 @@ class GeoPatternDetector:
             duplicados_df2 = df2[columnas_geo2[mejor_nivel]].duplicated().sum()
 
             if duplicados_df2 > len(df2) * 0.1:  # Más del 10% duplicados
-
                 recomendaciones["estrategia_duplicados"] = "aggregate"
 
                 recomendaciones["problemas_potenciales"].append(
@@ -651,7 +603,6 @@ class GeoPatternDetector:
         valores2 = set(serie2.dropna().astype(str))
 
         if valores1 and valores2:
-
             overlap = len(valores1 & valores2) / len(valores1 | valores2)
 
             score += overlap * 0.4
@@ -675,7 +626,6 @@ class GeoPatternDetector:
         # Factor 4: Distribución similar (10% del score)
 
         if len(valores1) > 1 and len(valores2) > 1:
-
             # Comparar diversidad relativa
 
             diversidad1 = len(valores1) / len(serie1)
@@ -683,7 +633,6 @@ class GeoPatternDetector:
             diversidad2 = len(valores2) / len(serie2)
 
             if diversidad1 > 0 and diversidad2 > 0:
-
                 ratio_diversidad = min(diversidad1, diversidad2) / max(diversidad1, diversidad2)
 
                 score += ratio_diversidad * 0.1
@@ -704,7 +653,6 @@ class GeoPatternDetector:
         str2 = serie2.dropna().astype(str)
 
         if str1.empty or str2.empty:
-
             return 0.0
 
         # Comparar longitudes típicas
@@ -714,11 +662,9 @@ class GeoPatternDetector:
         len2_mode = str2.str.len().mode().iloc[0] if not str2.str.len().mode().empty else 0
 
         if len1_mode == len2_mode and len1_mode > 0:
-
             score += 0.4
 
         elif abs(len1_mode - len2_mode) <= 1:
-
             score += 0.2
 
         # Comparar si ambos son numéricos o alfabéticos
@@ -728,13 +674,11 @@ class GeoPatternDetector:
         num2 = str2.str.isnumeric().mean()
 
         if (num1 > 0.8 and num2 > 0.8) or (num1 < 0.2 and num2 < 0.2):
-
             score += 0.3
 
         # Para UBIGEO, verificar estructura específica
 
         if nivel == "ubigeo":
-
             # Verificar que ambos sigan patrón de 6 dígitos
 
             pattern1 = str1.str.match(r"^\d{6}", na=False).mean()
@@ -742,7 +686,6 @@ class GeoPatternDetector:
             pattern2 = str2.str.match(r"^\d{6}", na=False).mean()
 
             if pattern1 > 0.8 and pattern2 > 0.8:
-
                 score += 0.3
 
         return min(1.0, score)
@@ -771,7 +714,6 @@ class GeoPatternDetector:
         """
 
         if not columnas_detectadas:
-
             return "❌ No se detectaron columnas geográficas en el DataFrame"
 
         lines = [
@@ -787,7 +729,6 @@ class GeoPatternDetector:
         lines.append("📍 COLUMNAS DETECTADAS:")
 
         for tipo_geo, columna in columnas_detectadas.items():
-
             completitud = df[columna].notna().sum() / len(df) * 100
 
             valores_unicos = df[columna].nunique()
@@ -803,7 +744,6 @@ class GeoPatternDetector:
             muestra = df[columna].dropna().head(3).tolist()
 
             if muestra:
-
                 muestra_str = ", ".join([str(v) for v in muestra])
 
                 lines.append(f"    - Muestra: {muestra_str}")
@@ -821,11 +761,9 @@ class GeoPatternDetector:
         completitud = self.analyze_geographic_completeness(df, columnas_detectadas)
 
         if completitud:
-
             lines.append("📊 COMPLETITUD POR NIVEL:")
 
             for nivel, porcentaje in completitud.items():
-
                 status = "✅" if porcentaje > 90 else "⚠️" if porcentaje > 70 else "❌"
 
                 lines.append(f"  {status} {nivel}: {porcentaje:.1f}%")

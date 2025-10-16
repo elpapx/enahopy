@@ -98,27 +98,21 @@ def validate_dataframe(
     """
 
     if df is None:
-
         raise ValueError(f"{name} no puede ser None")
 
     if not isinstance(df, pd.DataFrame):
-
         raise ValueError(f"{name} debe ser un pandas DataFrame, recibido: {type(df)}")
 
     if df.empty and min_rows > 0:
-
         raise ValueError(f"{name} no puede estar vacío (requiere al menos {min_rows} filas)")
 
     if len(df) < min_rows:
-
         raise ValueError(f"{name} debe tener al menos {min_rows} filas, tiene {len(df)}")
 
     if required_columns:
-
         missing_cols = set(required_columns) - set(df.columns)
 
         if missing_cols:
-
             raise ValueError(
                 f"{name} no tiene las columnas requeridas: {missing_cols}. "
                 f"Columnas disponibles: {list(df.columns[:10])}..."
@@ -157,7 +151,6 @@ def ensure_compatible_types(
     """
 
     if merge_column not in df1.columns or merge_column not in df2.columns:
-
         return df1, df2
 
     df1_copy = df1.copy()
@@ -169,9 +162,7 @@ def ensure_compatible_types(
     type2 = df2_copy[merge_column].dtype
 
     if type1 != type2:
-
         if logger:
-
             logger.warning(
                 f"Tipos incompatibles en '{merge_column}': {type1} vs {type2}. Convirtiendo..."
             )
@@ -179,7 +170,6 @@ def ensure_compatible_types(
         # Estrategia: convertir ambos a string para máxima compatibilidad
 
         try:
-
             # Manejar NaN antes de convertir
 
             df1_copy[merge_column] = df1_copy[merge_column].fillna("").astype(str)
@@ -193,9 +183,7 @@ def ensure_compatible_types(
             df2_copy[merge_column] = df2_copy[merge_column].replace("", np.nan)
 
         except Exception as e:
-
             if logger:
-
                 logger.error(f"Error convirtiendo tipos: {str(e)}")
 
             raise ValueError(f"No se pudieron compatibilizar tipos para '{merge_column}': {str(e)}")
@@ -284,7 +272,6 @@ def quick_geographic_merge(
     size = len(df_principal)
 
     if size < 10000:
-
         config = GeoMergeConfiguration(
             columna_union=ubigeo_column,
             optimizar_memoria=False,
@@ -295,7 +282,6 @@ def quick_geographic_merge(
         )
 
     elif size < 100000:
-
         config = GeoMergeConfiguration(
             columna_union=ubigeo_column,
             optimizar_memoria=True,
@@ -305,7 +291,6 @@ def quick_geographic_merge(
         )
 
     else:
-
         config = GeoMergeConfiguration(
             columna_union=ubigeo_column,
             optimizar_memoria=True,
@@ -318,9 +303,7 @@ def quick_geographic_merge(
     # Aplicar configuraciones personalizadas
 
     for key, value in kwargs.items():
-
         if hasattr(config, key):
-
             setattr(config, key, value)
 
     # Realizar merge usando la función principal (importación diferida)
@@ -330,21 +313,17 @@ def quick_geographic_merge(
     merger = ENAHOGeoMerger(geo_config=config, verbose=verbose)
 
     try:
-
         result_df, validation = merger.merge_geographic_data(
             df_principal, df_geografia, columna_union=ubigeo_column
         )
 
         if verbose and validation:
-
             print(f"✅ Merge completado: {validation.coverage_percentage:.1f}% cobertura")
 
         return result_df
 
     except Exception as e:
-
         if verbose:
-
             print(f"❌ Error en merge: {str(e)}")
 
         raise
@@ -402,13 +381,11 @@ def smart_module_merge(
     # Validaciones
 
     if not modules_dict:
-
         raise ValueError("modules_dict no puede estar vacío")
 
     # Validar cada módulo
 
     for module_code, df in modules_dict.items():
-
         validate_dataframe(
             df,
             f"Módulo {module_code}",
@@ -419,17 +396,14 @@ def smart_module_merge(
     # Detectar módulo base si no se especifica
 
     if base_module is None:
-
         base_module = _detect_optimal_base_module(modules_dict)
 
         if verbose:
-
             print(f"📊 Módulo base detectado: {base_module}")
 
     # Validar que el módulo base existe
 
     if base_module not in modules_dict:
-
         raise ValueError(
             f"Módulo base '{base_module}' no encontrado. "
             f"Módulos disponibles: {list(modules_dict.keys())}"
@@ -438,19 +412,16 @@ def smart_module_merge(
     # Detectar estrategia y nivel óptimos
 
     if auto_detect_strategy:
-
         strategy = _detect_optimal_merge_strategy(modules_dict)
 
         level = _detect_optimal_merge_level(modules_dict)
 
         if verbose:
-
             print(f"🎯 Estrategia detectada: {strategy}")
 
             print(f"📍 Nivel detectado: {level}")
 
     else:
-
         strategy = kwargs.get("strategy", "coalesce")
 
         level = kwargs.get("level", "hogar")
@@ -472,13 +443,11 @@ def smart_module_merge(
     merger = ENAHOGeoMerger(module_config=config, verbose=verbose)
 
     try:
-
         result = merger.merge_multiple_modules(
             modules_dict, base_module=base_module, merge_config=config
         )
 
         if verbose:
-
             print(f"✅ Módulos fusionados: {', '.join(result.modules_merged)}")
 
             print(f"📊 Registros finales: {len(result.merged_df)}")
@@ -486,9 +455,7 @@ def smart_module_merge(
         return result.merged_df
 
     except Exception as e:
-
         if verbose:
-
             print(f"❌ Error en merge de módulos: {str(e)}")
 
         raise
@@ -535,7 +502,6 @@ def detect_merge_type(
     # Validar inputs
 
     if df1 is None or df1.empty or df2 is None or df2.empty:
-
         return "general"
 
     # Detectar si son módulos ENAHO
@@ -545,7 +511,6 @@ def detect_merge_type(
     has_enaho_keys = all(key in df1.columns and key in df2.columns for key in enaho_keys)
 
     if has_enaho_keys:
-
         # Verificar si tienen datos válidos en las llaves
 
         keys_valid = all(
@@ -553,13 +518,11 @@ def detect_merge_type(
         )
 
         if keys_valid:
-
             return "module"
 
     # Detectar si hay información geográfica (importación diferida)
 
     try:
-
         from .geographic.patterns import GeoPatternDetector
 
         logger = logging.getLogger("detector")
@@ -571,15 +534,12 @@ def detect_merge_type(
         geo_cols2 = detector.detectar_columnas_geograficas(df2, confidence_threshold)
 
         if geo_cols1 and geo_cols2:
-
             common_geo = set(geo_cols1.keys()) & set(geo_cols2.keys())
 
             if common_geo:
-
                 return "geographic"
 
     except ImportError:
-
         pass
 
     return "general"
@@ -611,15 +571,12 @@ def _detect_optimal_base_module(modules_dict: Dict[str, pd.DataFrame]) -> str:
     # Buscar por prioridad
 
     for module_code in priority_order:
-
         if module_code in modules_dict:
-
             # Verificar que tiene datos válidos
 
             df = modules_dict[module_code]
 
             if not df.empty and len(df) > 0:
-
                 return module_code
 
     # Si no hay módulos prioritarios, usar el más grande
@@ -649,7 +606,6 @@ def _detect_optimal_merge_strategy(modules_dict: Dict[str, pd.DataFrame]) -> str
     """
 
     if len(modules_dict) < 2:
-
         return "coalesce"
 
     # Analizar conflictos potenciales
@@ -663,15 +619,12 @@ def _detect_optimal_merge_strategy(modules_dict: Dict[str, pd.DataFrame]) -> str
     modules = list(modules_dict.items())
 
     for i in range(len(modules)):
-
         for j in range(i + 1, len(modules)):
-
             name1, df1 = modules[i]
 
             name2, df2 = modules[j]
 
             if df1 is None or df2 is None or df1.empty or df2.empty:
-
                 continue
 
             # Columnas comunes (excluyendo llaves)
@@ -681,7 +634,6 @@ def _detect_optimal_merge_strategy(modules_dict: Dict[str, pd.DataFrame]) -> str
             common_cols = (set(df1.columns) & set(df2.columns)) - keys
 
             for col in common_cols:
-
                 total_comparisons += 1
 
                 # Verificar tipo de dato
@@ -689,27 +641,22 @@ def _detect_optimal_merge_strategy(modules_dict: Dict[str, pd.DataFrame]) -> str
                 if pd.api.types.is_numeric_dtype(df1[col]) and pd.api.types.is_numeric_dtype(
                     df2[col]
                 ):
-
                     numeric_conflicts += 1
 
                 # Estimar conflictos basado en valores únicos
 
                 try:
-
                     unique1 = df1[col].nunique()
 
                     unique2 = df2[col].nunique()
 
                     if unique1 > 1 or unique2 > 1:
-
                         total_conflicts += 0.5
 
                 except:
-
                     pass
 
     if total_comparisons == 0:
-
         return "coalesce"
 
     conflict_rate = total_conflicts / total_comparisons
@@ -719,19 +666,15 @@ def _detect_optimal_merge_strategy(modules_dict: Dict[str, pd.DataFrame]) -> str
     # Decidir estrategia basada en análisis
 
     if numeric_rate > 0.5:
-
         return "average"  # Muchas columnas numéricas
 
     elif conflict_rate > 0.7:
-
         return "keep_left"  # Muchos conflictos, priorizar primer módulo
 
     elif conflict_rate > 0.3:
-
         return "coalesce"  # Conflictos moderados
 
     else:
-
         return "coalesce"  # Pocos conflictos, usar primer no-nulo
 
 
@@ -759,15 +702,12 @@ def _detect_optimal_merge_level(modules_dict: Dict[str, pd.DataFrame]) -> str:
     all_have_codperso = True
 
     for module_code, df in modules_dict.items():
-
         if df is None or df.empty:
-
             all_have_codperso = False
 
             break
 
         if "codperso" not in df.columns:
-
             all_have_codperso = False
 
             break
@@ -775,7 +715,6 @@ def _detect_optimal_merge_level(modules_dict: Dict[str, pd.DataFrame]) -> str:
         # Verificar que codperso tiene datos válidos
 
         if df["codperso"].isna().all():
-
             all_have_codperso = False
 
             break
@@ -783,7 +722,6 @@ def _detect_optimal_merge_level(modules_dict: Dict[str, pd.DataFrame]) -> str:
         # Verificar que hay variación en codperso (no todos son iguales)
 
         if df["codperso"].nunique() < 2:
-
             all_have_codperso = False
 
             break
@@ -845,7 +783,6 @@ def suggest_merge_optimization(
     """
 
     if df_size <= 0:
-
         raise ValueError("df_size debe ser positivo")
 
     # Estimar uso de memoria (aproximado)
@@ -865,7 +802,6 @@ def suggest_merge_optimization(
     # Advertencias de memoria
 
     if memory_ratio > 0.8:
-
         suggestions["warnings"].append(
             f"⚠️ Alto uso de memoria esperado ({memory_ratio:.0%}). "
             "Considere procesar por chunks."
@@ -874,7 +810,6 @@ def suggest_merge_optimization(
     # Configuración recomendada según objetivo
 
     if target_performance == "speed":
-
         suggestions["recommended_config"] = {
             "chunk_size": min(100000, df_size),
             "optimizar_memoria": False,
@@ -888,7 +823,6 @@ def suggest_merge_optimization(
         suggestions["performance_tips"].append("Usar cache para operaciones repetidas")
 
     elif target_performance == "memory":
-
         chunk_size = min(10000, df_size // 10)
 
         suggestions["recommended_config"] = {
@@ -904,7 +838,6 @@ def suggest_merge_optimization(
         suggestions["performance_tips"].append("Liberar DataFrames intermedios")
 
     else:  # balanced
-
         chunk_size = min(50000, df_size // 4)
 
         suggestions["recommended_config"] = {
@@ -920,13 +853,11 @@ def suggest_merge_optimization(
     # Sugerencias adicionales basadas en tamaño
 
     if df_size > 1000000:
-
         suggestions["performance_tips"].append(
             "Considere guardar resultados intermedios en archivos"
         )
 
     if num_modules > 5:
-
         suggestions["performance_tips"].append("Fusione módulos en grupos pequeños primero")
 
     return suggestions
@@ -1005,7 +936,6 @@ def analyze_merge_quality(
     # Verificar cambio en número de filas
 
     if analysis["rows_change"] > 0:
-
         pct_increase = (analysis["rows_change"] / len(df_original)) * 100
 
         analysis["warnings"].append(
@@ -1016,7 +946,6 @@ def analyze_merge_quality(
         analysis["quality_score"] -= min(20, pct_increase)
 
     elif analysis["rows_change"] < 0:
-
         analysis["warnings"].append(
             f"Pérdida de {abs(analysis['rows_change'])} filas. " "Revisar tipo de join."
         )
@@ -1028,17 +957,14 @@ def analyze_merge_quality(
     new_columns = set(df_result.columns) - set(df_original.columns)
 
     if new_columns:
-
         completeness_scores = []
 
         for col in new_columns:
-
             completeness = df_result[col].notna().mean()
 
             completeness_scores.append(completeness)
 
             if completeness < 0.5:
-
                 analysis["warnings"].append(
                     f"Columna '{col}' tiene {(1 - completeness) * 100:.1f}% valores faltantes"
                 )
@@ -1052,13 +978,10 @@ def analyze_merge_quality(
     # Verificar integridad de merge keys
 
     for col in merge_columns:
-
         if col in df_result.columns:
-
             null_ratio = df_result[col].isna().mean()
 
             if null_ratio > 0:
-
                 analysis["warnings"].append(
                     f"Columna de merge '{col}' tiene {null_ratio * 100:.1f}% NaN"
                 )
@@ -1072,7 +995,6 @@ def analyze_merge_quality(
     analysis["quality_grade"] = _get_quality_grade(analysis["quality_score"])
 
     if verbose:
-
         print(f"\n📊 ANÁLISIS DE CALIDAD DEL MERGE")
 
         print(f"{'=' * 40}")
@@ -1088,11 +1010,9 @@ def analyze_merge_quality(
         )
 
         if analysis["warnings"]:
-
             print(f"\n⚠️ Advertencias:")
 
             for warning in analysis["warnings"][:5]:
-
                 print(f"  • {warning}")
 
     return analysis
@@ -1102,23 +1022,18 @@ def _get_quality_grade(score: float) -> str:
     """Convierte score numérico en calificación textual."""
 
     if score >= 90:
-
         return "Excelente"
 
     elif score >= 75:
-
         return "Bueno"
 
     elif score >= 60:
-
         return "Aceptable"
 
     elif score >= 40:
-
         return "Deficiente"
 
     else:
-
         return "Crítico"
 
 
@@ -1170,7 +1085,6 @@ def migrate_legacy_config(old_config: Dict[str, Any], version: str = "1.0") -> D
     # Mapear configuraciones geográficas
 
     if "columna_ubigeo" in old_config or "columna_union" in old_config:
-
         geo_params = {}
 
         # Mapeo de nombres antiguos a nuevos
@@ -1184,21 +1098,16 @@ def migrate_legacy_config(old_config: Dict[str, Any], version: str = "1.0") -> D
         }
 
         for old_field, new_field in field_mapping.items():
-
             if old_field in old_config:
-
                 value = old_config[old_field]
 
                 # Convertir valores si es necesario
 
                 if new_field == "manejo_duplicados":
-
                     try:
-
                         value = TipoManejoDuplicados(value)
 
                     except:
-
                         value = TipoManejoDuplicados.FIRST
 
                 geo_params[new_field] = value
@@ -1208,27 +1117,20 @@ def migrate_legacy_config(old_config: Dict[str, Any], version: str = "1.0") -> D
     # Mapear configuraciones de módulos si existen
 
     if "merge_level" in old_config or "merge_strategy" in old_config:
-
         module_params = {}
 
         if "merge_level" in old_config:
-
             try:
-
                 module_params["merge_level"] = ModuleMergeLevel(old_config["merge_level"])
 
             except:
-
                 module_params["merge_level"] = ModuleMergeLevel.HOGAR
 
         if "merge_strategy" in old_config:
-
             try:
-
                 module_params["merge_strategy"] = ModuleMergeStrategy(old_config["merge_strategy"])
 
             except:
-
                 module_params["merge_strategy"] = ModuleMergeStrategy.COALESCE
 
         new_config["module_config"] = ModuleMergeConfig(**module_params)
@@ -1236,11 +1138,9 @@ def migrate_legacy_config(old_config: Dict[str, Any], version: str = "1.0") -> D
     # Mapear otras configuraciones
 
     if "cache_dir" in old_config:
-
         new_config["cache_dir"] = old_config["cache_dir"]
 
     if "verbose" in old_config:
-
         new_config["verbose"] = old_config["verbose"]
 
     return new_config
@@ -1293,7 +1193,6 @@ def validate_legacy_data(
     # Validación básica
 
     if df is None or df.empty:
-
         validation["is_valid"] = False
 
         validation["issues"].append("DataFrame vacío o None")
@@ -1303,7 +1202,6 @@ def validate_legacy_data(
     df_work = df.copy() if fix_issues else df
 
     if expected_structure == "enaho":
-
         # Validar estructura ENAHO
 
         required_columns = ["conglome", "vivienda", "hogar"]
@@ -1311,15 +1209,12 @@ def validate_legacy_data(
         missing_cols = set(required_columns) - set(df.columns)
 
         if missing_cols:
-
             validation["issues"].append(f"Columnas ENAHO faltantes: {missing_cols}")
 
             if fix_issues:
-
                 # Intentar detectar columnas con nombres similares
 
                 for col in missing_cols:
-
                     alternatives = [
                         c
                         for c in df.columns
@@ -1327,7 +1222,6 @@ def validate_legacy_data(
                     ]
 
                     if alternatives:
-
                         df_work[col] = df_work[alternatives[0]]
 
                         validation["fixes_applied"].append(
@@ -1335,25 +1229,19 @@ def validate_legacy_data(
                         )
 
                     else:
-
                         validation["is_valid"] = False
 
         # Validar tipos de datos
 
         for col in required_columns:
-
             if col in df_work.columns:
-
                 if not pd.api.types.is_string_dtype(df_work[col]):
-
                     validation["warnings"].append(
                         f"Columna '{col}' no es string, puede causar problemas"
                     )
 
                     if fix_issues:
-
                         try:
-
                             df_work[col] = df_work[col].astype(str)
 
                             validation["fixes_applied"].append(
@@ -1361,11 +1249,9 @@ def validate_legacy_data(
                             )
 
                         except:
-
                             validation["issues"].append(f"No se pudo convertir '{col}' a string")
 
     elif expected_structure == "geographic":
-
         # Validar estructura geográfica
 
         ubigeo_columns = ["ubigeo", "ccpp", "ccdd", "ubigeo_distrito"]
@@ -1373,15 +1259,12 @@ def validate_legacy_data(
         found_ubigeo = False
 
         for col in ubigeo_columns:
-
             if col in df.columns:
-
                 found_ubigeo = True
 
                 # Validar formato UBIGEO
 
                 if col == "ubigeo" or col == "ubigeo_distrito":
-
                     sample = df_work[col].dropna().head(10)
 
                     # Verificar longitud (6 dígitos típicamente)
@@ -1389,13 +1272,11 @@ def validate_legacy_data(
                     invalid_length = sample.astype(str).str.len() != 6
 
                     if invalid_length.any():
-
                         validation["warnings"].append(
                             f"Columna '{col}' tiene valores con longitud incorrecta"
                         )
 
                         if fix_issues:
-
                             # Intentar rellenar con ceros
 
                             df_work[col] = df_work[col].astype(str).str.zfill(6)
@@ -1407,7 +1288,6 @@ def validate_legacy_data(
                 break
 
         if not found_ubigeo:
-
             validation["is_valid"] = False
 
             validation["issues"].append("No se encontró columna UBIGEO válida")
@@ -1415,11 +1295,9 @@ def validate_legacy_data(
     # Verificar duplicados en índice
 
     if df_work.index.duplicated().any():
-
         validation["warnings"].append("Índice con valores duplicados")
 
         if fix_issues:
-
             df_work = df_work.reset_index(drop=True)
 
             validation["fixes_applied"].append("Índice reiniciado")
@@ -1429,11 +1307,9 @@ def validate_legacy_data(
     null_columns = df_work.columns[df_work.isna().all()].tolist()
 
     if null_columns:
-
         validation["warnings"].append(f"Columnas completamente nulas: {null_columns[:5]}")
 
         if fix_issues:
-
             df_work = df_work.drop(columns=null_columns)
 
             validation["fixes_applied"].append(f"Eliminadas {len(null_columns)} columnas nulas")
@@ -1441,7 +1317,6 @@ def validate_legacy_data(
     # Resultado final
 
     if fix_issues:
-
         validation["fixed_data"] = df_work
 
         validation["final_shape"] = df_work.shape
@@ -1500,7 +1375,6 @@ def create_test_data(
     np.random.seed(seed)
 
     if data_type == "enaho":
-
         # Datos tipo ENAHO
 
         data = {
@@ -1518,19 +1392,16 @@ def create_test_data(
         module = kwargs.get("module", "34")
 
         if module == "34":
-
             data["gashog2d"] = np.random.uniform(100, 10000, size)
 
             data["inghog2d"] = np.random.uniform(100, 15000, size)
 
         elif module == "01":
-
             data["nbi1"] = np.random.choice([0, 1], size)
 
             data["nbi2"] = np.random.choice([0, 1], size)
 
     elif data_type == "geographic":
-
         # Datos geográficos
 
         # Departamentos reales del Perú
@@ -1580,7 +1451,6 @@ def create_test_data(
         }
 
     elif data_type == "module":
-
         # Datos de módulo específico
 
         module_code = kwargs.get("module_code", "05")
@@ -1595,7 +1465,6 @@ def create_test_data(
         # Agregar columnas específicas del módulo
 
         if module_code == "05":  # Empleo
-
             data["p501"] = np.random.choice([1, 2, 3, 4, 5, 6], size)
 
             data["p502"] = np.random.choice([1, 2], size)
@@ -1603,13 +1472,11 @@ def create_test_data(
             data["i524a1"] = np.random.uniform(0, 5000, size)
 
         elif module_code == "03":  # Educación
-
             data["p301a"] = np.random.choice([1, 2, 3, 4, 5, 6], size)
 
             data["p306"] = np.random.choice([1, 2], size)
 
     else:
-
         raise ValueError(f"Tipo de datos '{data_type}' no reconocido")
 
     df = pd.DataFrame(data)
@@ -1617,13 +1484,10 @@ def create_test_data(
     # Agregar valores faltantes si se solicita
 
     if include_missing:
-
         missing_ratio = kwargs.get("missing_ratio", 0.1)
 
         for col in df.columns:
-
             if col not in ["conglome", "vivienda", "hogar"]:  # No en llaves principales
-
                 mask = np.random.random(size) < missing_ratio
 
                 df.loc[mask, col] = np.nan
@@ -1631,13 +1495,11 @@ def create_test_data(
     # Agregar duplicados si se solicita
 
     if kwargs.get("include_duplicates", False):
-
         dup_ratio = kwargs.get("duplicate_ratio", 0.05)
 
         n_duplicates = int(size * dup_ratio)
 
         if n_duplicates > 0:
-
             dup_indices = np.random.choice(df.index, n_duplicates)
 
             df_duplicates = df.loc[dup_indices].copy()
@@ -1687,13 +1549,11 @@ def debug_merge_issues(
     # Verificar existencia de columnas
 
     if merge_column not in df1.columns:
-
         diagnosis["problems"].append(f"Columna '{merge_column}' no existe en df1")
 
         return diagnosis
 
     if merge_column not in df2.columns:
-
         diagnosis["problems"].append(f"Columna '{merge_column}' no existe en df2")
 
         return diagnosis
@@ -1705,7 +1565,6 @@ def debug_merge_issues(
     type2 = df2[merge_column].dtype
 
     if type1 != type2:
-
         diagnosis["problems"].append(f"Tipos incompatibles: {type1} vs {type2}")
 
         diagnosis["recommendations"].append(
@@ -1736,7 +1595,6 @@ def debug_merge_issues(
     # Detectar problemas de overlap
 
     if len(common) == 0:
-
         diagnosis["problems"].append("No hay valores comunes entre las columnas de merge")
 
         diagnosis["recommendations"].append(
@@ -1744,7 +1602,6 @@ def debug_merge_issues(
         )
 
     elif diagnosis["statistics"]["overlap_percentage"] < 50:
-
         diagnosis["problems"].append(
             f"Bajo overlap: solo {diagnosis['statistics']['overlap_percentage']:.1f}% "
             f"de valores coinciden"
@@ -1757,13 +1614,11 @@ def debug_merge_issues(
     nan2 = df2[merge_column].isna().sum()
 
     if nan1 > 0:
-
         diagnosis["problems"].append(
             f"df1 tiene {nan1} ({nan1 / len(df1) * 100:.1f}%) valores NaN en '{merge_column}'"
         )
 
     if nan2 > 0:
-
         diagnosis["problems"].append(
             f"df2 tiene {nan2} ({nan2 / len(df2) * 100:.1f}%) valores NaN en '{merge_column}'"
         )
@@ -1775,19 +1630,16 @@ def debug_merge_issues(
     dup2 = df2[merge_column].duplicated().sum()
 
     if dup1 > 0:
-
         diagnosis["problems"].append(f"df1 tiene {dup1} valores duplicados en '{merge_column}'")
 
         diagnosis["recommendations"].append("Considerar estrategia de manejo de duplicados")
 
     if dup2 > 0:
-
         diagnosis["problems"].append(f"df2 tiene {dup2} valores duplicados en '{merge_column}'")
 
     # Preview del merge
 
     if len(common) > 0 and sample_size > 0:
-
         sample_values = list(common)[:sample_size]
 
         sample1 = df1[df1[merge_column].isin(sample_values)].head(sample_size)
@@ -1795,7 +1647,6 @@ def debug_merge_issues(
         sample2 = df2[df2[merge_column].isin(sample_values)].head(sample_size)
 
         try:
-
             preview = pd.merge(sample1, sample2, on=merge_column, how="inner")
 
             diagnosis["merge_preview"] = {
@@ -1805,7 +1656,6 @@ def debug_merge_issues(
             }
 
         except Exception as e:
-
             diagnosis["problems"].append(f"Error en merge de prueba: {str(e)}")
 
             diagnosis["merge_preview"] = {"successful": False, "error": str(e)}
@@ -1813,13 +1663,11 @@ def debug_merge_issues(
     # Generar recomendaciones finales
 
     if not diagnosis["problems"]:
-
         diagnosis["recommendations"].append(
             "✅ No se detectaron problemas. Merge debería funcionar correctamente."
         )
 
     else:
-
         diagnosis["recommendations"].append(
             f"Se detectaron {len(diagnosis['problems'])} problemas potenciales"
         )
@@ -1875,17 +1723,13 @@ def export_merge_report(
     output_path = Path(output_path)
 
     if format == "excel":
-
         with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
-
             # Si es DataFrame, exportar directamente
 
             if isinstance(merge_result, pd.DataFrame):
-
                 merge_result.to_excel(writer, sheet_name="Datos_Fusionados", index=False)
 
                 if include_diagnostics:
-
                     # Crear hoja de resumen
 
                     summary = pd.DataFrame(
@@ -1904,17 +1748,13 @@ def export_merge_report(
             # Si es diccionario de reporte
 
             elif isinstance(merge_result, dict):
-
                 for key, value in merge_result.items():
-
                     if isinstance(value, pd.DataFrame):
-
                         sheet_name = key[:31]  # Excel limite de 31 caracteres
 
                         value.to_excel(writer, sheet_name=sheet_name, index=False)
 
                     elif isinstance(value, dict):
-
                         df_temp = pd.DataFrame.from_dict(value, orient="index", columns=["Valor"])
 
                         sheet_name = key[:31]
@@ -1922,17 +1762,14 @@ def export_merge_report(
                         df_temp.to_excel(writer, sheet_name=sheet_name)
 
     elif format == "html":
-
         # Implementar exportación HTML
 
         html_content = "<html><head><title>Merge Report</title></head><body>"
 
         if isinstance(merge_result, pd.DataFrame):
-
             html_content += merge_result.to_html()
 
         elif isinstance(merge_result, dict):
-
             import json
 
             html_content += f"<pre>{json.dumps(merge_result, indent=2, default=str)}</pre>"
@@ -1940,27 +1777,21 @@ def export_merge_report(
         html_content += "</body></html>"
 
         with open(output_path, "w", encoding="utf-8") as f:
-
             f.write(html_content)
 
     elif format == "json":
-
         import json
 
         if isinstance(merge_result, pd.DataFrame):
-
             data = merge_result.to_dict(orient="records")
 
         else:
-
             data = merge_result
 
         with open(output_path, "w", encoding="utf-8") as f:
-
             json.dump(data, f, indent=2, default=str, ensure_ascii=False)
 
     else:
-
         raise ValueError(f"Formato '{format}' no soportado. Use 'excel', 'html' o 'json'")
 
     print(f"✅ Reporte exportado a: {output_path}")

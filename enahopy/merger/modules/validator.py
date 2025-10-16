@@ -78,7 +78,6 @@ class ModuleValidator:
     """
 
     def __init__(self, config: ModuleMergeConfig, logger: logging.Logger):
-
         self.config = config
 
         self.logger = logger
@@ -113,7 +112,6 @@ class ModuleValidator:
             return warnings  # Sin advertencias para módulos intermedios
 
         if module_code not in self.config.module_validations:
-
             warnings.append(f"Módulo {module_code} no reconocido")
 
             return warnings
@@ -127,17 +125,14 @@ class ModuleValidator:
         missing_cols = [col for col in required_cols if col not in df.columns]
 
         if missing_cols:
-
             warnings.append(f"Módulo {module_code}: columnas faltantes {missing_cols}")
 
         # Validar duplicados en llaves si no faltan columnas
 
         if not missing_cols:
-
             duplicates = df.duplicated(subset=required_cols).sum()
 
             if duplicates > 0:
-
                 warnings.append(f"Módulo {module_code}: {duplicates} registros duplicados")
 
         # Validaciones específicas por tipo de módulo
@@ -145,15 +140,12 @@ class ModuleValidator:
         module_type = module_info["level"]
 
         if module_type == ModuleType.PERSONA_LEVEL:
-
             warnings.extend(self._validate_persona_level_module(df, module_code))
 
         elif module_type == ModuleType.HOGAR_LEVEL:
-
             warnings.extend(self._validate_hogar_level_module(df, module_code, required_cols))
 
         elif module_type == ModuleType.SPECIAL:
-
             warnings.extend(self._validate_special_module(df, module_code))
 
         return warnings
@@ -164,13 +156,11 @@ class ModuleValidator:
         warnings = []
 
         if "codperso" in df.columns:
-
             # Verificar que codperso sea válido
 
             invalid_codperso = df["codperso"].isin([0, "0", "", None]).sum()
 
             if invalid_codperso > 0:
-
                 warnings.append(
                     f"Módulo {module_code}: {invalid_codperso} códigos de persona inválidos"
                 )
@@ -178,11 +168,9 @@ class ModuleValidator:
             # Verificar rango típico de codperso (1-20 usualmente)
 
             if pd.api.types.is_numeric_dtype(df["codperso"]):
-
                 max_codperso = df["codperso"].max()
 
                 if max_codperso > 30:
-
                     warnings.append(
                         f"Módulo {module_code}: código de persona muy alto ({max_codperso})"
                     )
@@ -190,15 +178,12 @@ class ModuleValidator:
         # Verificar distribución por hogar
 
         if all(col in df.columns for col in ["conglome", "vivienda", "hogar"]):
-
             personas_por_hogar = df.groupby(["conglome", "vivienda", "hogar"]).size()
 
             if personas_por_hogar.max() > 20:
-
                 warnings.append(f"Módulo {module_code}: hogares con más de 20 personas detectados")
 
             if personas_por_hogar.min() == 0:
-
                 warnings.append(f"Módulo {module_code}: hogares sin personas detectados")
 
         return warnings
@@ -213,13 +198,11 @@ class ModuleValidator:
         # Verificar que no haya múltiples registros por hogar
 
         if "hogar" in df.columns and not any(col for col in required_cols if col not in df.columns):
-
             hogar_counts = df.groupby(required_cols).size()
 
             multi_records = (hogar_counts > 1).sum()
 
             if multi_records > 0:
-
                 warnings.append(
                     f"Módulo {module_code}: {multi_records} hogares con múltiples registros"
                 )
@@ -227,11 +210,9 @@ class ModuleValidator:
         # Validaciones específicas por módulo
 
         if module_code == "34":  # Sumaria
-
             warnings.extend(self._validate_sumaria_module(df))
 
         elif module_code in ["07", "08"]:  # Ingresos y gastos
-
             warnings.extend(self._validate_economic_module(df, module_code))
 
         return warnings
@@ -242,11 +223,9 @@ class ModuleValidator:
         warnings = []
 
         if module_code == "37":  # Gobierno electrónico
-
             # Validaciones específicas para módulo 37
 
             if df.empty:
-
                 warnings.append(
                     "Módulo 37: módulo vacío (normal si no hay datos de gobierno electrónico)"
                 )
@@ -265,23 +244,19 @@ class ModuleValidator:
         missing_sumaria = [var for var in key_sumaria_vars if var not in df.columns]
 
         if missing_sumaria:
-
             warnings.append(f"Sumaria: variables clave faltantes {missing_sumaria}")
 
         # Verificar valores lógicos
 
         if "mieperho" in df.columns:
-
             invalid_members = (df["mieperho"] <= 0) | (df["mieperho"] > 20)
 
             if invalid_members.any():
-
                 warnings.append(
                     f"Sumaria: {invalid_members.sum()} hogares con número de miembros inválido"
                 )
 
         if "gashog2d" in df.columns and "inghog2d" in df.columns:
-
             # Verificar que gastos no sean mayores que ingresos * 2 (permite cierta flexibilidad)
 
             inconsistent = (
@@ -289,7 +264,6 @@ class ModuleValidator:
             )
 
             if inconsistent.any():
-
                 warnings.append(
                     f"Sumaria: {inconsistent.sum()} hogares con gastos muy superiores a ingresos"
                 )
@@ -310,17 +284,13 @@ class ModuleValidator:
         ]
 
         if amount_cols:
-
             for col in amount_cols:
-
                 if pd.api.types.is_numeric_dtype(df[col]):
-
                     # Verificar valores negativos (podrían ser válidos en algunos casos)
 
                     negative_count = (df[col] < 0).sum()
 
                     if negative_count > len(df) * 0.1:  # Más del 10%
-
                         warnings.append(
                             f"Módulo {module_code}: {negative_count} valores negativos en '{col}'"
                         )
@@ -328,7 +298,6 @@ class ModuleValidator:
                     # Verificar valores extremos
 
                     if df[col].max() > 1000000:  # Más de 1M
-
                         extreme_count = (df[col] > 1000000).sum()
 
                         warnings.append(
@@ -371,17 +340,14 @@ class ModuleValidator:
         if (
             "+" in module1 or module1.isdigit() or module1.startswith(("merged", "combined"))
         ):  # modulo compuesto o intermedio
-
             return {"compatible": True}
 
         # Obtener información de módulos
 
         if module1 not in self.config.module_validations:
-
             return {"compatible": False, "error": f"Módulo {module1} no reconocido"}
 
         if module2 not in self.config.module_validations:
-
             return {"compatible": False, "error": f"Módulo {module2} no reconocido"}
 
         module1_info = self.config.module_validations[module1]
@@ -410,7 +376,6 @@ class ModuleValidator:
         is_compatible = compatibility_matrix.get((level1, level2), False)
 
         if not is_compatible:
-
             return {
                 "compatible": False,
                 "error": f"Módulos {module1} ({level1.value}) y {module2} ({level2.value}) no compatibles en nivel {merge_level.value}",
@@ -425,7 +390,6 @@ class ModuleValidator:
         missing_keys_2 = [k for k in merge_keys if k not in df2.columns]
 
         if missing_keys_1 or missing_keys_2:
-
             return {
                 "compatible": False,
                 "missing_keys_module1": missing_keys_1,
@@ -441,7 +405,6 @@ class ModuleValidator:
         # Convertir llaves a string para consistencia
 
         for key in merge_keys:
-
             df1_keys[key] = df1_keys[key].astype(str)
 
             df2_keys[key] = df2_keys[key].astype(str)
@@ -474,19 +437,15 @@ class ModuleValidator:
         """Obtiene llaves de merge según el nivel"""
 
         if level == ModuleMergeLevel.HOGAR:
-
             return self.config.hogar_keys
 
         elif level == ModuleMergeLevel.PERSONA:
-
             return self.config.persona_keys
 
         elif level == ModuleMergeLevel.VIVIENDA:
-
             return self.config.vivienda_keys
 
         else:
-
             raise ValueError(f"Nivel de merge no soportado: {level}")
 
     def _get_merge_recommendation(self, rate1: float, rate2: float) -> str:
@@ -495,19 +454,15 @@ class ModuleValidator:
         avg_rate = (rate1 + rate2) / 2
 
         if avg_rate >= 90:
-
             return "Excelente compatibilidad - merge recomendado"
 
         elif avg_rate >= 70:
-
             return "Buena compatibilidad - revisar registros no coincidentes"
 
         elif avg_rate >= 50:
-
             return "Compatibilidad moderada - verificar llaves y filtros"
 
         else:
-
             return "Baja compatibilidad - revisar estructura de datos"
 
     def _detailed_compatibility_analysis(
@@ -520,9 +475,7 @@ class ModuleValidator:
         # Análisis de distribución de llaves
 
         for key in merge_keys:
-
             if key in df1.columns and key in df2.columns:
-
                 values1 = set(df1[key].dropna().astype(str))
 
                 values2 = set(df2[key].dropna().astype(str))
@@ -580,25 +533,21 @@ class ModuleValidator:
         # Verificar consistencia de llaves
 
         if module_code in self.config.module_validations:
-
             required_keys = self.config.module_validations[module_code]["required_keys"]
 
             missing_keys = [key for key in required_keys if key not in df.columns]
 
             if missing_keys:
-
                 report["issues_found"].append(f"Llaves faltantes: {missing_keys}")
 
                 report["consistency_score"] -= 20
 
             else:
-
                 # Verificar valores nulos en llaves
 
                 null_in_keys = df[required_keys].isnull().any(axis=1).sum()
 
                 if null_in_keys > 0:
-
                     report["issues_found"].append(
                         f"Valores nulos en llaves: {null_in_keys} registros"
                     )
@@ -610,15 +559,12 @@ class ModuleValidator:
         numeric_cols = df.select_dtypes(include=["number"]).columns
 
         for col in numeric_cols:
-
             if df[col].min() < 0 and col.lower() not in ["ingreso", "monto", "valor"]:
-
                 # Variables que no deberían ser negativas
 
                 negative_count = (df[col] < 0).sum()
 
                 if negative_count > 0:
-
                     report["issues_found"].append(
                         f"Valores negativos inesperados en '{col}': {negative_count}"
                     )
@@ -628,15 +574,12 @@ class ModuleValidator:
         # Verificar duplicados
 
         if module_code in self.config.module_validations:
-
             required_keys = self.config.module_validations[module_code]["required_keys"]
 
             if all(key in df.columns for key in required_keys):
-
                 duplicates = df.duplicated(subset=required_keys).sum()
 
                 if duplicates > 0:
-
                     report["issues_found"].append(f"Registros duplicados: {duplicates}")
 
                     report["consistency_score"] -= min(25, (duplicates / len(df)) * 100)
@@ -647,13 +590,11 @@ class ModuleValidator:
         """Calcula score de unicidad basado en llaves primarias"""
 
         if module_code not in self.config.module_validations:
-
             return 100.0
 
         required_keys = self.config.module_validations[module_code]["required_keys"]
 
         if not all(key in df.columns for key in required_keys):
-
             return 50.0  # Score medio si faltan llaves
 
         unique_combinations = df[required_keys].drop_duplicates().shape[0]
@@ -670,17 +611,13 @@ class ModuleValidator:
         # Validaciones específicas por módulo
 
         if module_code == "34":  # Sumaria
-
             if "mieperho" in df.columns:
-
                 invalid_members = ((df["mieperho"] <= 0) | (df["mieperho"] > 30)).sum()
 
                 score -= min(20, (invalid_members / len(df)) * 100)
 
         elif module_code in ["02", "03", "04", "05"]:  # Módulos de persona
-
             if "codperso" in df.columns:
-
                 invalid_codperso = (df["codperso"] <= 0).sum()
 
                 score -= min(15, (invalid_codperso / len(df)) * 100)
@@ -690,11 +627,9 @@ class ModuleValidator:
         numeric_cols = df.select_dtypes(include=["number"]).columns
 
         for col in numeric_cols:
-
             # Verificar valores extremos (outliers simples)
 
             if len(df[col].dropna()) > 0:
-
                 q1 = df[col].quantile(0.25)
 
                 q3 = df[col].quantile(0.75)
@@ -702,13 +637,11 @@ class ModuleValidator:
                 iqr = q3 - q1
 
                 if iqr > 0:
-
                     outliers = ((df[col] < (q1 - 3 * iqr)) | (df[col] > (q3 + 3 * iqr))).sum()
 
                     outlier_rate = outliers / len(df)
 
                     if outlier_rate > 0.05:  # Más del 5% outliers
-
                         score -= min(5, outlier_rate * 20)
 
         return max(0, score)
@@ -764,11 +697,9 @@ class ModuleValidator:
         # Advertencias estructurales
 
         if validation_warnings:
-
             lines.append("⚠️  ADVERTENCIAS ESTRUCTURALES:")
 
             for warning in validation_warnings:
-
                 lines.append(f"  • {warning}")
 
             lines.append("")
@@ -776,11 +707,9 @@ class ModuleValidator:
         # Problemas de consistencia
 
         if consistency_report["issues_found"]:
-
             lines.append("❌ PROBLEMAS DE CONSISTENCIA:")
 
             for issue in consistency_report["issues_found"]:
-
                 lines.append(f"  • {issue}")
 
             lines.append("")
@@ -788,15 +717,12 @@ class ModuleValidator:
         # Resumen final
 
         if consistency_report["consistency_score"] >= 80:
-
             status = "✅ BUENA CALIDAD"
 
         elif consistency_report["consistency_score"] >= 60:
-
             status = "⚠️  CALIDAD MODERADA"
 
         else:
-
             status = "❌ REQUIERE ATENCIÓN"
 
         lines.extend([f"🏷️  ESTADO GENERAL: {status}", ""])

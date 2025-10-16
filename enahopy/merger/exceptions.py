@@ -13,11 +13,9 @@ y merge entre módulos ENAHO.
 """
 
 try:
-
     from ..loader import ENAHOError, ENAHOValidationError
 
 except ImportError:
-
     # Fallback para uso independiente
 
     class ENAHOError(Exception):
@@ -42,7 +40,6 @@ class GeoMergeError(ENAHOError):
     """Error específico durante operaciones de fusión geográfica"""
 
     def __init__(self, message: str, error_code: str = None, **context):
-
         super().__init__(message)
 
         self.error_code = error_code
@@ -54,7 +51,6 @@ class UbigeoValidationError(ENAHOValidationError):
     """Error de validación de códigos UBIGEO"""
 
     def __init__(self, message: str, invalid_ubigeos: list = None, **context):
-
         super().__init__(message)
 
         self.invalid_ubigeos = invalid_ubigeos or []
@@ -66,7 +62,6 @@ class TerritorialInconsistencyError(GeoMergeError):
     """Error de inconsistencia territorial"""
 
     def __init__(self, message: str, inconsistencies: list = None, **context):
-
         super().__init__(message)
 
         self.inconsistencies = inconsistencies or []
@@ -78,7 +73,6 @@ class DuplicateHandlingError(GeoMergeError):
     """Error durante el manejo de duplicados geográficos"""
 
     def __init__(self, message: str, duplicates_info: dict = None, **context):
-
         super().__init__(message)
 
         self.duplicates_info = duplicates_info or {}
@@ -97,7 +91,6 @@ class ModuleMergeError(ENAHOError):
     """Error específico durante merge entre módulos ENAHO"""
 
     def __init__(self, message: str, modules_involved: list = None, **context):
-
         super().__init__(message)
 
         self.modules_involved = modules_involved or []
@@ -111,7 +104,6 @@ class ModuleValidationError(ENAHOValidationError):
     def __init__(
         self, message: str, module_code: str = None, validation_failures: list = None, **context
     ):
-
         super().__init__(message)
 
         self.module_code = module_code
@@ -132,7 +124,6 @@ class IncompatibleModulesError(ModuleMergeError):
         compatibility_info: dict = None,
         **context,
     ):
-
         super().__init__(message)
 
         self.module1 = module1
@@ -150,7 +141,6 @@ class MergeKeyError(ModuleMergeError):
     def __init__(
         self, message: str, missing_keys: list = None, invalid_keys: list = None, **context
     ):
-
         super().__init__(message)
 
         self.missing_keys = missing_keys or []
@@ -164,7 +154,6 @@ class ConflictResolutionError(ModuleMergeError):
     """Error durante la resolución de conflictos en merge"""
 
     def __init__(self, message: str, conflicts: list = None, strategy_used: str = None, **context):
-
         super().__init__(message)
 
         self.conflicts = conflicts or []
@@ -185,7 +174,6 @@ class DataQualityError(ENAHOError):
     """Error relacionado con calidad de datos"""
 
     def __init__(self, message: str, quality_metrics: dict = None, **context):
-
         super().__init__(message)
 
         self.quality_metrics = quality_metrics or {}
@@ -204,7 +192,6 @@ class ValidationThresholdError(ENAHOValidationError):
         actual: float = None,
         **context,
     ):
-
         super().__init__(message)
 
         self.threshold_type = threshold_type
@@ -222,7 +209,6 @@ class ConfigurationError(ENAHOError):
     def __init__(
         self, message: str, config_section: str = None, invalid_values: dict = None, **context
     ):
-
         super().__init__(message)
 
         self.config_section = config_section
@@ -267,33 +253,27 @@ def format_exception_details(exception: Exception) -> dict:
     # Agregar contexto específico si está disponible
 
     if hasattr(exception, "context"):
-
         details["context"] = exception.context
 
     if hasattr(exception, "error_code"):
-
         details["error_code"] = exception.error_code
 
     # Atributos específicos por tipo de excepción
 
     if isinstance(exception, UbigeoValidationError):
-
         details["invalid_ubigeos"] = exception.invalid_ubigeos
 
     elif isinstance(exception, ModuleValidationError):
-
         details["module_code"] = exception.module_code
 
         details["validation_failures"] = exception.validation_failures
 
     elif isinstance(exception, IncompatibleModulesError):
-
         details["modules"] = [exception.module1, exception.module2]
 
         details["compatibility_info"] = exception.compatibility_info
 
     elif isinstance(exception, ValidationThresholdError):
-
         details["threshold_info"] = {
             "type": exception.threshold_type,
             "expected": exception.expected,
@@ -333,21 +313,17 @@ def create_merge_error_report(exception: Exception, operation_context: dict = No
     # Agregar contexto de operación
 
     if operation_context:
-
         report_lines.append("\nContexto de operación:")
 
         for key, value in operation_context.items():
-
             report_lines.append(f"  {key}: {value}")
 
     # Detalles específicos de la excepción
 
     if hasattr(exception, "context") and exception.context:
-
         report_lines.append("\nDetalles adicionales:")
 
         for key, value in exception.context.items():
-
             report_lines.append(f"  {key}: {value}")
 
     # Recomendaciones específicas
@@ -355,11 +331,9 @@ def create_merge_error_report(exception: Exception, operation_context: dict = No
     recommendations = _get_error_recommendations(exception)
 
     if recommendations:
-
         report_lines.append("\nRecomendaciones:")
 
         for rec in recommendations:
-
             report_lines.append(f"  • {rec}")
 
     return "\n".join(report_lines)
@@ -369,7 +343,6 @@ def _get_error_recommendations(exception: Exception) -> list:
     """Genera recomendaciones específicas según el tipo de error"""
 
     if isinstance(exception, UbigeoValidationError):
-
         return [
             "Verificar formato de códigos UBIGEO (6 dígitos)",
             "Validar que departamentos estén en el rango 01-25",
@@ -377,7 +350,6 @@ def _get_error_recommendations(exception: Exception) -> list:
         ]
 
     elif isinstance(exception, IncompatibleModulesError):
-
         return [
             "Verificar que los módulos sean del mismo año",
             "Considerar usar merge a nivel hogar en lugar de persona",
@@ -385,7 +357,6 @@ def _get_error_recommendations(exception: Exception) -> list:
         ]
 
     elif isinstance(exception, DuplicateHandlingError):
-
         return [
             "Especificar estrategia de manejo de duplicados apropiada",
             "Verificar columna de calidad si usa BEST_QUALITY",
@@ -393,7 +364,6 @@ def _get_error_recommendations(exception: Exception) -> list:
         ]
 
     elif isinstance(exception, DataQualityError):
-
         return [
             "Revisar completitud de datos antes del merge",
             "Validar consistencia de llaves de unión",

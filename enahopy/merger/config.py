@@ -620,27 +620,21 @@ class GeoValidationResult:
         ]
 
         if self.missing_coordinates > 0:
-
             report.append(f"Sin coordenadas: {self.missing_coordinates:,}")
 
         if self.territorial_inconsistencies > 0:
-
             report.append(f"Inconsistencias territoriales: {self.territorial_inconsistencies:,}")
 
         if self.warnings:
-
             report.append("\n⚠️  Advertencias:")
 
             for warning in self.warnings[:5]:  # Máximo 5
-
                 report.append(f"  - {warning}")
 
         if self.errors:
-
             report.append("\n❌ Errores:")
 
             for error in self.errors[:5]:  # Máximo 5
-
                 report.append(f"  - {error}")
 
         return "\n".join(report)
@@ -690,7 +684,9 @@ class ModuleMergeResult:
         status = (
             "✅ EXITOSO"
             if self.quality_score >= 70
-            else "⚠️ CON ADVERTENCIAS" if self.quality_score >= 50 else "❌ PROBLEMÁTICO"
+            else "⚠️ CON ADVERTENCIAS"
+            if self.quality_score >= 50
+            else "❌ PROBLEMÁTICO"
         )
 
         report = [
@@ -718,15 +714,12 @@ class ModuleMergeResult:
                 report.append(f"  Factor de cardinalidad: {change:.2f}x {symbol}")
 
         if self.validation_warnings:
-
             report.append(f"\n⚠️  Advertencias ({len(self.validation_warnings)}):")
 
             for warning in self.validation_warnings[:3]:
-
                 report.append(f"  - {warning}")
 
             if len(self.validation_warnings) > 3:
-
                 report.append(f"  ... y {len(self.validation_warnings) - 3} más")
 
         return "\n".join(report)

@@ -395,9 +395,7 @@ class NullAnalyzer:
         elif severity in ["high", "critical", "extreme"]:
             recommendations.append(f"❌ ADVERTENCIA: {null_pct:.1f}% de valores nulos detectados.")
             recommendations.append("❌ El análisis puede estar severamente comprometido.")
-            recommendations.append(
-                "❌ Considere excluir variables con exceso de valores faltantes."
-            )
+            recommendations.append("❌ Considere excluir variables con exceso de valores faltantes.")
             recommendations.append("❌ Revise la calidad de la fuente de datos.")
 
         # Recomendaciones por patrones

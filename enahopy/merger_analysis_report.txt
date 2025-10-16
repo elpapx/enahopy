@@ -1,0 +1,20 @@
+============================================================
+REPORTE DE ANÁLISIS DEL MERGER
+============================================================
+
+🔍 USO DE ENAHOGeoMerger (0 referencias):
+
+📦 USO DE ENAHOModuleMerger (0 referencias):
+
+🛠️ FUNCIONES DE CONVENIENCIA (0 usos):
+
+🧪 TESTS EXISTENTES (0 archivos):
+
+📤 EXPORTACIONES PÚBLICAS (0 items):
+
+============================================================
+CONCLUSIONES Y RECOMENDACIONES
+============================================================
+✅ Uso moderado de ENAHOGeoMerger - refactorización segura
+✅ ENAHOModuleMerger poco usado directamente - puede promocionarse
+⚠️ Cobertura de tests baja - crear más tests antes de refactorizar

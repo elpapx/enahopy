@@ -1,0 +1,25 @@
+{
+  "last_download_session": {
+    "timestamp": 1755806435.772423,
+    "data": {
+      "timestamp": "2025-08-21T15:00:35.772422",
+      "modules": [
+        "01"
+      ],
+      "years": [
+        "2023"
+      ],
+      "dataset_type": "corte transversal",
+      "total_tasks": 1,
+      "successful_tasks": 0,
+      "failed_tasks": [
+        [
+          "2023",
+          "01"
+        ]
+      ],
+      "elapsed_time": 24.31270980834961,
+      "success_rate": 0.0
+    }
+  }
+}

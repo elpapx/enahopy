@@ -1,0 +1,57 @@
+# Core testing frameworks
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0  # Para tests paralelos
+pytest-timeout>=2.1.0  # Para timeout en tests
+pytest-mock>=3.11.0  # Para mocking
+unittest-xml-reporting>=3.2.0  # Para reportes XML
+
+# Coverage
+coverage[toml]>=7.2.0
+codecov>=2.1.13
+
+# Mocking y fixtures
+mock>=5.0.0
+responses>=0.23.0  # Para mocking de HTTP requests
+faker>=18.0.0  # Para generar datos fake
+factory-boy>=3.2.0  # Para factories de tests
+
+# Análisis de código
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0
+mypy>=1.3.0
+pylint>=2.17.0
+
+# Testing de performance
+pytest-benchmark>=4.0.0
+memory-profiler>=0.61.0
+
+# Testing de documentación
+pytest-doctestplus>=1.0.0
+
+# Dependencias del proyecto
+pandas>=1.5.0
+numpy>=1.23.0
+requests>=2.28.0
+matplotlib>=3.6.0
+seaborn>=0.12.0
+scipy>=1.10.0
+scikit-learn>=1.2.0
+
+# Opcional para formatos específicos
+pyreadstat>=1.2.0  # Para archivos SPSS/Stata
+openpyxl>=3.1.0  # Para Excel
+xlrd>=2.0.0
+pyarrow>=11.0.0  # Para Parquet
+fastparquet>=2023.0.0
+
+# Testing de notebooks (opcional)
+nbval>=0.10.0
+jupyter>=1.0.0
+
+# Herramientas de entorno
+tox>=4.5.0
+pre-commit>=3.3.0
+
+

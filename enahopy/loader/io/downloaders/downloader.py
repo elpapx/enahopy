@@ -178,7 +178,6 @@ class ENAHODownloader:
                     desc=f"Descargando {file_path.name}",
                     disable=not verbose,
                 ) as progress_bar:
-
                     for chunk in response.iter_content(chunk_size=self.config.chunk_size):
                         if chunk:
                             file.write(chunk)
