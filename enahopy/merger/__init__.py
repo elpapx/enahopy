@@ -6,6 +6,8 @@ Exportaciones principales y funciones de conveniencia para el sistema
 de fusión geográfica y merge entre módulos ENAHO.
 """
 
+from __future__ import annotations
+
 from .config import (  # Configuraciones; Enums geográficos; Enums de módulos; Dataclasses de resultados; Constantes
     DEPARTAMENTOS_VALIDOS,
     PATRONES_GEOGRAFICOS,

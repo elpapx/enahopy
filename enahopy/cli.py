@@ -6,6 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import __version__
+
 
 def main():
     """Función principal del CLI"""

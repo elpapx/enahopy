@@ -20,7 +20,7 @@ def quick_null_analysis(
 ) -> Dict[str, Any]:
     """Análisis rápido de nulos con validación mejorada."""
     # Lazy import to avoid circular dependencies
-    from . import ENAHONullAnalyzer
+    from . import ENAHONullAnalyzer  # noqa: F821
 
     # Validar y convertir complexity de forma segura
     valid_complexities = {c.value for c in AnalysisComplexity}
@@ -45,7 +45,7 @@ def get_data_quality_score(
     Función de conveniencia para obtener score rápido de calidad de datos.
     """
     # Lazy import to avoid circular dependencies
-    from . import ENAHONullAnalyzer
+    from . import ENAHONullAnalyzer  # noqa: F821
 
     analyzer = ENAHONullAnalyzer(verbose=False)
     return analyzer.get_data_quality_score(df, detailed=detailed)

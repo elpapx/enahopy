@@ -293,9 +293,15 @@ class StreamingProcessor:
                                 )
 
                         # Update statistics
-                        stats.total_rows += len(chunk)
+                        chunk_rows = len(chunk)
+                        stats.total_rows += chunk_rows
                         stats.chunks_processed += 1
                         first_chunk = False
+
+                        chunk_time = time.time() - chunk_start
+                        self.logger.debug(
+                            f"Processed chunk {chunk_num + 1} ({chunk_rows} rows) in {chunk_time:.2f}s"
+                        )
 
                         # Clean up memory
                         del chunk, processed_chunk
@@ -303,11 +309,6 @@ class StreamingProcessor:
                         # Periodic garbage collection
                         if chunk_num % 10 == 0:
                             gc.collect()
-
-                        chunk_time = time.time() - chunk_start
-                        self.logger.debug(
-                            f"Processed chunk {chunk_num + 1} ({len(chunk)} rows) in {chunk_time:.2f}s"
-                        )
 
                     except Exception as e:
                         error_msg = f"Error processing chunk {chunk_num + 1}: {str(e)}"
