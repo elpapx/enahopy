@@ -3,16 +3,13 @@ Funciones de conveniencia para análisis de valores nulos
 """
 
 import warnings
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 from ..validation import validate_dataframe_not_empty
 from .config import MissingDataPattern  # Agregar si se usa en detect_missing_patterns_automatically
 from .config import AnalysisComplexity, ExportFormat, NullAnalysisConfig, VisualizationType
-from .exceptions import NullAnalysisError
 
 
 def quick_null_analysis(
@@ -60,6 +57,9 @@ def create_null_visualizations(
     """
     Función de conveniencia para crear visualizaciones de nulos.
     """
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer  # noqa: F811
+
     # Usar enum correcto
     viz_type = VisualizationType.INTERACTIVE if interactive else VisualizationType.STATIC
     config = NullAnalysisConfig(visualization_type=viz_type)
@@ -117,6 +117,9 @@ def generate_null_report(
     if not export_formats:
         export_formats = [ExportFormat("html"), ExportFormat("json")]
 
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer  # noqa: F811
+
     config = NullAnalysisConfig(
         export_formats=export_formats, complexity_level=AnalysisComplexity.ADVANCED
     )
@@ -146,6 +149,9 @@ def compare_null_patterns(
 
     if len(datasets) == 1:
         raise ValueError("Se requieren al menos 2 datasets para comparar")
+
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer  # noqa: F811
 
     analyzer = ENAHONullAnalyzer(verbose=False)
 
@@ -206,6 +212,8 @@ def suggest_imputation_methods(df: pd.DataFrame, variable: Optional[str] = None)
     """
     Función de conveniencia para sugerir métodos de imputación.
     """
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer  # noqa: F811
 
     config = NullAnalysisConfig(complexity_level=AnalysisComplexity.ADVANCED)
     analyzer = ENAHONullAnalyzer(config=config, verbose=False)
@@ -233,6 +241,9 @@ def validate_data_completeness(
             "missing_variables": required_variables or [],
             "recommendations": ["Cargar datos antes de validar"],
         }
+
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer  # noqa: F811
 
     analyzer = ENAHONullAnalyzer(verbose=False)
 
@@ -283,11 +294,18 @@ def validate_data_completeness(
     return validation_result
 
 
-def detect_missing_patterns_automatically(
+def analyze_common_missing_patterns(
     df: pd.DataFrame, min_pattern_frequency: int = 10
 ) -> Dict[str, Any]:
     """
-    Detecta automáticamente patrones comunes de datos faltantes.
+    Analiza patrones comunes de datos faltantes por frecuencia.
+
+    Args:
+        df: DataFrame a analizar
+        min_pattern_frequency: Frecuencia mínima para considerar un patrón común
+
+    Returns:
+        Dict con análisis de patrones comunes
     """
 
     missing_matrix = df.isnull()
@@ -352,6 +370,9 @@ class LegacyNullAnalyzer:
             DeprecationWarning,
             stacklevel=2,
         )
+
+        # Lazy import to avoid circular dependencies
+        from . import ENAHONullAnalyzer  # noqa: F811
 
         self.analyzer = ENAHONullAnalyzer(config=config, verbose=False)
 
@@ -438,6 +459,9 @@ def detect_missing_patterns_automatically(
     Returns:
         Dict con patrón detectado y nivel de confianza
     """
+    # Lazy import to avoid circular dependencies
+    from . import ENAHONullAnalyzer  # noqa: F811
+
     analyzer = ENAHONullAnalyzer(
         config=NullAnalysisConfig(complexity_level=AnalysisComplexity.EXPERT), verbose=False
     )

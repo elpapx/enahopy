@@ -8,6 +8,11 @@ de fusión geográfica y merge entre módulos ENAHO.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
+
 from .config import (  # Configuraciones; Enums geográficos; Enums de módulos; Dataclasses de resultados; Constantes
     DEPARTAMENTOS_VALIDOS,
     PATRONES_GEOGRAFICOS,
