@@ -9,7 +9,7 @@ Define contratos para lectores, validadores y otros componentes.
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Union
 
 import pandas as pd
 
@@ -20,6 +20,8 @@ try:
     DASK_AVAILABLE = True
 except ImportError:
     DASK_AVAILABLE = False
+    if TYPE_CHECKING:
+        import dask.dataframe as dd
 
 
 class IReader(ABC):
