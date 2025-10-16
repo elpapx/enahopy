@@ -1268,6 +1268,12 @@ class ENAHOGeoMerger:
         if self.geo_config.valor_faltante is not None:
             geo_columns = [col for col in result_df.columns if col in columnas_geograficas.values()]
             for col in geo_columns:
+                # Handle categorical dtype: add category before filling
+                if isinstance(result_df[col].dtype, pd.CategoricalDtype):
+                    if self.geo_config.valor_faltante not in result_df[col].cat.categories:
+                        result_df[col] = result_df[col].cat.add_categories(
+                            [self.geo_config.valor_faltante]
+                        )
                 result_df[col] = result_df[col].fillna(self.geo_config.valor_faltante)
 
         # Generar reporte final
@@ -2039,10 +2045,12 @@ class ENAHOGeoMerger:
         # 3. Combinar reportes
         combined_report = {
             "module_merge": {
-                "modules_processed": module_result.modules_merged,
+                "modules_processed": list(modules_dict.keys()),
                 "conflicts_resolved": module_result.conflicts_resolved,
-                "warnings": module_result.warnings,
-                "quality_metrics": module_result.quality_metrics,
+                "warnings": module_result.validation_warnings,
+                "quality_score": module_result.quality_score,
+                "unmatched_left": module_result.unmatched_left,
+                "unmatched_right": module_result.unmatched_right,
             },
             "geographic_merge": {
                 "validation": (
@@ -2058,7 +2066,7 @@ class ENAHOGeoMerger:
                 "modules_processed": len(modules_dict),
                 "base_module": base_module,
                 "final_shape": geo_result.shape,
-                "merge_sequence": " → ".join(module_result.modules_merged),
+                "merge_sequence": " → ".join(modules_dict.keys()),
                 "geographic_coverage": geo_validation.coverage_percentage,
             },
         }
@@ -2096,8 +2104,8 @@ class ENAHOGeoMerger:
         # Evaluar calidad general
         quality_score = completeness
 
-        if module_result.conflicts_found > 0:
-            quality_score -= (module_result.conflicts_found / len(final_df)) * 10
+        if module_result.conflicts_resolved > 0:
+            quality_score -= (module_result.conflicts_resolved / len(final_df)) * 10
 
         if high_nan_cols:
             quality_score -= len(high_nan_cols) * 2
@@ -2108,8 +2116,8 @@ class ENAHOGeoMerger:
             "overall_score": round(quality_score, 2),
             "data_completeness": round(completeness, 2),
             "high_nan_columns": high_nan_cols[:10],  # Top 10 columnas con más NaN
-            "total_conflicts": module_result.conflicts_found,
-            "warnings_count": len(module_result.warnings),
+            "total_conflicts": module_result.conflicts_resolved,
+            "warnings_count": len(module_result.validation_warnings),
             "recommendation": self._get_quality_recommendation(quality_score),
         }
 
