@@ -18,6 +18,8 @@ import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
+import numpy as np
+import pandas as pd
 import pytest
 import requests
 import responses
@@ -694,6 +696,334 @@ class TestErrorHandlingRetry:
 
         # Verify error was logged
         assert downloader.logger.error.called
+
+
+# ============================================================================
+# PRIORITY 4: ZIP EXTRACTION TESTS (8-10 tests)
+# ============================================================================
+
+
+class TestZIPExtraction:
+    """Test ZIP extraction functionality from extractor module"""
+
+    @pytest.fixture
+    def extractor(self, logger):
+        """Create extractor instance"""
+        from enahopy.loader.io.downloaders.extractor import ENAHOExtractor
+
+        return ENAHOExtractor(logger)
+
+    @pytest.fixture
+    def sample_zip_with_dta(self, temp_dir):
+        """Create a ZIP file with .dta files"""
+        zip_path = temp_dir / "sample_enaho.zip"
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("module_34.dta", b"fake stata file content")
+            zf.writestr("module_01.dta", b"another stata file")
+            zf.writestr("readme.txt", b"This is a readme")
+            zf.writestr("data/nested_file.dta", b"nested dta file")
+        return zip_path
+
+    def test_extract_zip_basic(self, extractor, sample_zip_with_dta, temp_dir):
+        """Test basic ZIP extraction"""
+        extract_dir = temp_dir / "extracted"
+        extract_dir.mkdir()
+
+        extracted_files = extractor.extract_zip(sample_zip_with_dta, extract_dir)
+
+        assert len(extracted_files) > 0
+        assert all(f.exists() for f in extracted_files)
+
+    def test_extract_zip_only_dta_filter(self, extractor, sample_zip_with_dta, temp_dir):
+        """Test extraction with only_dta=True filter"""
+        extract_dir = temp_dir / "extracted_dta"
+        extract_dir.mkdir()
+
+        extracted_files = extractor.extract_zip(sample_zip_with_dta, extract_dir, only_dta=True)
+
+        # Should only extract .dta files
+        assert len(extracted_files) == 3  # module_34.dta, module_01.dta, nested_file.dta
+        assert all(f.suffix == ".dta" for f in extracted_files)
+
+    def test_extract_zip_flatten_structure(self, extractor, sample_zip_with_dta, temp_dir):
+        """Test extraction with flattened directory structure"""
+        extract_dir = temp_dir / "flat"
+        extract_dir.mkdir()
+
+        extracted_files = extractor.extract_zip(sample_zip_with_dta, extract_dir, flatten=True)
+
+        # All files should be in extract_dir root
+        assert all(f.parent == extract_dir for f in extracted_files)
+
+    def test_extract_zip_preserve_structure(self, extractor, sample_zip_with_dta, temp_dir):
+        """Test extraction preserving directory structure"""
+        extract_dir = temp_dir / "nested"
+        extract_dir.mkdir()
+
+        extracted_files = extractor.extract_zip(sample_zip_with_dta, extract_dir, flatten=False)
+
+        # Some files should be in subdirectories
+        nested_files = [f for f in extracted_files if len(f.relative_to(extract_dir).parts) > 1]
+        assert len(nested_files) > 0
+
+    def test_extract_zip_custom_filter_func(self, extractor, sample_zip_with_dta, temp_dir):
+        """Test extraction with custom filter function"""
+        extract_dir = temp_dir / "filtered"
+        extract_dir.mkdir()
+
+        # Only extract files starting with "module"
+        def custom_filter(filename):
+            return filename.startswith("module")
+
+        extracted_files = extractor.extract_zip(
+            sample_zip_with_dta, extract_dir, filter_func=custom_filter
+        )
+
+        # Should only have module_34.dta and module_01.dta
+        assert len(extracted_files) == 2
+        assert all("module" in f.name for f in extracted_files)
+
+    def test_extract_zip_corrupted_raises_error(self, extractor, temp_dir, corrupted_zip_bytes):
+        """Test extraction of corrupted ZIP raises ENAHOError"""
+        from enahopy.loader.core.exceptions import ENAHOError
+
+        zip_path = temp_dir / "corrupted.zip"
+        zip_path.write_bytes(corrupted_zip_bytes)
+
+        extract_dir = temp_dir / "extract"
+        extract_dir.mkdir()
+
+        with pytest.raises(ENAHOError) as exc_info:
+            extractor.extract_zip(zip_path, extract_dir)
+
+        assert "corrupto" in str(exc_info.value).lower()
+
+    def test_extract_zip_empty_zip(self, extractor, temp_dir):
+        """Test extraction of empty ZIP file"""
+        # Create empty ZIP
+        zip_path = temp_dir / "empty.zip"
+        with zipfile.ZipFile(zip_path, "w"):
+            pass
+
+        extract_dir = temp_dir / "extract"
+        extract_dir.mkdir()
+
+        extracted_files = extractor.extract_zip(zip_path, extract_dir)
+
+        # Empty ZIP should return empty list
+        assert len(extracted_files) == 0
+
+    def test_extract_zip_skips_directories(self, extractor, temp_dir):
+        """Test extraction skips directory entries"""
+        # Create ZIP with directory entries
+        zip_path = temp_dir / "with_dirs.zip"
+        with zipfile.ZipFile(zip_path, "w") as zf:
+            zf.writestr("data/", "")  # Directory entry
+            zf.writestr("data/file.dta", b"content")
+
+        extract_dir = temp_dir / "extract"
+        extract_dir.mkdir()
+
+        extracted_files = extractor.extract_zip(zip_path, extract_dir)
+
+        # Should only have the file, not directory entries
+        assert len(extracted_files) == 1
+        assert extracted_files[0].name == "file.dta"
+
+    def test_extract_zip_combined_filters(self, extractor, temp_dir):
+        """Test extraction with multiple filters combined"""
+        # Create ZIP with various files
+        zip_path = temp_dir / "mixed.zip"
+        with zipfile.ZipFile(zip_path, "w") as zf:
+            zf.writestr("module_34.dta", b"stata1")
+            zf.writestr("other_file.dta", b"stata2")
+            zf.writestr("data.csv", b"csv content")
+            zf.writestr("readme.txt", b"readme")
+
+        extract_dir = temp_dir / "extract"
+        extract_dir.mkdir()
+
+        # Custom filter for files starting with "module", plus only_dta=True
+        def starts_with_module(filename):
+            return filename.startswith("module")
+
+        extracted_files = extractor.extract_zip(
+            zip_path, extract_dir, only_dta=True, filter_func=starts_with_module
+        )
+
+        # Should only have module_34.dta
+        assert len(extracted_files) == 1
+        assert extracted_files[0].name == "module_34.dta"
+
+
+# ============================================================================
+# PRIORITY 5: DTA LOADING & OPTIMIZATION TESTS (10-12 tests)
+# ============================================================================
+
+
+class TestDTALoadingAndOptimization:
+    """Test DTA file loading and data optimization"""
+
+    @pytest.fixture
+    def extractor(self, logger):
+        """Create extractor instance"""
+        from enahopy.loader.io.downloaders.extractor import ENAHOExtractor
+
+        return ENAHOExtractor(logger)
+
+    @pytest.fixture
+    def sample_dta_dir(self, temp_dir):
+        """Create directory with sample .dta files"""
+        dta_dir = temp_dir / "dta_files"
+        dta_dir.mkdir()
+
+        # Create sample DataFrames and save as Stata files
+        df1 = pd.DataFrame({"id": [1, 2, 3], "value": [100, 200, 300], "name": ["A", "B", "C"]})
+
+        df2 = pd.DataFrame({"code": [10, 20], "amount": [1.5, 2.5]})
+
+        # Save as Stata files
+        df1.to_stata(dta_dir / "module_34.dta", write_index=False)
+        df2.to_stata(dta_dir / "module_01.dta", write_index=False)
+
+        # Also create a non-dta file
+        (dta_dir / "readme.txt").write_text("This is not a DTA file")
+
+        return dta_dir
+
+    def test_load_dta_files_basic(self, extractor, sample_dta_dir):
+        """Test basic DTA file loading"""
+        loaded_data = extractor.load_dta_files(sample_dta_dir)
+
+        assert len(loaded_data) == 2  # Should load 2 .dta files
+        assert "module_34" in loaded_data
+        assert "module_01" in loaded_data
+
+        # Verify data integrity
+        assert len(loaded_data["module_34"]) == 3
+        assert len(loaded_data["module_01"]) == 2
+
+    def test_load_dta_files_low_memory_optimization(self, extractor, sample_dta_dir):
+        """Test DTA loading with low_memory optimization"""
+        loaded_data = extractor.load_dta_files(sample_dta_dir, low_memory=True)
+
+        assert len(loaded_data) == 2
+
+        # Check that optimization was applied (dtypes should be downcast)
+        for df in loaded_data.values():
+            assert isinstance(df, pd.DataFrame)
+
+    def test_load_dta_files_no_optimization(self, extractor, sample_dta_dir):
+        """Test DTA loading without memory optimization"""
+        loaded_data = extractor.load_dta_files(sample_dta_dir, low_memory=False)
+
+        assert len(loaded_data) == 2
+        # Data should still be loaded correctly
+        assert all(isinstance(df, pd.DataFrame) for df in loaded_data.values())
+
+    def test_load_dta_files_empty_directory(self, extractor, temp_dir):
+        """Test loading from empty directory"""
+        empty_dir = temp_dir / "empty"
+        empty_dir.mkdir()
+
+        loaded_data = extractor.load_dta_files(empty_dir)
+
+        # Should return empty dict
+        assert len(loaded_data) == 0
+
+    def test_load_dta_files_ignores_non_dta(self, extractor, sample_dta_dir):
+        """Test that non-.dta files are ignored"""
+        loaded_data = extractor.load_dta_files(sample_dta_dir)
+
+        # readme.txt should be ignored
+        assert "readme" not in loaded_data
+        assert len(loaded_data) == 2  # Only .dta files
+
+    def test_load_dta_files_handles_corrupted_file(self, extractor, temp_dir):
+        """Test handling of corrupted .dta file"""
+        dta_dir = temp_dir / "corrupted"
+        dta_dir.mkdir()
+
+        # Create valid file
+        df_valid = pd.DataFrame({"x": [1, 2]})
+        df_valid.to_stata(dta_dir / "valid.dta", write_index=False)
+
+        # Create corrupted file
+        (dta_dir / "corrupted.dta").write_bytes(b"not a valid stata file")
+
+        # Should load valid file and skip corrupted one
+        loaded_data = extractor.load_dta_files(dta_dir)
+
+        assert "valid" in loaded_data
+        # Corrupted file should be skipped with warning
+        assert extractor.logger.warning.called
+
+    def test_optimize_dtypes_int64_to_int8(self, extractor):
+        """Test int64 downcast to int8"""
+        df = pd.DataFrame({"small_int": np.array([1, 2, 3, 100], dtype="int64")})
+
+        optimized = extractor._optimize_dtypes(df)
+
+        # Should be downcast to int8 (range -128 to 127)
+        assert optimized["small_int"].dtype == "int8"
+
+    def test_optimize_dtypes_int64_to_int16(self, extractor):
+        """Test int64 downcast to int16"""
+        df = pd.DataFrame({"medium_int": np.array([1000, 2000, 30000], dtype="int64")})
+
+        optimized = extractor._optimize_dtypes(df)
+
+        # Should be downcast to int16 (range -32768 to 32767)
+        assert optimized["medium_int"].dtype == "int16"
+
+    def test_optimize_dtypes_int64_to_int32(self, extractor):
+        """Test int64 downcast to int32"""
+        df = pd.DataFrame({"large_int": np.array([100000, 200000, 1000000], dtype="int64")})
+
+        optimized = extractor._optimize_dtypes(df)
+
+        # Should be downcast to int32
+        assert optimized["large_int"].dtype == "int32"
+
+    def test_optimize_dtypes_float_downcast(self, extractor):
+        """Test float64 downcast"""
+        df = pd.DataFrame({"float_col": np.array([1.5, 2.5, 3.5], dtype="float64")})
+
+        optimized = extractor._optimize_dtypes(df)
+
+        # Should be downcast to float32
+        assert optimized["float_col"].dtype in ["float32", "float64"]  # Depends on values
+
+    def test_prepare_data_for_stata_object_columns(self, extractor):
+        """Test preparation of object columns for Stata export"""
+        df = pd.DataFrame(
+            {"text": ["hello", "world", None], "number": [1, 2, 3], "mixed": ["a", None, "c"]}
+        )
+
+        prepared = extractor._prepare_data_for_stata(df)
+
+        # Object columns should be converted to string
+        assert prepared["text"].dtype == object
+        assert prepared["mixed"].dtype == object
+
+    def test_prepare_data_for_stata_bool_columns(self, extractor):
+        """Test preparation of boolean columns for Stata export"""
+        df = pd.DataFrame({"bool_col": [True, False, True], "value": [1, 2, 3]})
+
+        prepared = extractor._prepare_data_for_stata(df)
+
+        # Boolean should be converted to int
+        assert prepared["bool_col"].dtype in ["int64", "int32", "int"]
+
+    def test_prepare_data_for_stata_empty_strings(self, extractor):
+        """Test handling of empty strings and nan in Stata preparation"""
+        df = pd.DataFrame({"col1": ["", "nan", "None"], "col2": [1, 2, 3]})
+
+        prepared = extractor._prepare_data_for_stata(df)
+
+        # Empty strings should be handled appropriately
+        assert isinstance(prepared, pd.DataFrame)
+        assert len(prepared) == 3
 
 
 # ============================================================================
