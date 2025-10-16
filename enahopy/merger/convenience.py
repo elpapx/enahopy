@@ -54,8 +54,6 @@ from .exceptions import ConfigurationError, DataQualityError, ValidationThreshol
 # Import seguro para evitar circularidad
 
 
-
-
 # =====================================================
 
 # FUNCIONES DE VALIDACIÓN Y UTILIDAD
