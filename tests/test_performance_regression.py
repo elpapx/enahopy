@@ -193,7 +193,9 @@ class TestCachePerformance:
 
         # Cache read should be faster than write (more relaxed threshold)
         # Note: Actual speedup will vary, so we just check that hit is not slower
-        assert time_hit <= time_miss * 2, f"Cache hit ({time_hit:.4f}s) slower than expected vs write ({time_miss:.4f}s)"
+        assert (
+            time_hit <= time_miss * 2
+        ), f"Cache hit ({time_hit:.4f}s) slower than expected vs write ({time_miss:.4f}s)"
 
     def test_cache_compression(self, cache_manager, sample_dataframe_large):
         """Test that cache compression is enabled and effective."""

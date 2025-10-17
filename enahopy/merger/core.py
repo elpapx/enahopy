@@ -1267,10 +1267,10 @@ class ENAHOGeoMerger:
         # Manejo de valores faltantes
         # FIX: Solo rellenar valores faltantes para registros SIN match geográfico (left_only)
         # Preservar nulls que vienen del DataFrame geográfico mismo
-        if self.geo_config.valor_faltante is not None and '_merge' in result_df.columns:
+        if self.geo_config.valor_faltante is not None and "_merge" in result_df.columns:
             geo_columns = [col for col in result_df.columns if col in columnas_geograficas.values()]
             # Solo rellenar para registros que no tuvieron match (left_only)
-            mask_sin_match = result_df['_merge'] == 'left_only'
+            mask_sin_match = result_df["_merge"] == "left_only"
 
             for col in geo_columns:
                 # Handle categorical dtype: add category before filling

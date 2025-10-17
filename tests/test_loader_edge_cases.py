@@ -73,7 +73,11 @@ class TestLoaderFileEdgeCases:
             assert df.empty or len(df) == 0
         except (FileReaderError, pd.errors.EmptyDataError) as e:
             # Expected - should have clear message
-            assert "empty" in str(e).lower() or "no data" in str(e).lower() or "no columns" in str(e).lower()
+            assert (
+                "empty" in str(e).lower()
+                or "no data" in str(e).lower()
+                or "no columns" in str(e).lower()
+            )
 
     def test_csv_with_only_headers(self, temp_dir):
         """Test CSV file with headers but no data rows."""

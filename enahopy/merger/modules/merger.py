@@ -323,7 +323,9 @@ class ENAHOModuleMerger:
 
             return ModuleMergeResult(
                 merged_df=pd.DataFrame(),
-                merge_report={"warning": f"Módulo {left_module} vacío, resultado vacío (left-join)"},
+                merge_report={
+                    "warning": f"Módulo {left_module} vacío, resultado vacío (left-join)"
+                },
                 conflicts_resolved=0,
                 unmatched_left=0,
                 unmatched_right=unmatched_right_count,
@@ -409,7 +411,7 @@ class ENAHOModuleMerger:
 
         # If not all keys available, use common subset (at least hogar keys)
         if common_keys != merge_keys:
-            hogar_keys = ['conglome', 'vivienda', 'hogar']
+            hogar_keys = ["conglome", "vivienda", "hogar"]
             if all(k in common_keys for k in hogar_keys):
                 self.logger.warning(
                     f"Usando llaves comunes {common_keys} en lugar de {merge_keys} para cross-level merge"
@@ -420,7 +422,7 @@ class ENAHOModuleMerger:
                 raise MergeKeyError(
                     f"Insuficientes llaves comunes. Requerido: {hogar_keys}, Disponible: {common_keys}",
                     missing_keys=hogar_keys,
-                    invalid_keys=[]
+                    invalid_keys=[],
                 )
 
         # ====== FIX 2: Validar compatibilidad de tipos antes del merge ======
