@@ -135,7 +135,7 @@ class IncompatibleModulesError(ModuleMergeError):
         self.context = context
 
 
-class MergeKeyError(ModuleMergeError):
+class MergeKeyError(ModuleMergeError, KeyError):
     """Error relacionado con llaves de merge"""
 
     def __init__(

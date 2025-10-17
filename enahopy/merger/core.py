@@ -1265,8 +1265,13 @@ class ENAHOGeoMerger:
             result_df = self._merge_simple(df_principal, df_geo_clean, columna_union)
 
         # Manejo de valores faltantes
-        if self.geo_config.valor_faltante is not None:
+        # FIX: Solo rellenar valores faltantes para registros SIN match geográfico (left_only)
+        # Preservar nulls que vienen del DataFrame geográfico mismo
+        if self.geo_config.valor_faltante is not None and '_merge' in result_df.columns:
             geo_columns = [col for col in result_df.columns if col in columnas_geograficas.values()]
+            # Solo rellenar para registros que no tuvieron match (left_only)
+            mask_sin_match = result_df['_merge'] == 'left_only'
+
             for col in geo_columns:
                 # Handle categorical dtype: add category before filling
                 if isinstance(result_df[col].dtype, pd.CategoricalDtype):
@@ -1274,7 +1279,9 @@ class ENAHOGeoMerger:
                         result_df[col] = result_df[col].cat.add_categories(
                             [self.geo_config.valor_faltante]
                         )
-                result_df[col] = result_df[col].fillna(self.geo_config.valor_faltante)
+                # FIX: Directly assign to null values in left_only records
+                mask_null = mask_sin_match & result_df[col].isna()
+                result_df.loc[mask_null, col] = self.geo_config.valor_faltante
 
         # Generar reporte final
         if validation_result is None:
@@ -1399,12 +1406,12 @@ class ENAHOGeoMerger:
             raise ValueError(f"Merge key '{on}' not found in right DataFrame")
 
         try:
-            result = pd.merge(df1, df2, on=on, how="left", validate="m:1")
+            result = pd.merge(df1, df2, on=on, how="left", validate="m:1", indicator=True)
         except pd.errors.MergeError as e:
             self.logger.error(f"Error en merge: {str(e)}")
             # Intentar merge sin validación
             self.logger.warning("Reintentando merge sin validación m:1...")
-            result = pd.merge(df1, df2, on=on, how="left")
+            result = pd.merge(df1, df2, on=on, how="left", indicator=True)
 
         # Bug fix #1: Check for duplicate merge key columns after merge (shouldn't happen but defensive)
         if on in result.columns:
@@ -1442,7 +1449,7 @@ class ENAHOGeoMerger:
             end_idx = min((i + 1) * chunk_size, len(df1))
 
             chunk = df1.iloc[start_idx:end_idx]
-            chunk_merged = pd.merge(chunk, df2, on=on, how="left")
+            chunk_merged = pd.merge(chunk, df2, on=on, how="left", indicator=True)
             chunks_results.append(chunk_merged)
 
             if (i + 1) % 10 == 0:

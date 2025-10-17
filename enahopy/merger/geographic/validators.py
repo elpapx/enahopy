@@ -36,14 +36,17 @@ class UbigeoValidator:
         if not isinstance(ubigeo, str):
             return False, "UBIGEO debe ser string"
 
-        # Normalizar a 6 dígitos
-        ubigeo_norm = ubigeo.zfill(6)
-
-        if len(ubigeo_norm) != 6:
-            return False, f"Longitud inválida: {len(ubigeo_norm)}"
-
-        if not ubigeo_norm.isdigit():
+        # Validar que solo contenga dígitos antes de normalizar
+        if not ubigeo.isdigit():
             return False, "Contiene caracteres no numéricos"
+
+        # Validar longitud original (solo 2, 4, o 6 dígitos son válidos)
+        original_length = len(ubigeo)
+        if original_length not in [2, 4, 6]:
+            return False, f"Longitud inválida: {original_length} (debe ser 2, 4 o 6 dígitos)"
+
+        # Normalizar a 6 dígitos para validaciones jerárquicas
+        ubigeo_norm = ubigeo.zfill(6)
 
         # Validar departamento
         dep = ubigeo_norm[:2]
@@ -114,14 +117,19 @@ class UbigeoValidator:
         Returns:
             DataFrame con componentes territoriales
         """
-        serie_norm = serie.astype(str).str.zfill(6)
+        # Preservar nulls antes de conversión a string
+        # Reemplazar None y NaN con empty string temporalmente
+        serie_clean = serie.fillna("").astype(str)
+
+        # Aplicar zfill solo a valores no vacíos
+        serie_norm = serie_clean.apply(lambda x: x.zfill(6) if x and x != "nan" else "")
 
         componentes = pd.DataFrame(
             {
                 "ubigeo": serie_norm,
-                "departamento": serie_norm.str[:2],
-                "provincia": serie_norm.str[:4],
-                "distrito": serie_norm.str[:6],
+                "departamento": serie_norm.str[:2].replace("", pd.NA),
+                "provincia": serie_norm.str[:4].replace("", pd.NA),
+                "distrito": serie_norm.str[:6].replace("", pd.NA),
                 "nombre_departamento": serie_norm.str[:2].map(DEPARTAMENTOS_VALIDOS),
             },
             index=serie.index,

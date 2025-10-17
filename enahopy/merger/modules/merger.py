@@ -317,29 +317,18 @@ class ENAHOModuleMerger:
         if left_df is None or left_df.empty:
             self.logger.warning(f"⚠️ Módulo {left_module} está vacío o es None")
 
-            if right_df is None or right_df.empty:
-                # Ambos vacíos
-
-                return ModuleMergeResult(
-                    merged_df=pd.DataFrame(),
-                    merge_report={"error": "Ambos DataFrames vacíos"},
-                    conflicts_resolved=0,
-                    unmatched_left=0,
-                    unmatched_right=0,
-                    validation_warnings=["Ambos módulos vacíos"],
-                    quality_score=0.0,
-                )
-
-            # Solo left vacío, retornar right
+            # Left-join semantics: empty left = empty result
+            # Track right records as unmatched
+            unmatched_right_count = 0 if (right_df is None or right_df.empty) else len(right_df)
 
             return ModuleMergeResult(
-                merged_df=right_df.copy(),
-                merge_report={"warning": f"Módulo {left_module} vacío, retornando {right_module}"},
+                merged_df=pd.DataFrame(),
+                merge_report={"warning": f"Módulo {left_module} vacío, resultado vacío (left-join)"},
                 conflicts_resolved=0,
                 unmatched_left=0,
-                unmatched_right=len(right_df),
+                unmatched_right=unmatched_right_count,
                 validation_warnings=[f"Módulo {left_module} vacío"],
-                quality_score=50.0,
+                quality_score=0.0,
             )
 
         if right_df is None or right_df.empty:
@@ -412,6 +401,27 @@ class ENAHOModuleMerger:
         # 3. Determinar llaves de merge
 
         merge_keys = self._get_merge_keys_for_level(config.merge_level)
+
+        # FIX: Use only common available keys for cross-level merges
+        available_in_left = [k for k in merge_keys if k in left_df.columns]
+        available_in_right = [k for k in merge_keys if k in right_df.columns]
+        common_keys = [k for k in merge_keys if k in available_in_left and k in available_in_right]
+
+        # If not all keys available, use common subset (at least hogar keys)
+        if common_keys != merge_keys:
+            hogar_keys = ['conglome', 'vivienda', 'hogar']
+            if all(k in common_keys for k in hogar_keys):
+                self.logger.warning(
+                    f"Usando llaves comunes {common_keys} en lugar de {merge_keys} para cross-level merge"
+                )
+                merge_keys = common_keys
+            else:
+                # Not enough common keys - raise MergeKeyError (which inherits from KeyError)
+                raise MergeKeyError(
+                    f"Insuficientes llaves comunes. Requerido: {hogar_keys}, Disponible: {common_keys}",
+                    missing_keys=hogar_keys,
+                    invalid_keys=[]
+                )
 
         # ====== FIX 2: Validar compatibilidad de tipos antes del merge ======
 
@@ -710,7 +720,6 @@ class ENAHOModuleMerger:
         df_clean = df.copy()
 
         # Verificar que todas las llaves existan
-
         missing_keys = [key for key in merge_keys if key not in df_clean.columns]
 
         if missing_keys:
