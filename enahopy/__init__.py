@@ -12,8 +12,8 @@ Implementa lazy loading para optimizar tiempo de carga inicial.
 from typing import Any, Dict
 
 # Version info
-__version__ = "0.5.1"
-__version_info__ = (0, 5, 1)
+__version__ = "0.6.0"
+__version_info__ = (0, 6, 0)
 __author__ = "Paul Camacho"
 __email__ = "pcamacho447@gmail.com"
 
