@@ -36,52 +36,77 @@ pip install enahopy[all]
 
 ## 🚀 Inicio Rápido
 
-### 1. Descargar y leer datos ENAHO
+### 1. Descargar datos ENAHO
 
 ```python
-from enahopy.loader import download_enaho_data, read_enaho_file
+from enahopy.loader import ENAHODataDownloader
 
-# Descargar módulo sumaria (información del hogar)
-download_enaho_data(year=2023, modules=['sumaria'], data_dir='datos_enaho')
+# Inicializar downloader
+downloader = ENAHODataDownloader(verbose=True)
 
-# Leer archivo descargado
-df_hogar = read_enaho_file('datos_enaho/2023/sumaria-2023.dta')
-print(f"Registros cargados: {len(df_hogar):,}")
-```
-
-### 2. Fusionar múltiples módulos
-
-```python
-from enahopy.merger import merge_enaho_modules
-
-# Combinar módulo de hogar con personas
-df_merged = merge_enaho_modules(
-    modules=['01', '02'],  # 01: Características del hogar, 02: Personas
-    year=2023,
-    level='persona'
+# Descargar múltiples módulos en paralelo
+data_multi = downloader.download(
+    modules=['01', '02', '05', '34'],  # Hogar, Persona, Empleo, Sumaria
+    years=['2024'],
+    output_dir='./data',
+    decompress=True,
+    load_dta=True,
+    parallel=True,
+    max_workers=3
 )
 
-print(f"Dimensiones: {df_merged.shape}")
-print(f"Columnas disponibles: {list(df_merged.columns[:10])}")
+# Extraer datasets
+df_hogar = data_multi[('2024', '01')]['enaho01-2024-100']
+df_persona = data_multi[('2024', '02')]['enaho01-2024-200']
+df_empleo = data_multi[('2024', '05')]['enaho01a-2024-500']
+df_sumaria = data_multi[('2024', '34')]['sumaria-2024']
+
+print(f"✓ Hogares: {len(df_hogar):,} registros")
+print(f"✓ Personas: {len(df_persona):,} registros")
 ```
 
-### 3. Análisis con información geográfica
+### 2. Fusionar módulos
 
 ```python
-from enahopy.merger.geographic import merge_with_geography
+from enahopy.merger import ENAHOModuleMerger
+from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel
 
-# Agregar información geográfica (departamento, provincia, distrito)
-df_geo = merge_with_geography(
-    df_merged,
-    nivel='departamento',
-    incluir_ubigeo=True
+# Configurar merger para nivel persona
+config = ModuleMergeConfig(merge_level=ModuleMergeLevel.PERSONA)
+merger = ENAHOModuleMerger(config)
+
+# Fusionar módulos individuales
+modules_dict = {
+    '02': df_persona,
+    '05': df_empleo
+}
+
+result = merger.merge_multiple_modules(
+    modules_dict=modules_dict,
+    base_module='02',
+    merge_config=config
 )
 
-# Análisis por departamento
-stats_by_dept = df_geo.groupby('departamento').agg({
-    'ingreso': ['mean', 'median'],
-    'gasto': ['mean', 'sum']
-})
+df_merged = result.merged_df
+print(f"✓ Fusionado: {df_merged.shape}")
+```
+
+### 3. Análisis geográfico
+
+```python
+from enahopy.merger.geographic.merger import GeographicMerger
+import pandas as pd
+
+# Cargar tabla UBIGEO
+df_ubigeo = pd.read_excel('UBIGEO_2024.xlsx')
+df_ubigeo = df_ubigeo[['IDDIST', 'NOMBDEP', 'NOMBPROV', 'NOMBDIST']]
+df_ubigeo = df_ubigeo.rename(columns={'IDDIST': 'ubigeo'})
+
+# Fusionar con datos geográficos
+merger_geo = GeographicMerger()
+df_geo, report = merger_geo.merge(df_sumaria, df_ubigeo, columna_union='ubigeo')
+
+print(f"✓ Registros con geografía: {report['output_rows']}")
 ```
 
 ### 4. Análisis de valores nulos
@@ -92,9 +117,6 @@ from enahopy.null_analysis import ENAHONullAnalyzer
 # Análisis completo de valores faltantes
 analyzer = ENAHONullAnalyzer(complexity='advanced')
 result = analyzer.analyze(df_merged)
-
-# Visualizar patrones
-analyzer.plot_missing_patterns(save_path='missing_analysis.png')
 
 # Generar reporte HTML
 analyzer.export_report(result, 'reporte_nulos.html')
@@ -291,111 +313,44 @@ Informalidad:
 ✓ Dataset final guardado: 33,691 hogares × 68 variables
 ```
 
-> **💡 Tip**: Este ejemplo completo está disponible como notebook interactivo en [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) con análisis adicionales, visualizaciones y modelos estadísticos.
+**Código completo del ejemplo:** Ver [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) y [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py)
 
 ---
 
-### Análisis de Pobreza Monetaria (Básico)
+### 🗺️ Merge Geográfico con UBIGEO
+
+Ejemplo simple de cómo agregar información geográfica (departamento, provincia, distrito) usando la tabla UBIGEO oficial del INEI.
+
+**Archivo:** [`examples/investigacion/merger_enahopy_geografico.py`](examples/investigacion/merger_enahopy_geografico.py)
 
 ```python
-from enahopy.loader import ENAHODataDownloader, ENAHOConfig
+from enahopy.merger.geographic.merger import GeographicMerger
 import pandas as pd
 
-# Configurar descarga con cache
-config = ENAHOConfig(cache_dir='.enaho_cache', enable_cache=True)
-downloader = ENAHODataDownloader(config=config)
+# Cargar datos finales del análisis
+df = pd.read_csv('dataframe_final_2024.csv')
 
-# Descargar módulo sumaria (contiene gasto per cápita)
-df_sumaria = downloader.download_module(year=2023, module='sumaria', format='dta')
+# Cargar tabla UBIGEO oficial (1,891 distritos)
+df_ubigeo = pd.read_excel('UBIGEO_2022_1891_distritos.xlsx')
+df_ubigeo = df_ubigeo[['IDDIST', 'NOMBDEP', 'NOMBPROV', 'NOMBDIST']]
+df_ubigeo = df_ubigeo.rename(columns={'IDDIST': 'ubigeo'})
+df_ubigeo = df_ubigeo.dropna()
 
-# Líneas de pobreza INEI 2023 (soles mensuales per cápita)
-POVERTY_LINE_EXTREME = 201
-POVERTY_LINE_TOTAL = 378
+# Fusionar con GeographicMerger
+merger = GeographicMerger()
+df_geo, report = merger.merge(df, df_ubigeo, columna_union='ubigeo')
 
-# Clasificar hogares según línea de pobreza
-df_sumaria['categoria_pobreza'] = pd.cut(
-    df_sumaria['gashog2d'],  # Gasto per cápita mensual
-    bins=[0, POVERTY_LINE_EXTREME, POVERTY_LINE_TOTAL, float('inf')],
-    labels=['Pobre Extremo', 'Pobre', 'No Pobre']
-)
+print(f"✓ Registros con geografía: {report['output_rows']}")
+print(f"✓ Columnas agregadas: NOMBDEP, NOMBPROV, NOMBDIST")
 
-# Calcular tasas de pobreza
-pobreza_stats = df_sumaria['categoria_pobreza'].value_counts(normalize=True) * 100
-print("\nTasas de Pobreza 2023:")
-print(pobreza_stats)
+# Guardar resultado
+df_geo.to_csv('dataframe_final_completo_geografico_2024.csv', index=False)
 ```
 
-### Análisis Geográfico de Desigualdad
-
-```python
-from enahopy.merger import ENAHOMerger, MergerConfig
-
-# Configurar fusión geográfica
-merger_config = MergerConfig(validate_merge=True, strict_mode=True)
-merger = ENAHOMerger(config=merger_config)
-
-# Fusionar sumaria con módulo 01 (información geográfica)
-df_geo = merger.merge_modules(
-    left_df=df_sumaria,
-    right_df=df_hogar,
-    left_module='sumaria',
-    right_module='01',
-    level='hogar'
-)
-
-# Extraer código de departamento del UBIGEO
-df_geo['cod_depto'] = df_geo['ubigeo'].astype(str).str[:2]
-
-# Mapeo de códigos a nombres
-DEPARTAMENTOS = {
-    '01': 'Amazonas', '02': 'Áncash', '03': 'Apurímac', '04': 'Arequipa',
-    '05': 'Ayacucho', '06': 'Cajamarca', '07': 'Callao', '08': 'Cusco',
-    '09': 'Huancavelica', '10': 'Huánuco', '11': 'Ica', '12': 'Junín',
-    '13': 'La Libertad', '14': 'Lambayeque', '15': 'Lima', '16': 'Loreto',
-    '17': 'Madre de Dios', '18': 'Moquegua', '19': 'Pasco', '20': 'Piura',
-    '21': 'Puno', '22': 'San Martín', '23': 'Tacna', '24': 'Tumbes',
-    '25': 'Ucayali'
-}
-df_geo['departamento'] = df_geo['cod_depto'].map(DEPARTAMENTOS)
-
-# Análisis de desigualdad por departamento
-desigualdad_dept = df_geo.groupby('departamento').agg({
-    'gashog2d': ['mean', 'std', 'count'],
-    'ingreso': 'mean'
-}).round(2)
-
-print("\nDesigualdad por Departamento (Top 5 gasto promedio):")
-print(desigualdad_dept.sort_values(('gashog2d', 'mean'), ascending=False).head())
+**Output:**
 ```
-
-### Análisis de Mercado Laboral
-
-```python
-# Descargar módulo 05 (empleo e ingresos)
-df_empleo = downloader.download_module(year=2023, module='05', format='dta')
-
-# Fusionar con módulo 02 (características de personas)
-df_personas = downloader.download_module(year=2023, module='02', format='dta')
-
-merger = ENAHOMerger()
-df_laboral = merger.merge_modules(
-    left_df=df_personas,
-    right_df=df_empleo,
-    left_module='02',
-    right_module='05',
-    level='persona'
-)
-
-# Calcular tasa de ocupación por grupo de edad
-df_laboral['grupo_edad'] = pd.cut(
-    df_laboral['edad'],
-    bins=[14, 24, 34, 44, 54, 64, 100],
-    labels=['15-24', '25-34', '35-44', '45-54', '55-64', '65+']
-)
-
-ocupacion_por_edad = df_laboral.groupby('grupo_edad')['ocupado'].mean() * 100
-print("\nTasa de Ocupación por Grupo de Edad:")
-print(ocupacion_por_edad)
+✓ Registros con geografía: 33,691
+✓ Columnas agregadas: NOMBDEP, NOMBPROV, NOMBDIST
 ```
 
 ## 🏗️ Arquitectura del Paquete
