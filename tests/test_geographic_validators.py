@@ -122,9 +122,7 @@ class TestUbigeoValidator(unittest.TestCase):
         """Should validate series with basic validation."""
         serie = pd.Series(["010101", "010102", "150101"])
 
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.BASIC
-        )
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.BASIC)
 
         self.assertEqual(len(mask), 3)
         self.assertTrue(all(mask))
@@ -134,9 +132,7 @@ class TestUbigeoValidator(unittest.TestCase):
         """Should validate series with structural validation."""
         serie = pd.Series(["010101", "990101", "010102"])
 
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.STRUCTURAL
-        )
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.STRUCTURAL)
 
         self.assertEqual(len(mask), 3)
         self.assertTrue(mask.iloc[0])
@@ -148,9 +144,7 @@ class TestUbigeoValidator(unittest.TestCase):
         """Should handle null values in series."""
         serie = pd.Series(["010101", None, "010102", np.nan])
 
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.STRUCTURAL
-        )
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.STRUCTURAL)
 
         # Nulls should be marked as invalid
         self.assertTrue(mask.iloc[0])
@@ -161,9 +155,7 @@ class TestUbigeoValidator(unittest.TestCase):
         # Series validation normalizes with zfill
         serie = pd.Series(["010101", "150101", "080101"])
 
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.STRUCTURAL
-        )
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.STRUCTURAL)
 
         self.assertTrue(all(mask))
 
@@ -212,17 +204,19 @@ class TestTerritorialValidator(unittest.TestCase):
 
     def test_validar_jerarquia_territorial_valid(self):
         """Should pass for territorially consistent data."""
-        df = pd.DataFrame({
-            "ubigeo": ["010101", "010102", "010201"],
-            "departamento": ["01", "01", "01"],
-            "provincia": ["0101", "0101", "0102"],
-            "distrito": ["010101", "010102", "010201"]
-        })
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["010101", "010102", "010201"],
+                "departamento": ["01", "01", "01"],
+                "provincia": ["0101", "0101", "0102"],
+                "distrito": ["010101", "010102", "010201"],
+            }
+        )
 
         columnas = {
             "departamento": "departamento",
             "provincia": "provincia",
-            "distrito": "distrito"
+            "distrito": "distrito",
         }
 
         inconsistencias = self.validator.validar_jerarquia_territorial(df, columnas)
@@ -230,29 +224,23 @@ class TestTerritorialValidator(unittest.TestCase):
 
     def test_validar_jerarquia_territorial_inconsistent_district(self):
         """Should detect district-province inconsistencies."""
-        df = pd.DataFrame({
-            "provincia": ["0101", "0101"],
-            "distrito": ["010101", "010201"]  # 010201 belongs to province 0102, not 0101
-        })
+        df = pd.DataFrame(
+            {
+                "provincia": ["0101", "0101"],
+                "distrito": ["010101", "010201"],  # 010201 belongs to province 0102, not 0101
+            }
+        )
 
-        columnas = {
-            "provincia": "provincia",
-            "distrito": "distrito"
-        }
+        columnas = {"provincia": "provincia", "distrito": "distrito"}
 
         inconsistencias = self.validator.validar_jerarquia_territorial(df, columnas)
         self.assertGreater(len(inconsistencias), 0)
 
     def test_validar_jerarquia_territorial_missing_columns(self):
         """Should handle missing territorial columns gracefully."""
-        df = pd.DataFrame({
-            "ubigeo": ["010101", "010102"]
-        })
+        df = pd.DataFrame({"ubigeo": ["010101", "010102"]})
 
-        columnas = {
-            "departamento": "departamento",
-            "provincia": "provincia"
-        }
+        columnas = {"departamento": "departamento", "provincia": "provincia"}
 
         # Should not raise exception if columns don't exist
         inconsistencias = self.validator.validar_jerarquia_territorial(df, columnas)
@@ -261,16 +249,18 @@ class TestTerritorialValidator(unittest.TestCase):
 
     def test_validar_jerarquia_territorial_with_nulls(self):
         """Should handle null values in territorial columns."""
-        df = pd.DataFrame({
-            "departamento": ["01", "01", None],
-            "provincia": ["0101", "0101", None],
-            "distrito": ["010101", "010102", None]
-        })
+        df = pd.DataFrame(
+            {
+                "departamento": ["01", "01", None],
+                "provincia": ["0101", "0101", None],
+                "distrito": ["010101", "010102", None],
+            }
+        )
 
         columnas = {
             "departamento": "departamento",
             "provincia": "provincia",
-            "distrito": "distrito"
+            "distrito": "distrito",
         }
 
         # Should handle nulls gracefully
@@ -293,9 +283,7 @@ class TestUbigeoValidatorPerformance(unittest.TestCase):
         ubigeos = [f"010101"] * 5000 + [f"150101"] * 5000
         serie = pd.Series(ubigeos)
 
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.BASIC
-        )
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.BASIC)
 
         self.assertEqual(len(mask), 10000)
         self.assertTrue(all(mask))
@@ -376,9 +364,7 @@ class TestUbigeoValidatorAdditionalMethods(unittest.TestCase):
 
     def test_validate_ubigeo_consistency(self):
         """Should validate UBIGEO consistency in DataFrame."""
-        df = pd.DataFrame({
-            "codigo": ["010101", "010102", "010201"]
-        })
+        df = pd.DataFrame({"codigo": ["010101", "010102", "010201"]})
 
         inconsistencias = self.validator.validate_ubigeo_consistency(df, "codigo")
 
@@ -387,9 +373,7 @@ class TestUbigeoValidatorAdditionalMethods(unittest.TestCase):
 
     def test_validate_ubigeo_consistency_missing_column(self):
         """Should handle missing column gracefully."""
-        df = pd.DataFrame({
-            "other_col": [1, 2, 3]
-        })
+        df = pd.DataFrame({"other_col": [1, 2, 3]})
 
         inconsistencias = self.validator.validate_ubigeo_consistency(df, "codigo")
 
@@ -401,9 +385,7 @@ class TestUbigeoValidatorAdditionalMethods(unittest.TestCase):
         serie = pd.Series(["010101", "150101"])
 
         # This should trigger the fallback warning
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.EXISTENCE
-        )
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.EXISTENCE)
 
         # Should still work (fallback to STRUCTURAL)
         self.assertEqual(len(mask), 2)
@@ -445,18 +427,18 @@ class TestUbigeoValidatorIntegration(unittest.TestCase):
 
     def test_mixed_validation_types(self):
         """Should handle mixed validation scenarios."""
-        serie = pd.Series([
-            "010101",   # Valid 6-digit
-            "150101",   # Valid Lima
-            "080101",   # Valid Cusco
-            "990101",   # Invalid department
-            "010001",   # Invalid province
-            None,       # Null value
-        ])
-
-        mask, errors = self.validator.validar_serie_ubigeos(
-            serie, TipoValidacionUbigeo.STRUCTURAL
+        serie = pd.Series(
+            [
+                "010101",  # Valid 6-digit
+                "150101",  # Valid Lima
+                "080101",  # Valid Cusco
+                "990101",  # Invalid department
+                "010001",  # Invalid province
+                None,  # Null value
+            ]
         )
+
+        mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.STRUCTURAL)
 
         # Should validate correctly
         self.assertTrue(mask.iloc[0])

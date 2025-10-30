@@ -23,18 +23,22 @@ class TestGeographicMerger(unittest.TestCase):
         self.merger = GeographicMerger()
 
         # Sample data
-        self.df_data = pd.DataFrame({
-            'ubigeo': ['150101', '150102', '150103'],
-            'conglome': ['001', '002', '003'],
-            'ingreso': [2000, 1500, 1800]
-        })
+        self.df_data = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "150102", "150103"],
+                "conglome": ["001", "002", "003"],
+                "ingreso": [2000, 1500, 1800],
+            }
+        )
 
-        self.df_geo = pd.DataFrame({
-            'ubigeo': ['150101', '150102', '150103'],
-            'departamento': ['Lima', 'Lima', 'Lima'],
-            'provincia': ['Lima', 'Lima', 'Lima'],
-            'distrito': ['Lima', 'Ancón', 'Ate']
-        })
+        self.df_geo = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "150102", "150103"],
+                "departamento": ["Lima", "Lima", "Lima"],
+                "provincia": ["Lima", "Lima", "Lima"],
+                "distrito": ["Lima", "Ancón", "Ate"],
+            }
+        )
 
     def test_init_default(self):
         """Should initialize with default config."""
@@ -44,15 +48,15 @@ class TestGeographicMerger(unittest.TestCase):
 
     def test_init_custom_config(self):
         """Should initialize with custom config."""
-        config = GeoMergeConfiguration(columna_union='codigo')
+        config = GeoMergeConfiguration(columna_union="codigo")
         merger = GeographicMerger(config=config)
-        self.assertEqual(merger.config.columna_union, 'codigo')
+        self.assertEqual(merger.config.columna_union, "codigo")
 
     def test_init_custom_logger(self):
         """Should initialize with custom logger."""
-        logger = logging.getLogger('test_logger')
+        logger = logging.getLogger("test_logger")
         merger = GeographicMerger(logger=logger)
-        self.assertEqual(merger.logger.name, 'test_logger')
+        self.assertEqual(merger.logger.name, "test_logger")
 
     def test_merge_basic(self):
         """Should perform basic geographic merge."""
@@ -60,39 +64,34 @@ class TestGeographicMerger(unittest.TestCase):
 
         # Check result structure
         self.assertEqual(len(result), 3)
-        self.assertIn('ubigeo', result.columns)
-        self.assertIn('departamento', result.columns)
-        self.assertIn('ingreso', result.columns)
+        self.assertIn("ubigeo", result.columns)
+        self.assertIn("departamento", result.columns)
+        self.assertIn("ingreso", result.columns)
 
         # Check report
-        self.assertEqual(report['input_rows'], 3)
-        self.assertEqual(report['geography_rows'], 3)
-        self.assertEqual(report['output_rows'], 3)
-        self.assertEqual(report['match_rate'], 100.0)
+        self.assertEqual(report["input_rows"], 3)
+        self.assertEqual(report["geography_rows"], 3)
+        self.assertEqual(report["output_rows"], 3)
+        self.assertEqual(report["match_rate"], 100.0)
 
     def test_merge_custom_column(self):
         """Should merge using custom column name."""
         # Rename columns
-        df_data = self.df_data.rename(columns={'ubigeo': 'codigo'})
-        df_geo = self.df_geo.rename(columns={'ubigeo': 'codigo'})
+        df_data = self.df_data.rename(columns={"ubigeo": "codigo"})
+        df_geo = self.df_geo.rename(columns={"ubigeo": "codigo"})
 
-        result, report = self.merger.merge(
-            df_data,
-            df_geo,
-            columna_union='codigo'
-        )
+        result, report = self.merger.merge(df_data, df_geo, columna_union="codigo")
 
         self.assertEqual(len(result), 3)
-        self.assertIn('codigo', result.columns)
-        self.assertIn('departamento', result.columns)
+        self.assertIn("codigo", result.columns)
+        self.assertIn("departamento", result.columns)
 
     def test_merge_partial_matches(self):
         """Should handle partial geographic matches."""
         # Geography data missing one UBIGEO
-        df_partial_geo = pd.DataFrame({
-            'ubigeo': ['150101', '150102'],  # Missing 150103
-            'departamento': ['Lima', 'Lima']
-        })
+        df_partial_geo = pd.DataFrame(
+            {"ubigeo": ["150101", "150102"], "departamento": ["Lima", "Lima"]}  # Missing 150103
+        )
 
         result, report = self.merger.merge(self.df_data, df_partial_geo)
 
@@ -100,15 +99,17 @@ class TestGeographicMerger(unittest.TestCase):
         self.assertEqual(len(result), 3)
 
         # Record with missing geography should have NaN
-        missing_geo = result[result['ubigeo'] == '150103']
-        self.assertTrue(pd.isna(missing_geo['departamento'].iloc[0]))
+        missing_geo = result[result["ubigeo"] == "150103"]
+        self.assertTrue(pd.isna(missing_geo["departamento"].iloc[0]))
 
     def test_merge_no_matches(self):
         """Should handle case with no geographic matches."""
-        df_no_match_geo = pd.DataFrame({
-            'ubigeo': ['080101', '080102'],  # Different UBIGEOs
-            'departamento': ['Cusco', 'Cusco']
-        })
+        df_no_match_geo = pd.DataFrame(
+            {
+                "ubigeo": ["080101", "080102"],  # Different UBIGEOs
+                "departamento": ["Cusco", "Cusco"],
+            }
+        )
 
         result, report = self.merger.merge(self.df_data, df_no_match_geo)
 
@@ -116,15 +117,17 @@ class TestGeographicMerger(unittest.TestCase):
         self.assertEqual(len(result), 3)
 
         # All geography columns should be NaN
-        self.assertTrue(result['departamento'].isna().all())
+        self.assertTrue(result["departamento"].isna().all())
 
     def test_merge_duplicate_ubigeos_in_geography(self):
         """Should handle duplicate UBIGEOs in geography data."""
-        df_dup_geo = pd.DataFrame({
-            'ubigeo': ['150101', '150101', '150102'],  # Duplicate 150101
-            'departamento': ['Lima', 'Lima', 'Lima'],
-            'detalle': ['A', 'B', 'C']
-        })
+        df_dup_geo = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "150101", "150102"],  # Duplicate 150101
+                "departamento": ["Lima", "Lima", "Lima"],
+                "detalle": ["A", "B", "C"],
+            }
+        )
 
         result, report = self.merger.merge(self.df_data, df_dup_geo)
 
@@ -133,16 +136,16 @@ class TestGeographicMerger(unittest.TestCase):
 
     def test_merge_empty_geography(self):
         """Should handle empty geography DataFrame."""
-        df_empty_geo = pd.DataFrame(columns=['ubigeo', 'departamento'])
+        df_empty_geo = pd.DataFrame(columns=["ubigeo", "departamento"])
 
         result, report = self.merger.merge(self.df_data, df_empty_geo)
 
         # All input records preserved
         self.assertEqual(len(result), 3)
-        self.assertEqual(report['geography_rows'], 0)
+        self.assertEqual(report["geography_rows"], 0)
 
         # Geography columns should be NaN
-        self.assertTrue(result['departamento'].isna().all())
+        self.assertTrue(result["departamento"].isna().all())
 
     def test_merge_preserves_original_columns(self):
         """Should preserve all original columns from principal DataFrame."""
@@ -153,24 +156,16 @@ class TestGeographicMerger(unittest.TestCase):
             self.assertIn(col, result.columns)
 
         # Check original values preserved
-        self.assertEqual(result['ingreso'].tolist(), self.df_data['ingreso'].tolist())
+        self.assertEqual(result["ingreso"].tolist(), self.df_data["ingreso"].tolist())
 
     def test_merge_with_validate_parameter(self):
         """Should accept validate parameter (for API compatibility)."""
         # Parameter accepted but not currently used
-        result, report = self.merger.merge(
-            self.df_data,
-            self.df_geo,
-            validate=True
-        )
+        result, report = self.merger.merge(self.df_data, self.df_geo, validate=True)
 
         self.assertEqual(len(result), 3)
 
-        result2, report2 = self.merger.merge(
-            self.df_data,
-            self.df_geo,
-            validate=False
-        )
+        result2, report2 = self.merger.merge(self.df_data, self.df_geo, validate=False)
 
         self.assertEqual(len(result2), 3)
 
@@ -178,9 +173,7 @@ class TestGeographicMerger(unittest.TestCase):
         """Should accept columnas_geograficas parameter (for API compatibility)."""
         # Parameter accepted but not currently used
         result, report = self.merger.merge(
-            self.df_data,
-            self.df_geo,
-            columnas_geograficas=['departamento', 'provincia']
+            self.df_data, self.df_geo, columnas_geograficas=["departamento", "provincia"]
         )
 
         self.assertEqual(len(result), 3)
@@ -196,20 +189,14 @@ class TestGeographicMergerAlias(unittest.TestCase):
 
     def test_alias_functionality(self):
         """Should have same functionality as GeographicMerger."""
-        df_data = pd.DataFrame({
-            'ubigeo': ['150101', '150102'],
-            'value': [100, 200]
-        })
-        df_geo = pd.DataFrame({
-            'ubigeo': ['150101', '150102'],
-            'departamento': ['Lima', 'Lima']
-        })
+        df_data = pd.DataFrame({"ubigeo": ["150101", "150102"], "value": [100, 200]})
+        df_geo = pd.DataFrame({"ubigeo": ["150101", "150102"], "departamento": ["Lima", "Lima"]})
 
         merger = ENAHOGeographicMerger()
         result, report = merger.merge(df_data, df_geo)
 
         self.assertEqual(len(result), 2)
-        self.assertIn('departamento', result.columns)
+        self.assertIn("departamento", result.columns)
 
 
 class TestGeographicMergerEdgeCases(unittest.TestCase):
@@ -221,14 +208,8 @@ class TestGeographicMergerEdgeCases(unittest.TestCase):
 
     def test_merge_with_nan_ubigeos(self):
         """Should handle NaN UBIGEOs in principal data."""
-        df_data = pd.DataFrame({
-            'ubigeo': ['150101', None, '150103'],
-            'value': [100, 200, 300]
-        })
-        df_geo = pd.DataFrame({
-            'ubigeo': ['150101', '150103'],
-            'departamento': ['Lima', 'Lima']
-        })
+        df_data = pd.DataFrame({"ubigeo": ["150101", None, "150103"], "value": [100, 200, 300]})
+        df_geo = pd.DataFrame({"ubigeo": ["150101", "150103"], "departamento": ["Lima", "Lima"]})
 
         result, report = self.merger.merge(df_data, df_geo)
 
@@ -237,58 +218,42 @@ class TestGeographicMergerEdgeCases(unittest.TestCase):
 
     def test_merge_single_row(self):
         """Should handle single row DataFrames."""
-        df_data = pd.DataFrame({
-            'ubigeo': ['150101'],
-            'value': [100]
-        })
-        df_geo = pd.DataFrame({
-            'ubigeo': ['150101'],
-            'departamento': ['Lima']
-        })
+        df_data = pd.DataFrame({"ubigeo": ["150101"], "value": [100]})
+        df_geo = pd.DataFrame({"ubigeo": ["150101"], "departamento": ["Lima"]})
 
         result, report = self.merger.merge(df_data, df_geo)
 
         self.assertEqual(len(result), 1)
-        self.assertEqual(report['input_rows'], 1)
-        self.assertEqual(report['output_rows'], 1)
+        self.assertEqual(report["input_rows"], 1)
+        self.assertEqual(report["output_rows"], 1)
 
     def test_merge_large_geography(self):
         """Should handle large geography DataFrame."""
         # Create data with few UBIGEOs
-        df_data = pd.DataFrame({
-            'ubigeo': ['150101', '150102'],
-            'value': [100, 200]
-        })
+        df_data = pd.DataFrame({"ubigeo": ["150101", "150102"], "value": [100, 200]})
 
         # Create large geography with many UBIGEOs
-        ubigeos = [f'{i:06d}' for i in range(1, 1001)]
-        df_geo = pd.DataFrame({
-            'ubigeo': ubigeos,
-            'departamento': ['Lima'] * 1000
-        })
+        ubigeos = [f"{i:06d}" for i in range(1, 1001)]
+        df_geo = pd.DataFrame({"ubigeo": ubigeos, "departamento": ["Lima"] * 1000})
 
         result, report = self.merger.merge(df_data, df_geo)
 
         # Should only return matched rows (left join)
         self.assertEqual(len(result), 2)
-        self.assertEqual(report['geography_rows'], 1000)
+        self.assertEqual(report["geography_rows"], 1000)
 
     def test_merge_with_numeric_ubigeos(self):
         """Should handle numeric UBIGEO codes."""
-        df_data = pd.DataFrame({
-            'ubigeo': [150101, 150102, 150103],
-            'value': [100, 200, 300]
-        })
-        df_geo = pd.DataFrame({
-            'ubigeo': [150101, 150102, 150103],
-            'departamento': ['Lima', 'Lima', 'Lima']
-        })
+        df_data = pd.DataFrame({"ubigeo": [150101, 150102, 150103], "value": [100, 200, 300]})
+        df_geo = pd.DataFrame(
+            {"ubigeo": [150101, 150102, 150103], "departamento": ["Lima", "Lima", "Lima"]}
+        )
 
         result, report = self.merger.merge(df_data, df_geo)
 
         self.assertEqual(len(result), 3)
-        self.assertEqual(report['match_rate'], 100.0)
+        self.assertEqual(report["match_rate"], 100.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
