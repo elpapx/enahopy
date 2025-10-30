@@ -1321,8 +1321,8 @@ class ENAHOGeoMerger:
                 self.logger.debug(
                     f"Normalizing integer dtypes for '{column}': {type1} and {type2} → int64"
                 )
-                df1[column] = df1[column].astype('int64')
-                df2[column] = df2[column].astype('int64')
+                df1[column] = df1[column].astype("int64")
+                df2[column] = df2[column].astype("int64")
                 return
 
         if type1 != type2:
