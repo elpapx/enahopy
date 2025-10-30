@@ -88,6 +88,7 @@ jobs:
 
       - name: Install optional dependencies (best effort)
         run: |
+          pip install pyarrow || echo "pyarrow install failed (optional)"
           pip install pyreadstat || echo "pyreadstat install failed (optional)"
         continue-on-error: true
 
