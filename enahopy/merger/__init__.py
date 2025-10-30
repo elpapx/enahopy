@@ -1,9 +1,111 @@
 """
-ENAHO Merger - API Pública
+ENAHO Merger - Public API
 =========================
 
-Exportaciones principales y funciones de conveniencia para el sistema
-de fusión geográfica y merge entre módulos ENAHO.
+Main exports and convenience functions for the ENAHO geographic and module
+merging system.
+
+The ENAHO Merger module provides comprehensive data integration capabilities
+for Peruvian household survey (ENAHO) microdata, enabling researchers to:
+
+1. Enrich survey data with geographic information using UBIGEO codes
+2. Merge multiple survey modules at household, person, or dwelling levels
+3. Validate data quality with territorial consistency checks
+4. Handle duplicates with multiple strategies (first, last, aggregate, best quality)
+5. Optimize memory usage for large datasets (>500K records)
+6. Generate detailed quality reports and merge statistics
+
+Architecture:
+    The module is organized into specialized submodules:
+
+    - **core**: Main ENAHOGeoMerger orchestrating all merge operations
+    - **modules**: ENAHO module merging (ENAHOModuleMerger, ModuleValidator)
+    - **geographic**: Geographic data integration (validators, patterns, strategies)
+    - **config**: Configuration classes and enums
+    - **exceptions**: Specialized exceptions for error handling
+    - **panel**: Longitudinal panel data creation (optional)
+
+Main Classes:
+    - ENAHOGeoMerger: Central integration hub for geographic and module merges
+    - ENAHOModuleMerger: Specialized merger for ENAHO survey modules
+    - GeoMergeConfiguration: Configuration for geographic merge operations
+    - ModuleMergeConfig: Configuration for module-level merges
+
+Main Functions:
+    - merge_with_geography(): Quick geographic data enrichment
+    - merge_enaho_modules(): Quick multi-module integration
+    - merge_modules_with_geography(): Combined module + geographic merge
+    - validate_ubigeo_data(): Geographic data validation
+    - detect_geographic_columns(): Automatic column detection
+
+Enums and Types:
+    - TipoManejoDuplicados: Duplicate handling strategies (FIRST, LAST, AGGREGATE, etc.)
+    - ModuleMergeLevel: Merge levels (HOGAR, PERSONA, VIVIENDA)
+    - ModuleMergeStrategy: Conflict resolution (COALESCE, KEEP_LEFT, KEEP_RIGHT, etc.)
+    - TipoValidacionUbigeo: UBIGEO validation types (STRUCTURAL, SEMANTIC, TERRITORIAL)
+
+Examples:
+    Basic geographic enrichment:
+
+    >>> from enahopy.merger import merge_with_geography
+    >>> result_df, validation = merge_with_geography(
+    ...     df_principal=df_survey_data,
+    ...     df_geografia=df_geo_reference,
+    ...     columna_union='ubigeo'
+    ... )
+    >>> print(f"Coverage: {validation.coverage_percentage:.1f}%")
+
+    Multi-module merge with geography:
+
+    >>> from enahopy.merger import merge_modules_with_geography
+    >>> modules = {'34': df_sumaria, '01': df_vivienda, '02': df_personas}
+    >>> final_df = merge_modules_with_geography(
+    ...     modules_dict=modules,
+    ...     df_geografia=df_geo,
+    ...     base_module='34',
+    ...     level='hogar',
+    ...     strategy='coalesce'
+    ... )
+
+    Advanced usage with custom configuration:
+
+    >>> from enahopy.merger import ENAHOGeoMerger, GeoMergeConfiguration
+    >>> from enahopy.merger.config import TipoManejoDuplicados
+    >>>
+    >>> geo_config = GeoMergeConfiguration(
+    ...     manejo_duplicados=TipoManejoDuplicados.AGGREGATE,
+    ...     funciones_agregacion={'poblacion': 'sum', 'ingreso': 'mean'},
+    ...     validar_consistencia_territorial=True
+    ... )
+    >>> merger = ENAHOGeoMerger(geo_config=geo_config, verbose=True)
+    >>> result, validation = merger.merge_geographic_data(df_data, df_geo)
+
+    Feasibility analysis before merging:
+
+    >>> from enahopy.merger import validate_module_compatibility
+    >>> compatibility = validate_module_compatibility(
+    ...     modules_dict={'34': df1, '01': df2, '02': df3},
+    ...     level='hogar'
+    ... )
+    >>> if compatibility['overall_compatible']:
+    ...     # Proceed with merge
+    ...     pass
+
+Performance Considerations:
+    - Datasets <100K records: Standard merge (no optimization needed)
+    - Datasets 100K-500K records: Enable chunk processing
+    - Datasets >500K records: Enable memory optimization and categorical encoding
+    - Datasets >1M records: Consider Parquet format and parallel processing
+
+See Also:
+    - :class:`~enahopy.merger.ENAHOGeoMerger`: Main merger class
+    - :class:`~enahopy.merger.config.GeoMergeConfiguration`: Geographic merge config
+    - :class:`~enahopy.merger.config.ModuleMergeConfig`: Module merge config
+    - :mod:`~enahopy.loader`: Data loading and caching
+    - :mod:`~enahopy.null_analyzer`: Missing data analysis
+
+References:
+    INEI ENAHO Technical Documentation: https://www.inei.gob.pe/enaho/
 """
 
 from __future__ import annotations

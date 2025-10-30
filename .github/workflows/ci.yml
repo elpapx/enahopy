@@ -138,7 +138,7 @@ jobs:
 
       - name: Run tests with coverage enforcement
         run: |
-          pytest tests/ -v -m "not slow" --cov=enahopy --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=40 --tb=short
+          pytest tests/ -v -m "not slow" --cov=enahopy --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=55 --tb=short
         timeout-minutes: 10
 
       - name: Generate coverage badge

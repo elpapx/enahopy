@@ -4,6 +4,52 @@ ENAHO Merger - Submódulo de Módulos ENAHO
 
 Exportaciones del submódulo especializado en merge entre módulos ENAHO:
 merger, validador y funciones de compatibilidad.
+
+This submodule provides specialized functionality for merging ENAHO survey modules
+at household, person, and dwelling levels. It handles complex integration tasks
+including key validation, type harmonization, conflict resolution, and quality
+assessment across multiple survey modules.
+
+Main Components:
+    - ENAHOModuleMerger: Advanced merger for ENAHO module integration
+    - ModuleValidator: Validator for module structure and compatibility
+    - Convenience functions: Quick merge operations with minimal configuration
+
+Key Features:
+    - Multi-level merge support (household, person, dwelling)
+    - Automatic merge key detection and validation
+    - Multiple conflict resolution strategies (coalesce, keep_left, etc.)
+    - Cardinality validation and many-to-many detection
+    - Memory-optimized processing for large datasets
+    - Comprehensive quality scoring and reporting
+
+Examples:
+    Quick two-module merge:
+
+    >>> from enahopy.merger.modules import quick_module_merge
+    >>> result = quick_module_merge(
+    ...     df1, df2, '34', '01',
+    ...     level='hogar',
+    ...     strategy='coalesce'
+    ... )
+
+    Multiple module merge with planning:
+
+    >>> from enahopy.merger.modules import (
+    ...     analyze_merge_feasibility_quick,
+    ...     merge_multiple_modules_quick
+    ... )
+    >>> feasibility = analyze_merge_feasibility_quick(
+    ...     modules_dict={'34': df1, '01': df2, '02': df3},
+    ...     target_level='hogar'
+    ... )
+    >>> if feasibility['feasible']:
+    ...     result = merge_multiple_modules_quick(modules_dict, base_module='34')
+
+See Also:
+    - :class:`~enahopy.merger.modules.merger.ENAHOModuleMerger`: Main merger class
+    - :class:`~enahopy.merger.config.ModuleMergeConfig`: Configuration options
+    - :mod:`~enahopy.merger`: Parent merger module
 """
 
 from .merger import ENAHOModuleMerger
