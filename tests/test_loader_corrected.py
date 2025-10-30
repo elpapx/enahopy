@@ -324,20 +324,28 @@ class TestConvenienceFunctions(unittest.TestCase):
     @patch("enahopy.loader.utils.io_utils.ENAHODataDownloader")
     def test_download_function_integration(self, mock_class):
         """Test integración de función download - CORREGIDO"""
+        # BUG FIX v0.8.0: download_enaho_data returns None when load_dta=False (default)
+        # Updated test to use load_dta=True to get actual data return
+
         # Mock de la clase completa
         mock_instance = Mock()
         mock_class.return_value = mock_instance
-        # Simular que download devuelve un resultado mock
-        mock_result = Mock()
+        # Simular que download devuelve un resultado mock con estructura esperada
+        mock_df = Mock(spec=pd.DataFrame)
+        mock_result = {("2023", "01"): {"file.dta": mock_df}}
         mock_instance.download.return_value = mock_result
 
         # Importar después del mock
         from enahopy.loader.utils.io_utils import download_enaho_data
 
-        result = download_enaho_data(modules=["01"], years=["2023"], output_dir="test_dir")
+        # Test with load_dta=True to get data return
+        result = download_enaho_data(
+            modules=["01"], years=["2023"], output_dir="test_dir", load_dta=True
+        )
 
         # Verificar que se llamó download
         mock_instance.download.assert_called_once()
+        # With load_dta=True and single module/year, should return a DataFrame
         self.assertIsNotNone(result)
 
     def test_read_file_function_with_existing_file(self):

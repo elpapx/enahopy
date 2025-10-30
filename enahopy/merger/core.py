@@ -1220,9 +1220,6 @@ class ENAHOGeoMerger:
             f"{len(df_geografia)} registros geográficos"
         )
 
-        # Validar tipos de datos de las columnas de unión
-        self._validate_merge_column_types(df_principal, df_geografia, columna_union)
-
         # Detectar columnas geográficas si no se especifican
         if columnas_geograficas is None:
             self.logger.info("columnas geográficas automáticamente...")
@@ -1249,6 +1246,7 @@ class ENAHOGeoMerger:
                     f"Validación de datos geográficos falló: {validation_result.errors}",
                     validation_result=validation_result,
                 )
+            # BUG FIX v0.8.0: validation_result will be updated post-merge with principal df count
 
         # Preparar DataFrames para merge
         df_geo_clean = self._prepare_geographic_df(
@@ -1257,6 +1255,10 @@ class ENAHOGeoMerger:
 
         # Manejar duplicados
         df_geo_clean = self._handle_duplicates(df_geo_clean, columna_union)
+
+        # BUG FIX v0.8.0: Validate and normalize merge column dtypes AFTER preparing DataFrames
+        # This ensures the dtype fix is applied to the actual DataFrames used in merge
+        self._validate_merge_column_types(df_principal, df_geo_clean, columna_union)
 
         # Realizar merge con manejo de memoria optimizado
         if self.geo_config.optimizar_memoria and len(df_principal) > self.geo_config.chunk_size:
@@ -1284,10 +1286,12 @@ class ENAHOGeoMerger:
                 result_df.loc[mask_null, col] = self.geo_config.valor_faltante
 
         # Generar reporte final
-        if validation_result is None:
-            validation_result = self._generate_merge_report(
-                df_principal, df_geografia, result_df, columna_union
-            )
+        # BUG FIX v0.8.0: Always regenerate validation report to ensure total_records
+        # reflects the principal DataFrame count, not the geographic DataFrame count.
+        # This fixes the issue where validate_before_merge=True would return geo df count.
+        validation_result = self._generate_merge_report(
+            df_principal, df_geografia, result_df, columna_union
+        )
 
         self.logger.info(
             f"Merge completado: {len(result_df)} registros, " f"{result_df.shape[1]} columnas"
@@ -1308,6 +1312,18 @@ class ENAHOGeoMerger:
         """
         type1 = df1[column].dtype
         type2 = df2[column].dtype
+
+        # BUG FIX v0.8.0: Handle int32 vs int64 dtype mismatches that cause Buffer dtype errors
+        # When both are numeric integers but different subtypes (int32, int64, int, etc.),
+        # normalize to int64 to avoid pandas merge Buffer dtype mismatch errors
+        if pd.api.types.is_integer_dtype(type1) and pd.api.types.is_integer_dtype(type2):
+            if type1 != type2:
+                self.logger.debug(
+                    f"Normalizing integer dtypes for '{column}': {type1} and {type2} → int64"
+                )
+                df1[column] = df1[column].astype('int64')
+                df2[column] = df2[column].astype('int64')
+                return
 
         if type1 != type2:
             self.logger.warning(
@@ -1412,6 +1428,19 @@ class ENAHOGeoMerger:
             # Intentar merge sin validación
             self.logger.warning("Reintentando merge sin validación m:1...")
             result = pd.merge(df1, df2, on=on, how="left", indicator=True)
+        except ValueError as e:
+            # BUG FIX v0.8.0: Handle Buffer dtype mismatch errors in pandas merge
+            if "Buffer dtype mismatch" in str(e):
+                self.logger.warning(
+                    f"Buffer dtype mismatch detected for column '{on}'. "
+                    f"Converting to string for merge compatibility."
+                )
+                # Convert merge columns to string as fallback
+                df1[on] = df1[on].astype(str)
+                df2[on] = df2[on].astype(str)
+                result = pd.merge(df1, df2, on=on, how="left", indicator=True)
+            else:
+                raise
 
         # Bug fix #1: Check for duplicate merge key columns after merge (shouldn't happen but defensive)
         if on in result.columns:

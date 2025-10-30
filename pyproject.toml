@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "enahopy"
-version = "0.6.0"
+version = "0.8.0"
 authors = [
     {name = "Paul Camacho", email = "pcamacho447@gmail.com"}
 ]
@@ -137,11 +137,12 @@ omit = [
     "*/null_analysis/io/importers.py",
     "*/null_analysis/reports/templates.py",
 
-    # ML imputation strategies (Phase 2A complete, but low integration coverage)
-    "*/null_analysis/strategies/ml_imputation.py",
-    "*/null_analysis/strategies/advanced_ml_imputation.py",
-    "*/null_analysis/strategies/enaho_pattern_imputation.py",
-    "*/null_analysis/strategies/imputation_quality_assessment.py",
+    # ML imputation strategies - INCLUDED in v0.5.0 (84% coverage achieved in Phase 2A)
+    # These are now part of active modules and should be counted in coverage metrics
+    # "*/null_analysis/strategies/ml_imputation.py",
+    # "*/null_analysis/strategies/advanced_ml_imputation.py",
+    # "*/null_analysis/strategies/enaho_pattern_imputation.py",
+    # "*/null_analysis/strategies/imputation_quality_assessment.py",
 
     # Benchmark and analysis scripts
     "*/loader/core/cache_benchmark.py",
