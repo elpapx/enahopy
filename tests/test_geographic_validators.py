@@ -14,8 +14,8 @@ import pandas as pd
 import pytest
 
 from enahopy.merger.config import TipoValidacionUbigeo
-from enahopy.merger.exceptions import UbigeoValidationError, TerritorialInconsistencyError
-from enahopy.merger.geographic.validators import UbigeoValidator, TerritorialValidator
+from enahopy.merger.exceptions import TerritorialInconsistencyError, UbigeoValidationError
+from enahopy.merger.geographic.validators import TerritorialValidator, UbigeoValidator
 
 
 class TestUbigeoValidator(unittest.TestCase):

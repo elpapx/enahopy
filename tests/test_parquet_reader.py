@@ -9,12 +9,12 @@ import logging
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
 
-from enahopy.loader.io.readers.parquet import ParquetReader, PYARROW_AVAILABLE, DASK_AVAILABLE
+from enahopy.loader.io.readers.parquet import DASK_AVAILABLE, PYARROW_AVAILABLE, ParquetReader
 
 
 class TestParquetReaderBasic(unittest.TestCase):

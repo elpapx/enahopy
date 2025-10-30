@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from enahopy.merger.config import GeoMergeConfiguration
-from enahopy.merger.geographic.merger import GeographicMerger, ENAHOGeographicMerger
+from enahopy.merger.geographic.merger import ENAHOGeographicMerger, GeographicMerger
 
 
 class TestGeographicMerger(unittest.TestCase):
