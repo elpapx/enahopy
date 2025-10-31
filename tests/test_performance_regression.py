@@ -290,6 +290,7 @@ class TestMemoryEfficiency:
                 memory_increase < PERFORMANCE_BASELINES["memory"]["peak_memory_100mb_file_max"]
             ), f"Memory increase {memory_increase:.1f} MB exceeds {PERFORMANCE_BASELINES['memory']['peak_memory_100mb_file_max']} MB"
 
+    @pytest.mark.slow
     def test_memory_cleanup(self, sample_dataframe_large):
         """Test that memory is properly cleaned up after processing."""
         process = psutil.Process()
