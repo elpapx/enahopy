@@ -1,34 +1,44 @@
 """
-Excepciones específicas para análisis de nulos
+ENAHO Null Analysis - Exception Compatibility Layer
+=================================================
+
+This module imports exceptions from the unified hierarchy for backward compatibility.
+All new code should import directly from enahopy.exceptions.
+
+DEPRECATED: Import from enahopy.exceptions instead.
 """
 
-try:
-    from ..loader import ENAHOError
-except ImportError:
+import warnings
 
-    class ENAHOError(Exception):
-        pass
+# Import from unified exception hierarchy
+from enahopy.exceptions import (
+    ENAHOError,
+    ENAHONullAnalysisError,
+    PatternDetectionError,
+    VisualizationError,
+    ImputationError,
+    ENAHOValidationError,
+)
 
+# Deprecated warnings for backward compatibility
+warnings.warn(
+    "Importing from enahopy.null_analysis.exceptions is deprecated. "
+    "Import from enahopy.exceptions instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-class NullAnalysisError(ENAHOError):
-    """Error específico del análisis de nulos"""
+# Alias for backward compatibility
+NullAnalysisError = ENAHONullAnalysisError
+ValidationError = ENAHOValidationError
 
-    pass
-
-
-class ValidationError(NullAnalysisError):
-    """Error de validación de parámetros o datos"""
-
-    pass
-
-
-class VisualizationError(NullAnalysisError):
-    """Error en la generación de visualizaciones"""
-
-    pass
-
-
-class PatternDetectionError(NullAnalysisError):
-    """Error en la detección de patrones"""
-
-    pass
+# Export all for backward compatibility
+__all__ = [
+    "ENAHOError",
+    "ENAHONullAnalysisError",
+    "NullAnalysisError",  # Alias for compatibility
+    "PatternDetectionError",
+    "VisualizationError",
+    "ImputationError",
+    "ValidationError",  # Alias for compatibility
+]

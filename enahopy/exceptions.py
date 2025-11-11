@@ -275,6 +275,21 @@ class MergeKeyError(ModuleMergeError):
         self.invalid_keys = invalid_keys or []
 
 
+class DuplicateHandlingError(GeoMergeError):
+    """Error during handling of duplicate geographic entries."""
+
+    def __init__(
+        self,
+        message: str,
+        duplicates_info: Optional[Dict[str, Any]] = None,
+        duplicate_count: Optional[int] = None,
+        **kwargs,
+    ):
+        super().__init__(message, **kwargs)
+        self.duplicates_info = duplicates_info or {}
+        self.duplicate_count = duplicate_count
+
+
 # =====================================================
 # NULL ANALYSIS SYSTEM EXCEPTIONS
 # =====================================================
@@ -526,6 +541,7 @@ __all__ = [
     "ModuleMergeError",
     "IncompatibleModulesError",
     "MergeKeyError",
+    "DuplicateHandlingError",
     # Null analysis exceptions
     "ENAHONullAnalysisError",
     "PatternDetectionError",
