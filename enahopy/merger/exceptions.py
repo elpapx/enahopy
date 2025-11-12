@@ -35,6 +35,7 @@ warnings.warn(
 )
 
 # Aliases for backward compatibility
+MergerError = ENAHOMergeError  # Base merger exception
 ConfigurationError = ENAHOConfigError
 ModuleValidationError = ENAHOValidationError
 MergeValidationError = ENAHOMergeError
@@ -56,6 +57,7 @@ __all__ = [
     "IncompatibleModulesError",
     "MergeKeyError",
     # Aliases
+    "MergerError",
     "ConfigurationError",
     "ModuleValidationError",
     "MergeValidationError",
