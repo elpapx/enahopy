@@ -260,8 +260,12 @@ class IncompatibleModulesError(ModuleMergeError):
         self.compatibility_issues = compatibility_issues or []
 
 
-class MergeKeyError(ModuleMergeError):
-    """Error related to merge keys."""
+class MergeKeyError(ModuleMergeError, KeyError):
+    """Error related to merge keys.
+
+    Inherits from both ModuleMergeError (for ENAHO context) and KeyError
+    (for compatibility with standard Python exception handling).
+    """
 
     def __init__(
         self,
@@ -270,7 +274,10 @@ class MergeKeyError(ModuleMergeError):
         invalid_keys: Optional[List[str]] = None,
         **kwargs,
     ):
-        super().__init__(message, **kwargs)
+        # Initialize ModuleMergeError with our custom logic
+        ModuleMergeError.__init__(self, message, **kwargs)
+        # Initialize KeyError with the message (for compatibility)
+        KeyError.__init__(self, message)
         self.missing_keys = missing_keys or []
         self.invalid_keys = invalid_keys or []
 
