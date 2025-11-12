@@ -14,10 +14,10 @@ import warnings
 from enahopy.exceptions import (
     ENAHOError,
     ENAHONullAnalysisError,
+    ENAHOValidationError,
+    ImputationError,
     PatternDetectionError,
     VisualizationError,
-    ImputationError,
-    ENAHOValidationError,
 )
 
 # Deprecated warnings for backward compatibility

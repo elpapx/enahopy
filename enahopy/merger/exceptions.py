@@ -12,18 +12,18 @@ import warnings
 
 # Import from unified exception hierarchy
 from enahopy.exceptions import (
-    ENAHOError,
-    ENAHOValidationError,
-    ENAHOConfigError,
     DataQualityError,
-    GeoMergeError,
-    UbigeoValidationError,
-    TerritorialInconsistencyError,
     DuplicateHandlingError,
+    ENAHOConfigError,
+    ENAHOError,
     ENAHOMergeError,
-    ModuleMergeError,
+    ENAHOValidationError,
+    GeoMergeError,
     IncompatibleModulesError,
     MergeKeyError,
+    ModuleMergeError,
+    TerritorialInconsistencyError,
+    UbigeoValidationError,
 )
 
 # Deprecated warnings for backward compatibility
