@@ -3,19 +3,20 @@ Integration Tests for End-to-End ENAHO Workflows
 Tests complete pipelines: download → read → merge → analyze
 """
 
+import shutil
+import tempfile
+from pathlib import Path
+
 import pandas as pd
 import pytest
-import tempfile
-import shutil
-from pathlib import Path
 
 from enahopy.loader import ENAHODataDownloader
 from enahopy.loader.core.config import ENAHOConfig
 from enahopy.merger import ENAHOModuleMerger
 from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel
 from enahopy.merger.geographic.merger import GeographicMerger
-from enahopy.null_analysis import ENAHONullAnalyzer
 from enahopy.merger.panel import PanelCreator
+from enahopy.null_analysis import ENAHONullAnalyzer
 
 
 class TestDownloadReadWorkflow:
@@ -114,8 +115,9 @@ class TestMergerWorkflows:
     def test_module_merge_hogar_level(self, sample_household_data, sample_sumaria_data):
         """Test merging modules at household level"""
         import logging
+
         config = ModuleMergeConfig(merge_level=ModuleMergeLevel.HOGAR)
-        logger = logging.getLogger('test_merger')
+        logger = logging.getLogger("test_merger")
         merger = ENAHOModuleMerger(config, logger)
 
         result = merger.merge_modules(
@@ -138,6 +140,7 @@ class TestMergerWorkflows:
     def test_module_merge_persona_level(self, sample_person_data):
         """Test merging modules at person level"""
         import logging
+
         # Create additional person-level data (e.g., employment)
         employment_data = pd.DataFrame(
             {
@@ -151,7 +154,7 @@ class TestMergerWorkflows:
         )
 
         config = ModuleMergeConfig(merge_level=ModuleMergeLevel.PERSONA)
-        logger = logging.getLogger('test_merger')
+        logger = logging.getLogger("test_merger")
         merger = ENAHOModuleMerger(config, logger)
 
         result = merger.merge_modules(
@@ -330,6 +333,7 @@ class TestMultiModuleMergeWorkflow:
     def test_three_module_merge_workflow(self):
         """Test merging three modules: household + sumaria + person aggregate"""
         import logging
+
         # Module 01: Household characteristics
         df_hogar = pd.DataFrame(
             {
@@ -362,7 +366,7 @@ class TestMultiModuleMergeWorkflow:
         )
 
         config = ModuleMergeConfig(merge_level=ModuleMergeLevel.HOGAR)
-        logger = logging.getLogger('test_merger')
+        logger = logging.getLogger("test_merger")
         merger = ENAHOModuleMerger(config, logger)
 
         # Merge step 1: hogar + sumaria
@@ -389,12 +393,13 @@ class TestErrorHandlingInWorkflows:
     def test_merge_with_missing_key_columns(self):
         """Test merge behavior when key columns are missing"""
         import logging
+
         df1 = pd.DataFrame({"conglome": ["001"], "value": [100]})
 
         df2 = pd.DataFrame({"different_key": ["001"], "value2": [200]})
 
         config = ModuleMergeConfig(merge_level=ModuleMergeLevel.HOGAR)
-        logger = logging.getLogger('test_merger')
+        logger = logging.getLogger("test_merger")
         merger = ENAHOModuleMerger(config, logger)
 
         # This should handle the error gracefully
@@ -435,6 +440,7 @@ class TestPerformanceWorkflows:
     def test_large_person_dataset_merge(self):
         """Test merging larger person-level datasets"""
         import logging
+
         # Create 1000 person records
         n_persons = 1000
 
@@ -459,7 +465,7 @@ class TestPerformanceWorkflows:
         )
 
         config = ModuleMergeConfig(merge_level=ModuleMergeLevel.PERSONA)
-        logger = logging.getLogger('test_merger')
+        logger = logging.getLogger("test_merger")
         merger = ENAHOModuleMerger(config, logger)
 
         result = merger.merge_modules(df_persons, df_employment, "02", "05", config)
