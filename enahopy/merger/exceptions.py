@@ -34,13 +34,69 @@ warnings.warn(
     stacklevel=2,
 )
 
-# Aliases for backward compatibility
-MergerError = ENAHOMergeError  # Base merger exception
-ConfigurationError = ENAHOConfigError
-ModuleValidationError = ENAHOValidationError
-MergeValidationError = ENAHOMergeError
-ValidationThresholdError = ENAHOValidationError
-ConflictResolutionError = ENAHOMergeError
+
+# Backward compatibility wrapper classes with old interfaces
+class MergerError(ENAHOMergeError):
+    """Base merger exception - alias for ENAHOMergeError"""
+
+    pass
+
+
+class ConfigurationError(ENAHOConfigError):
+    """Configuration error - alias for ENAHOConfigError"""
+
+    pass
+
+
+class ModuleValidationError(ENAHOValidationError):
+    """Module validation error with backward-compatible attributes"""
+
+    def __init__(self, message: str, module_code=None, validation_failures=None, **kwargs):
+        super().__init__(message, validation_failures=validation_failures, **kwargs)
+        self.module_code = module_code
+
+
+class MergeValidationError(ENAHOMergeError):
+    """Merge validation error with backward-compatible attributes"""
+
+    def __init__(
+        self,
+        message: str,
+        merge_type=None,
+        validation_type=None,
+        failed_checks=None,
+        validation_details=None,
+        **kwargs,
+    ):
+        super().__init__(message, **kwargs)
+        self.merge_type = merge_type
+        self.validation_type = validation_type
+        self.failed_checks = failed_checks or []
+        self.validation_details = validation_details or {}
+
+
+class ValidationThresholdError(ENAHOValidationError):
+    """Validation threshold error - alias for ENAHOValidationError"""
+
+    pass
+
+
+class ConflictResolutionError(ENAHOMergeError):
+    """Conflict resolution error - alias for ENAHOMergeError"""
+
+    pass
+
+
+# Import utility functions from unified exception hierarchy
+from enahopy.exceptions import (
+    create_error_report,
+    format_exception_for_logging,
+    get_error_recommendations,
+)
+
+# Backward compatibility aliases for utility functions
+format_exception_details = format_exception_for_logging
+create_merge_error_report = create_error_report
 
 # Export all for backward compatibility
 __all__ = [
@@ -63,4 +119,8 @@ __all__ = [
     "MergeValidationError",
     "ValidationThresholdError",
     "ConflictResolutionError",
+    # Utility functions
+    "format_exception_details",
+    "create_merge_error_report",
+    "get_error_recommendations",
 ]
