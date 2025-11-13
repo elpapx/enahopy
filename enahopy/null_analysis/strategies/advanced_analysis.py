@@ -6,8 +6,21 @@ from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
-from scipy import stats
-from sklearn.cluster import KMeans
+
+# Optional imports for advanced statistical features
+try:
+    from scipy import stats
+    HAS_SCIPY = True
+except ImportError:
+    stats = None
+    HAS_SCIPY = False
+
+try:
+    from sklearn.cluster import KMeans
+    HAS_SKLEARN = True
+except ImportError:
+    KMeans = None
+    HAS_SKLEARN = False
 
 from ..config import MissingDataMetrics, MissingDataPattern, NullAnalysisConfig
 from .basic_analysis import BasicNullAnalysis
@@ -122,6 +135,13 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
 
     def _cluster_missing_patterns(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Clustering de patrones de missing data"""
+        if not HAS_SKLEARN:
+            self.logger.warning("sklearn not available - skipping clustering analysis")
+            return {
+                "clustering_successful": False,
+                "warning": "sklearn not installed - clustering analysis unavailable"
+            }
+
         missing_matrix = df.isnull().astype(int)
 
         if len(df) > 1000:
@@ -151,6 +171,11 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
     def _perform_statistical_tests(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Realiza tests estadísticos para evaluar patrones de missing data"""
         results = {}
+
+        if not HAS_SCIPY:
+            self.logger.warning("scipy not available - skipping advanced statistical tests")
+            results["warning"] = "scipy not installed - advanced statistical tests unavailable"
+            return results
 
         try:
             missing_matrix = df.isnull()
