@@ -4,19 +4,20 @@ Tests for enahopy.merger.core module - Coverage enhancement (FIXED)
 Focuses on testing edge cases and error paths with correct API usage
 """
 
-import pytest
-import pandas as pd
-import numpy as np
 import warnings
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-from enahopy.merger.core import ENAHOGeoMerger, check_dependencies
+import numpy as np
+import pandas as pd
+import pytest
+
 from enahopy.merger.config import (
     GeoMergeConfiguration,
     ModuleMergeConfig,
     TipoManejoDuplicados,
     TipoManejoErrores,
 )
+from enahopy.merger.core import ENAHOGeoMerger, check_dependencies
 from enahopy.merger.exceptions import (
     ConfigurationError,
     DataQualityError,

@@ -7,10 +7,11 @@ Tests coverage for:
 - Strategy pattern usage
 """
 
-import pytest
-import pandas as pd
-import numpy as np
 from abc import ABC
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from enahopy.merger.strategies import MergeStrategy, StandardMergeStrategy
 from enahopy.merger.strategies.base import MergeStrategy as BaseMergeStrategy
