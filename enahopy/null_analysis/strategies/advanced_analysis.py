@@ -10,6 +10,7 @@ import pandas as pd
 # Optional imports for advanced statistical features
 try:
     from scipy import stats
+
     HAS_SCIPY = True
 except ImportError:
     stats = None
@@ -17,6 +18,7 @@ except ImportError:
 
 try:
     from sklearn.cluster import KMeans
+
     HAS_SKLEARN = True
 except ImportError:
     KMeans = None
@@ -139,7 +141,7 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
             self.logger.warning("sklearn not available - skipping clustering analysis")
             return {
                 "clustering_successful": False,
-                "warning": "sklearn not installed - clustering analysis unavailable"
+                "warning": "sklearn not installed - clustering analysis unavailable",
             }
 
         missing_matrix = df.isnull().astype(int)
