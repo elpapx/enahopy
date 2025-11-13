@@ -56,7 +56,7 @@ class ModuleValidationError(ENAHOValidationError):
         self.module_code = module_code
 
 
-class MergeValidationError(ENAHOMergeError):
+class MergeValidationError(ModuleMergeError):
     """Merge validation error with backward-compatible attributes"""
 
     def __init__(

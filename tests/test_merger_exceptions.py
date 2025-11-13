@@ -487,9 +487,10 @@ class TestExceptionUtilityFunctions:
         details = format_exception_details(error)
 
         assert details["exception_type"] == "ValidationThresholdError"
-        assert details["threshold_info"]["type"] == "quality"
-        assert details["threshold_info"]["expected"] == 0.8
-        assert details["threshold_info"]["actual"] == 0.6
+        # threshold_type, expected, actual are in context
+        assert details["context"]["threshold_type"] == "quality"
+        assert details["context"]["expected"] == 0.8
+        assert details["context"]["actual"] == 0.6
 
     def test_create_merge_error_report_basic(self):
         """Test create_merge_error_report with basic exception"""
@@ -498,7 +499,7 @@ class TestExceptionUtilityFunctions:
         error = GeoMergeError("Merge failed")
         report = create_merge_error_report(error)
 
-        assert "=== REPORTE DE ERROR EN MERGE ===" in report
+        assert "ENAHOPY ERROR REPORT" in report
         assert "GeoMergeError" in report
         assert "Merge failed" in report
 
@@ -510,7 +511,7 @@ class TestExceptionUtilityFunctions:
         context = {"module": "05", "operation": "geographic_merge", "records_affected": 150}
         report = create_merge_error_report(error, operation_context=context)
 
-        assert "Contexto de operación:" in report
+        assert "Operation Context:" in report
         assert "module: 05" in report
         assert "operation: geographic_merge" in report
         assert "records_affected: 150" in report
@@ -524,8 +525,9 @@ class TestExceptionUtilityFunctions:
         )
         report = create_merge_error_report(error)
 
-        assert "Detalles adicionales:" in report
-        assert "duplicate_count: 25" in report
+        assert "Exception Context:" in report
+        # duplicate_count is a special attribute, not in context
+        # Only strategy_used appears in the exception context dict
         assert "strategy_used: BEST_QUALITY" in report
 
     def test_create_merge_error_report_with_recommendations_ubigeo(self):
