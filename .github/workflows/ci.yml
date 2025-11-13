@@ -76,6 +76,7 @@ jobs:
           path: |
             ~/.cache/pip
             ~\AppData\Local\pip\Cache
+            .pytest_cache
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
@@ -94,7 +95,7 @@ jobs:
 
       - name: Run fast tests (exclude slow tests)
         run: |
-          pytest tests/ -v -m "not slow" --tb=short --maxfail=5 --cov=enahopy --cov-report=xml --cov-report=term-missing:skip-covered --cov-branch --cov-fail-under=40
+          pytest tests/ -n auto -v -m "not slow" --tb=short --maxfail=5 --cov=enahopy --cov-report=xml --cov-report=term-missing:skip-covered --cov-branch --cov-fail-under=40
         timeout-minutes: 10
 
       - name: Upload coverage to Codecov
@@ -145,7 +146,7 @@ jobs:
 
       - name: Run tests with coverage enforcement
         run: |
-          pytest tests/ -v -m "not slow" --cov=enahopy --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=40 --tb=short
+          pytest tests/ -n auto -v -m "not slow" --cov=enahopy --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=40 --tb=short
         timeout-minutes: 10
 
       - name: Generate coverage badge
