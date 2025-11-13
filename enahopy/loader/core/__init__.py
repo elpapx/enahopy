@@ -6,6 +6,8 @@ Componentes fundamentales de enaho-analyzer:
 configuración, excepciones, logging y cache.
 """
 
+import warnings
+
 from .cache import CacheManager
 from .config import ENAHOConfig
 from .exceptions import (
@@ -17,7 +19,12 @@ from .exceptions import (
     FileReaderError,
     UnsupportedFormatError,
 )
-from .logging import StructuredFormatter, log_performance, setup_logging
+
+# Suppress deprecation warning for internal re-export
+# Users should use enahopy.logging directly, but we maintain backward compatibility
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from .logging import StructuredFormatter, log_performance, setup_logging
 
 __all__ = [
     # Config

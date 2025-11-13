@@ -164,6 +164,15 @@ class TestCachePerformance:
 
         Target: Cache hit should be 5x faster than initial load.
         """
+        # Check if parquet engines are available
+        try:
+            import pyarrow  # noqa: F401
+        except ImportError:
+            try:
+                import fastparquet  # noqa: F401
+            except ImportError:
+                pytest.skip("pyarrow or fastparquet required for parquet tests")
+
         # Save DataFrame to file for realistic test
         test_file = tmp_path / "test_data.parquet"
         sample_dataframe_large.to_parquet(test_file)
@@ -266,6 +275,15 @@ class TestMemoryEfficiency:
 
         Target: Peak memory < 200MB for 100MB+ file.
         """
+        # Check if parquet engines are available
+        try:
+            import pyarrow  # noqa: F401
+        except ImportError:
+            try:
+                import fastparquet  # noqa: F401
+            except ImportError:
+                pytest.skip("pyarrow or fastparquet required for parquet tests")
+
         # Save large DataFrame
         test_file = tmp_path / "large_test.parquet"
         sample_dataframe_large.to_parquet(test_file)
