@@ -65,20 +65,20 @@ class TestKNNImputation:
         """Test basic KNN imputation"""
         try:
             from enahopy.null_analysis.strategies.ml_imputation import KNNImputationStrategy
+
+            df = sample_data_with_missing.copy()
+            original_missing = df.isnull().sum().sum()
+
+            strategy = KNNImputationStrategy(n_neighbors=5, weights="uniform")
+            strategy.fit(df)
+            df_imputed = strategy.transform(df)
+
+            # Check that missing values were imputed
+            assert df_imputed.isnull().sum().sum() < original_missing
+            # Check shape unchanged
+            assert df_imputed.shape == df.shape
         except ImportError:
-            pytest.skip("ML imputation not available")
-
-        df = sample_data_with_missing.copy()
-        original_missing = df.isnull().sum().sum()
-
-        strategy = KNNImputationStrategy(n_neighbors=5, weights="uniform")
-        strategy.fit(df)
-        df_imputed = strategy.transform(df)
-
-        # Check that missing values were imputed
-        assert df_imputed.isnull().sum().sum() < original_missing
-        # Check shape unchanged
-        assert df_imputed.shape == df.shape
+            pytest.skip("ML imputation not available (sklearn required)")
 
     def test_knn_with_different_k(self, sample_data_with_missing):
         """Test KNN with different k values"""
