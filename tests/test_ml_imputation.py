@@ -192,8 +192,15 @@ class TestRandomForestImputation:
         df = sample_data_with_missing.copy()
 
         strategy = RandomForestImputationStrategy(n_estimators=50, random_state=42)
-        strategy.fit(df)
-        df_imputed = strategy.transform(df)
+
+        # Wrap fit/transform in try/except to handle sklearn availability
+        try:
+            strategy.fit(df)
+            df_imputed = strategy.transform(df)
+        except ImportError as e:
+            if "scikit-learn" in str(e):
+                pytest.skip("scikit-learn not installed")
+            raise
 
         # Check that feature importances are available
         importances = strategy.get_feature_importance()
@@ -208,43 +215,73 @@ class TestMLImputationManager:
     def test_manager_creation(self):
         """Test ML imputation manager creation"""
         try:
-            from enahopy.null_analysis.strategies.ml_imputation import create_ml_imputation_manager
+            from enahopy.null_analysis.strategies.ml_imputation import (
+                SKLEARN_AVAILABLE,
+                create_ml_imputation_manager,
+            )
         except ImportError:
             pytest.skip("ML imputation not available")
 
         manager = create_ml_imputation_manager()
         assert manager is not None
-        assert len(manager.strategies) > 0
+
+        # Only check strategies if sklearn is available
+        if SKLEARN_AVAILABLE:
+            assert len(manager.strategies) > 0
+        else:
+            pytest.skip("scikit-learn not installed, no strategies created")
 
     def test_manager_strategy_comparison(self, sample_data_with_missing):
         """Test strategy comparison"""
         try:
-            from enahopy.null_analysis.strategies.ml_imputation import create_ml_imputation_manager
+            from enahopy.null_analysis.strategies.ml_imputation import (
+                SKLEARN_AVAILABLE,
+                create_ml_imputation_manager,
+            )
         except ImportError:
             pytest.skip("ML imputation not available")
+
+        if not SKLEARN_AVAILABLE:
+            pytest.skip("scikit-learn not installed")
 
         df = sample_data_with_missing.copy()
         manager = create_ml_imputation_manager()
 
         # Compare strategies
-        results = manager.compare_strategies(df, test_size=0.3)
-        assert isinstance(results, dict)
-        assert len(results) > 0
+        try:
+            results = manager.compare_strategies(df, test_size=0.3)
+            assert isinstance(results, dict)
+            assert len(results) > 0
+        except ImportError as e:
+            if "scikit-learn" in str(e):
+                pytest.skip("scikit-learn not installed")
+            raise
 
     def test_manager_best_strategy_selection(self, sample_data_with_missing):
         """Test best strategy selection"""
         try:
-            from enahopy.null_analysis.strategies.ml_imputation import create_ml_imputation_manager
+            from enahopy.null_analysis.strategies.ml_imputation import (
+                SKLEARN_AVAILABLE,
+                create_ml_imputation_manager,
+            )
         except ImportError:
             pytest.skip("ML imputation not available")
+
+        if not SKLEARN_AVAILABLE:
+            pytest.skip("scikit-learn not installed")
 
         df = sample_data_with_missing.copy()
         manager = create_ml_imputation_manager()
 
-        results = manager.compare_strategies(df, test_size=0.3)
-        best_strategy = manager.get_best_strategy(results)
+        try:
+            results = manager.compare_strategies(df, test_size=0.3)
+            best_strategy = manager.get_best_strategy(results)
 
-        assert best_strategy in manager.strategies
+            assert best_strategy in manager.strategies
+        except ImportError as e:
+            if "scikit-learn" in str(e):
+                pytest.skip("scikit-learn not installed")
+            raise
 
 
 # ============================================================================
@@ -271,8 +308,15 @@ class TestQualityAssessment:
 
         # Perform imputation
         strategy = KNNImputationStrategy(n_neighbors=5)
-        strategy.fit(df)
-        df_imputed = strategy.transform(df)
+
+        # Wrap fit/transform in try/except to handle sklearn availability
+        try:
+            strategy.fit(df)
+            df_imputed = strategy.transform(df)
+        except ImportError as e:
+            if "scikit-learn" in str(e):
+                pytest.skip("scikit-learn not installed")
+            raise
 
         # Assess quality
         config = QualityAssessmentConfig(
