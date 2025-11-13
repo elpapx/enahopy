@@ -703,7 +703,7 @@ class TestWorkflowMethods:
         assert "data" in cleaned.columns
 
     def test_select_best_base_module(self, merger):
-        """Test _select_best_base_module chooses largest module"""
+        """Test _select_best_base_module chooses by priority, not size"""
         modules = {
             "01": pd.DataFrame({"conglome": ["001"], "hogar": ["1"]}),  # 1 row
             "02": pd.DataFrame(
@@ -714,8 +714,8 @@ class TestWorkflowMethods:
 
         best = merger._select_best_base_module(modules)
 
-        # Should select module with most records
-        assert best == "02"
+        # Should select module 01 based on priority (priority_modules = ["34", "01", "02", "03", "04", "05"])
+        assert best == "01"
 
     def test_validate_data_types_compatibility(self, merger):
         """Test _validate_data_types_compatibility"""
@@ -761,6 +761,8 @@ class TestMergeFeasibility:
 
     def test_analyze_merge_feasibility(self, merger):
         """Test analyze_merge_feasibility method"""
+        from enahopy.merger.config import ModuleMergeLevel
+
         modules = {
             "01": pd.DataFrame(
                 {
@@ -780,7 +782,8 @@ class TestMergeFeasibility:
             ),
         }
 
-        feasibility = merger.analyze_merge_feasibility(modules)
+        # Method requires merge_level parameter
+        feasibility = merger.analyze_merge_feasibility(modules, ModuleMergeLevel.HOGAR)
 
         # Should return analysis dict
         assert isinstance(feasibility, dict)
@@ -818,7 +821,8 @@ class TestMergePlanning:
             ),
         }
 
-        plan = merger.create_merge_plan(modules, base_module="01")
+        # Method uses target_module, not base_module
+        plan = merger.create_merge_plan(modules, target_module="01")
 
         # Should return a merge plan
         assert isinstance(plan, dict)
@@ -970,10 +974,11 @@ class TestOptimizedMerge:
         )
 
         merge_keys = ["conglome", "vivienda", "hogar"]
+        suffixes = ("_left", "_right")
 
-        # Should perform merge
+        # Should perform merge - method requires suffixes parameter
         try:
-            result = merger._execute_merge_optimized(left_df, right_df, merge_keys)
+            result = merger._execute_merge_optimized(left_df, right_df, merge_keys, suffixes)
             assert len(result) == 2
             assert "data" in result.columns
             assert "info" in result.columns
