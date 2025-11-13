@@ -274,9 +274,7 @@ class TestStatisticalTests:
 
         # Handle case where scipy is not available (CI environments)
         assert (
-            "simplified_mcar_test" in stat_tests
-            or "error" in stat_tests
-            or "warning" in stat_tests
+            "simplified_mcar_test" in stat_tests or "error" in stat_tests or "warning" in stat_tests
         )
         if "simplified_mcar_test" in stat_tests:
             assert "chi_square" in stat_tests["simplified_mcar_test"]

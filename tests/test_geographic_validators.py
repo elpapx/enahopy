@@ -448,5 +448,450 @@ class TestUbigeoValidatorIntegration(unittest.TestCase):
         self.assertFalse(mask.iloc[4])
 
 
+class TestGeoDataQualityValidator(unittest.TestCase):
+    """Tests for GeoDataQualityValidator coordinate validation."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.logger = logging.getLogger("test")
+        from enahopy.merger.geographic.validators import GeoDataQualityValidator
+
+        self.validator = GeoDataQualityValidator(self.logger)
+
+    def test_validate_geo_coordinates_valid(self):
+        """Should validate correct Peru coordinates."""
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "080101"],
+                "longitud": [-77.0428, -71.9675],  # Valid Peru longitudes
+                "latitud": [-12.0464, -13.5319],  # Valid Peru latitudes
+            }
+        )
+
+        coord_cols = {"x": "longitud", "y": "latitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should find no problems with valid coordinates
+        self.assertEqual(len(problemas), 0)
+
+    def test_validate_geo_coordinates_out_of_range_longitude(self):
+        """Should detect out-of-range longitudes."""
+        df = pd.DataFrame(
+            {"ubigeo": ["150101"], "longitud": [-90.0], "latitud": [-12.0]}  # Too far west for Peru
+        )
+
+        coord_cols = {"x": "longitud", "y": "latitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should detect out-of-range longitude
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("longitud" in p.lower() for p in problemas))
+
+    def test_validate_geo_coordinates_out_of_range_latitude(self):
+        """Should detect out-of-range latitudes."""
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["150101"],
+                "longitud": [-77.0],
+                "latitud": [-25.0],  # Too far south for Peru
+            }
+        )
+
+        coord_cols = {"x": "longitud", "y": "latitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should detect out-of-range latitude
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("latitud" in p.lower() for p in problemas))
+
+    def test_validate_geo_coordinates_missing_columns(self):
+        """Should handle missing coordinate columns."""
+        df = pd.DataFrame({"ubigeo": ["150101"]})
+
+        coord_cols = {"x": "longitud", "y": "latitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should report missing columns
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("no encontrada" in p for p in problemas))
+
+    def test_validate_geo_coordinates_null_values(self):
+        """Should detect null coordinates."""
+        df = pd.DataFrame(
+            {"ubigeo": ["150101", "080101"], "longitud": [-77.0, None], "latitud": [-12.0, -13.5]}
+        )
+
+        coord_cols = {"x": "longitud", "y": "latitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should detect incomplete coordinates
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("incompletas" in p for p in problemas))
+
+    def test_validate_geo_coordinates_duplicates(self):
+        """Should detect duplicate coordinates."""
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "150102"],
+                "longitud": [-77.0, -77.0],  # Exact duplicates
+                "latitud": [-12.0, -12.0],
+            }
+        )
+
+        coord_cols = {"x": "longitud", "y": "latitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should detect duplicate coordinates
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("duplicadas" in p for p in problemas))
+
+    def test_validate_geo_coordinates_incomplete_coord_cols(self):
+        """Should handle incomplete coord_cols specification."""
+        df = pd.DataFrame({"ubigeo": ["150101"], "longitud": [-77.0], "latitud": [-12.0]})
+
+        # Missing 'y' key
+        coord_cols = {"x": "longitud"}
+        problemas = self.validator.territorial_validator.validate_coordinate_consistency(
+            df, coord_cols, "ubigeo"
+        )
+
+        # Should report incomplete specification
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("'x' e 'y'" in p for p in problemas))
+
+
+class TestTerritorialCoverage(unittest.TestCase):
+    """Tests for territorial coverage validation."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.logger = logging.getLogger("test")
+        from enahopy.merger.geographic.validators import GeoDataQualityValidator
+
+        self.validator = GeoDataQualityValidator(self.logger)
+
+    def test_check_territorial_coverage_basic(self):
+        """Should analyze basic territorial coverage."""
+        df = pd.DataFrame({"ubigeo": ["150101", "150102", "080101", "080102"]})
+
+        coverage = self.validator.territorial_validator.check_territorial_coverage(df, "ubigeo")
+
+        # Should return coverage dict with statistics
+        self.assertIsInstance(coverage, dict)
+        self.assertIn("departamentos_presentes", coverage)
+        self.assertIn("departamentos_encontrados", coverage)
+        self.assertEqual(coverage["departamentos_presentes"], 2)  # Lima and Cusco
+        self.assertIn("LIMA", coverage["departamentos_encontrados"])
+        self.assertIn("CUSCO", coverage["departamentos_encontrados"])
+
+    def test_check_territorial_coverage_expected_departments(self):
+        """Should compare against expected departments."""
+        df = pd.DataFrame({"ubigeo": ["150101", "080101"]})  # Only Lima and Cusco
+
+        expected = ["LIMA", "CUSCO", "AMAZONAS"]  # Expecting these departments
+        coverage = self.validator.territorial_validator.check_territorial_coverage(
+            df, "ubigeo", expected
+        )
+
+        # Should include expected coverage information
+        self.assertIsInstance(coverage, dict)
+        self.assertIn("expected_missing", coverage)
+        self.assertIn("expected_coverage", coverage)
+        self.assertIn("AMAZONAS", coverage["expected_missing"])  # Should be missing
+
+
+class TestComprehensiveValidation(unittest.TestCase):
+    """Tests for comprehensive geographic validation."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.logger = logging.getLogger("test")
+        from enahopy.merger.geographic.validators import GeoDataQualityValidator
+
+        self.validator = GeoDataQualityValidator(self.logger)
+
+    def test_comprehensive_validation_all_enabled(self):
+        """Should run all validations when all configs enabled."""
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "080101"],
+                "departamento": ["15", "08"],
+                "provincia": ["1501", "0801"],
+                "distrito": ["150101", "080101"],
+                "coordenada_x": [-77.0, -71.9],
+                "coordenada_y": [-12.0, -13.5],
+            }
+        )
+
+        geo_columns = {
+            "ubigeo": "ubigeo",
+            "departamento": "departamento",
+            "provincia": "provincia",
+            "distrito": "distrito",
+            "coordenada_x": "coordenada_x",
+            "coordenada_y": "coordenada_y",
+        }
+
+        results = self.validator.comprehensive_validation(df, geo_columns)
+
+        # Should return comprehensive results
+        self.assertIn("results", results)
+        self.assertIn("ubigeo_validation", results["results"])
+        self.assertIn("territorial_hierarchy", results["results"])
+        self.assertIn("coordinate_validation", results["results"])
+        self.assertIn("territorial_coverage", results["results"])
+        self.assertIn("overall_quality_score", results)
+
+    def test_comprehensive_validation_selective(self):
+        """Should run only selected validations."""
+        df = pd.DataFrame({"ubigeo": ["150101", "080101"]})
+
+        geo_columns = {"ubigeo": "ubigeo"}
+        config = {
+            "ubigeo_structure": True,
+            "territorial_hierarchy": False,
+            "coordinate_consistency": False,
+            "coverage_analysis": True,
+        }
+
+        results = self.validator.comprehensive_validation(df, geo_columns, config)
+
+        # Should only have enabled validations
+        self.assertIn("ubigeo_validation", results["results"])
+        self.assertIn("territorial_coverage", results["results"])
+        self.assertNotIn("territorial_hierarchy", results["results"])
+        self.assertNotIn("coordinate_validation", results["results"])
+
+    def test_comprehensive_validation_without_coordinates(self):
+        """Should handle missing coordinate columns gracefully."""
+        df = pd.DataFrame({"ubigeo": ["150101", "080101"]})
+
+        geo_columns = {"ubigeo": "ubigeo"}
+
+        results = self.validator.comprehensive_validation(df, geo_columns)
+
+        # Should not fail without coordinates
+        self.assertIn("results", results)
+        self.assertIn("overall_quality_score", results)
+
+    def test_quality_score_perfect_data(self):
+        """Should give high quality score for perfect data."""
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["150101", "080101", "010101"] * 10,  # 3 departments, good coverage
+                "coordenada_x": [-77.0] * 30,
+                "coordenada_y": [-12.0] * 30,
+            }
+        )
+
+        geo_columns = {
+            "ubigeo": "ubigeo",
+            "coordenada_x": "coordenada_x",
+            "coordenada_y": "coordenada_y",
+        }
+
+        results = self.validator.comprehensive_validation(df, geo_columns)
+
+        # Should have high quality score
+        self.assertGreaterEqual(results["overall_quality_score"], 80)
+
+    def test_quality_score_bad_data(self):
+        """Should give low quality score for bad data."""
+        df = pd.DataFrame(
+            {
+                "ubigeo": ["999999", "888888", "777777"],  # Invalid UBIGEOs
+                "coordenada_x": [-90.0, 0.0, 100.0],  # Out of range
+                "coordenada_y": [-20.0, 5.0, 50.0],  # Out of range
+            }
+        )
+
+        geo_columns = {
+            "ubigeo": "ubigeo",
+            "coordenada_x": "coordenada_x",
+            "coordenada_y": "coordenada_y",
+        }
+
+        results = self.validator.comprehensive_validation(df, geo_columns)
+
+        # Should have low quality score
+        self.assertLessEqual(results["overall_quality_score"], 70)
+
+    def test_comprehensive_validation_missing_ubigeo_column(self):
+        """Should handle missing UBIGEO column."""
+        df = pd.DataFrame({"other_col": [1, 2, 3]})
+
+        geo_columns = {"ubigeo": "nonexistent"}
+        config = {"ubigeo_structure": True}
+
+        # Should not crash with missing column
+        try:
+            results = self.validator.comprehensive_validation(df, geo_columns, config)
+            # If it doesn't crash, should have results structure
+            self.assertIn("results", results)
+        except KeyError:
+            # Acceptable to raise KeyError for missing column
+            pass
+
+
+class TestTerritorialHierarchyEdgeCases(unittest.TestCase):
+    """Tests for territorial hierarchy edge cases."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.logger = logging.getLogger("test")
+        from enahopy.merger.geographic.validators import TerritorialValidator
+
+        self.validator = TerritorialValidator(self.logger)
+
+    def test_provincia_departamento_inconsistency(self):
+        """Should detect provincia-departamento inconsistency."""
+        df = pd.DataFrame(
+            {
+                "provincia": ["1501", "0801"],  # Lima, Cusco provinces
+                "departamento": ["08", "15"],  # Swapped departments!
+            }
+        )
+
+        columnas = {"provincia": "provincia", "departamento": "departamento"}
+
+        inconsistencias = self.validator.validar_jerarquia_territorial(df, columnas)
+
+        # Should detect 2 inconsistencies
+        self.assertGreater(len(inconsistencias), 0)
+        self.assertTrue(any("provincia-departamento" in i for i in inconsistencias))
+
+    def test_all_null_territorial_columns(self):
+        """Should handle all-null territorial values."""
+        df = pd.DataFrame({"provincia": [None, None], "departamento": [None, None]})
+
+        columnas = {"provincia": "provincia", "departamento": "departamento"}
+
+        inconsistencias = self.validator.validar_jerarquia_territorial(df, columnas)
+
+        # Should not crash with all nulls
+        self.assertIsInstance(inconsistencias, list)
+
+    def test_empty_dataframe(self):
+        """Should handle empty DataFrame."""
+        df = pd.DataFrame(columns=["provincia", "departamento"])
+
+        columnas = {"provincia": "provincia", "departamento": "departamento"}
+
+        inconsistencias = self.validator.validar_jerarquia_territorial(df, columnas)
+
+        # Should return empty list
+        self.assertEqual(inconsistencias, [])
+
+
+class TestCoordinateEdgeCases(unittest.TestCase):
+    """Tests for coordinate validation edge cases."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.logger = logging.getLogger("test")
+        from enahopy.merger.geographic.validators import TerritorialValidator
+
+        self.validator = TerritorialValidator(self.logger)
+
+    def test_boundary_coordinates(self):
+        """Should accept coordinates at Peru's boundaries."""
+        df = pd.DataFrame({"lon": [-81.4, -68.6], "lat": [-18.3, 0.1]})  # Near boundaries
+
+        coord_cols = {"x": "lon", "y": "lat"}
+        problemas = self.validator.validate_coordinate_consistency(df, coord_cols)
+
+        # Boundary coordinates should be accepted
+        self.assertEqual(len(problemas), 0)
+
+    def test_all_null_coordinates(self):
+        """Should handle all-null coordinates."""
+        df = pd.DataFrame({"lon": [None, None, None], "lat": [None, None, None]})
+
+        coord_cols = {"x": "lon", "y": "lat"}
+        problemas = self.validator.validate_coordinate_consistency(df, coord_cols)
+
+        # Should report incomplete coordinates
+        self.assertGreater(len(problemas), 0)
+        self.assertTrue(any("incompletas" in p for p in problemas))
+
+    def test_single_row_no_duplicates(self):
+        """Should handle single-row DataFrame without duplicate check."""
+        df = pd.DataFrame({"lon": [-77.0], "lat": [-12.0]})
+
+        coord_cols = {"x": "lon", "y": "lat"}
+        problemas = self.validator.validate_coordinate_consistency(df, coord_cols)
+
+        # Single row should have no duplicate issues
+        self.assertFalse(any("duplicadas" in p for p in problemas))
+
+
+class TestUbigeoEdgeCases(unittest.TestCase):
+    """Tests for UBIGEO validation edge cases."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.logger = logging.getLogger("test")
+        from enahopy.merger.geographic.validators import UbigeoValidator
+
+        self.validator = UbigeoValidator(self.logger)
+
+    def test_zero_province_code(self):
+        """Should reject UBIGEO with province code 00."""
+        is_valid, msg = self.validator.validar_estructura_ubigeo("150001")
+
+        # Province 00 is invalid
+        self.assertFalse(is_valid)
+        self.assertIn("Provincia", msg)
+
+    def test_zero_district_code(self):
+        """Should reject UBIGEO with district code 00."""
+        is_valid, msg = self.validator.validar_estructura_ubigeo("150100")
+
+        # District 00 is invalid
+        self.assertFalse(is_valid)
+        self.assertIn("Distrito", msg)
+
+    def test_high_province_code(self):
+        """Should accept valid high province codes."""
+        is_valid, msg = self.validator.validar_estructura_ubigeo("159901")
+
+        # Province 99 is valid
+        self.assertTrue(is_valid)
+
+    def test_high_district_code(self):
+        """Should accept valid high district codes."""
+        is_valid, msg = self.validator.validar_estructura_ubigeo("150199")
+
+        # District 99 is valid
+        self.assertTrue(is_valid)
+
+    def test_empty_string_ubigeo(self):
+        """Should handle empty string UBIGEO."""
+        is_valid, msg = self.validator.validar_estructura_ubigeo("")
+
+        # Empty string is invalid
+        self.assertFalse(is_valid)
+
+    def test_whitespace_ubigeo(self):
+        """Should reject UBIGEO with whitespace."""
+        is_valid, msg = self.validator.validar_estructura_ubigeo("15 01 01")
+
+        # Whitespace makes it non-numeric
+        self.assertFalse(is_valid)
+        self.assertIn("no numéricos", msg)
+
+
 if __name__ == "__main__":
     unittest.main()
