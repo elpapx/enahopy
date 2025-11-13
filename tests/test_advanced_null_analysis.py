@@ -272,7 +272,12 @@ class TestStatisticalTests:
 
         stat_tests = analyzer._perform_statistical_tests(df)
 
-        assert "simplified_mcar_test" in stat_tests or "error" in stat_tests
+        # Handle case where scipy is not available (CI environments)
+        assert (
+            "simplified_mcar_test" in stat_tests
+            or "error" in stat_tests
+            or "warning" in stat_tests
+        )
         if "simplified_mcar_test" in stat_tests:
             assert "chi_square" in stat_tests["simplified_mcar_test"]
             assert "p_value" in stat_tests["simplified_mcar_test"]

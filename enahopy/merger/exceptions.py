@@ -81,8 +81,8 @@ class ValidationThresholdError(ENAHOValidationError):
     pass
 
 
-class ConflictResolutionError(ENAHOMergeError):
-    """Conflict resolution error - alias for ENAHOMergeError"""
+class ConflictResolutionError(ModuleMergeError):
+    """Conflict resolution error - alias for ModuleMergeError"""
 
     pass
 
