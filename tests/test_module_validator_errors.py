@@ -24,7 +24,6 @@ import pytest
 from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel, ModuleType
 from enahopy.merger.modules.validator import ModuleValidator
 
-
 # ==============================================================================
 # Fixtures
 # ==============================================================================
@@ -213,9 +212,7 @@ class TestPersonaLevelValidationEdgeCases:
 
     def test_codperso_not_present(self, validator):
         """Test persona validation when codperso column is missing."""
-        df = pd.DataFrame(
-            {"conglome": ["HH001"], "vivienda": ["V001"], "hogar": [1], "edad": [25]}
-        )
+        df = pd.DataFrame({"conglome": ["HH001"], "vivienda": ["V001"], "hogar": [1], "edad": [25]})
 
         # Should not crash
         warnings = validator._validate_persona_level_module(df, "03")
@@ -308,9 +305,7 @@ class TestSpecialModuleValidation:
 
     def test_module_37_with_data(self, validator):
         """Test module 37 with actual data."""
-        df = pd.DataFrame(
-            {"conglome": ["HH001"], "vivienda": ["V001"], "hogar": [1], "value": [1]}
-        )
+        df = pd.DataFrame({"conglome": ["HH001"], "vivienda": ["V001"], "hogar": [1], "value": [1]})
 
         warnings = validator._validate_special_module(df, "37")
 
@@ -331,9 +326,7 @@ class TestModuleCompatibilityChecking:
         df1 = pd.DataFrame(columns=["conglome", "vivienda", "hogar"])
         df2 = pd.DataFrame(columns=["conglome", "vivienda", "hogar"])
 
-        result = validator.check_module_compatibility(
-            df1, df2, "34", "01", ModuleMergeLevel.HOGAR
-        )
+        result = validator.check_module_compatibility(df1, df2, "34", "01", ModuleMergeLevel.HOGAR)
 
         assert isinstance(result, dict)
         assert "compatible" in result
@@ -344,9 +337,7 @@ class TestModuleCompatibilityChecking:
 
         df2 = pd.DataFrame({"conglome": ["HH999"], "vivienda": ["V999"], "hogar": [1]})
 
-        result = validator.check_module_compatibility(
-            df1, df2, "34", "01", ModuleMergeLevel.HOGAR
-        )
+        result = validator.check_module_compatibility(df1, df2, "34", "01", ModuleMergeLevel.HOGAR)
 
         assert isinstance(result, dict)
         # Should indicate low or no match rate
@@ -357,9 +348,7 @@ class TestModuleCompatibilityChecking:
         df2 = valid_hogar_df.copy()
         df2["extra_col"] = [1, 2, 3]
 
-        result = validator.check_module_compatibility(
-            df1, df2, "34", "01", ModuleMergeLevel.HOGAR
-        )
+        result = validator.check_module_compatibility(df1, df2, "34", "01", ModuleMergeLevel.HOGAR)
 
         assert result.get("compatible", False)
         # Should have high match rate
