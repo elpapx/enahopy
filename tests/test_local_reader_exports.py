@@ -17,6 +17,14 @@ import pytest
 
 from enahopy.loader.io.local_reader import ENAHOLocalReader
 
+# Check for optional dependencies
+try:
+    import openpyxl
+
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    OPENPYXL_AVAILABLE = False
+
 # ============================================================================
 # FIXTURES
 # ============================================================================
@@ -136,6 +144,7 @@ def test_save_data_parquet_creates_directories(sample_dataframe, tmp_path, sampl
 # ============================================================================
 
 
+@pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not installed")
 def test_save_data_to_excel(sample_dataframe, tmp_path, sample_enaho_csv):
     """Test saving DataFrame to Excel format"""
     reader = ENAHOLocalReader(sample_enaho_csv)
@@ -150,6 +159,7 @@ def test_save_data_to_excel(sample_dataframe, tmp_path, sample_enaho_csv):
     assert "conglome" in df_read.columns
 
 
+@pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not installed")
 def test_save_data_to_excel_with_sheet_name(sample_dataframe, tmp_path, sample_enaho_csv):
     """Test saving Excel with custom sheet name"""
     reader = ENAHOLocalReader(sample_enaho_csv)
@@ -163,6 +173,7 @@ def test_save_data_to_excel_with_sheet_name(sample_dataframe, tmp_path, sample_e
     assert len(df_read) == 3
 
 
+@pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not installed")
 def test_save_data_excel_creates_directories(sample_dataframe, tmp_path, sample_enaho_csv):
     """Test that parent directories are created for Excel"""
     reader = ENAHOLocalReader(sample_enaho_csv)
@@ -471,6 +482,7 @@ def test_full_export_workflow_csv(reader_with_data, tmp_path):
     assert len(df_read) == len(df)
 
 
+@pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not installed")
 def test_full_export_workflow_multiple_formats(sample_dataframe, tmp_path, sample_enaho_csv):
     """Test exporting same data to multiple formats"""
     reader = ENAHOLocalReader(sample_enaho_csv)
