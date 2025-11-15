@@ -542,3 +542,324 @@ def test_export_with_special_characters(tmp_path, sample_enaho_csv):
     # Verify can be read back
     df_read = pd.read_csv(csv_path)
     assert "José" in df_read["nombre"].values[0] or "Jos" in df_read["nombre"].values[0]
+
+
+# ============================================================================
+# TESTS FOR __init__() - INITIALIZATION
+# ============================================================================
+
+
+def test_init_with_csv_file(sample_enaho_csv):
+    """Test reader initialization with CSV file"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    assert reader.file_path.exists()
+    assert reader.config is not None
+    assert reader.logger is not None
+    assert reader.reader is not None
+
+
+def test_init_with_custom_config(sample_enaho_csv):
+    """Test initialization with custom configuration"""
+    from enahopy.loader.core.config import ENAHOConfig
+
+    config = ENAHOConfig(chunk_size_default=20000)
+    reader = ENAHOLocalReader(sample_enaho_csv, config=config)
+    assert reader.config.chunk_size_default == 20000
+
+
+def test_init_verbose_false(sample_enaho_csv):
+    """Test initialization with verbose=False"""
+    reader = ENAHOLocalReader(sample_enaho_csv, verbose=False)
+    assert reader.logger is not None
+    # Logger should exist but not print to console
+
+
+def test_init_with_structured_logging(sample_enaho_csv):
+    """Test initialization with structured logging enabled"""
+    reader = ENAHOLocalReader(sample_enaho_csv, structured_logging=True)
+    assert reader.logger is not None
+
+
+def test_init_with_log_file(sample_enaho_csv, tmp_path):
+    """Test initialization with log file specified"""
+    log_file = tmp_path / "reader.log"
+    reader = ENAHOLocalReader(sample_enaho_csv, log_file=str(log_file))
+    assert reader.logger is not None
+    # Log file may not exist immediately but logger is configured
+
+
+def test_init_file_not_found():
+    """Test initialization with non-existent file"""
+    with pytest.raises(FileNotFoundError):
+        ENAHOLocalReader("/nonexistent/path/file.csv")
+
+
+def test_init_unsupported_format(tmp_path):
+    """Test initialization with unsupported file format"""
+    unsupported_file = tmp_path / "data.xyz"
+    unsupported_file.write_text("test")
+
+    from enahopy.loader.core.exceptions import UnsupportedFormatError
+
+    with pytest.raises(UnsupportedFormatError):
+        ENAHOLocalReader(str(unsupported_file))
+
+
+def test_init_with_parquet_file(tmp_path):
+    """Test reader initialization with Parquet file"""
+    parquet_file = tmp_path / "test.parquet"
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    df.to_parquet(parquet_file)
+
+    reader = ENAHOLocalReader(str(parquet_file))
+    assert reader.file_path.exists()
+    assert str(reader.file_path).endswith(".parquet")
+
+
+# ============================================================================
+# TESTS FOR get_available_columns()
+# ============================================================================
+
+
+def test_get_available_columns_returns_list(sample_enaho_csv):
+    """Test get_available_columns returns a list"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    columns = reader.get_available_columns()
+    assert isinstance(columns, list)
+
+
+def test_get_available_columns_correct_count(sample_enaho_csv):
+    """Test get_available_columns returns correct number of columns"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    columns = reader.get_available_columns()
+    # Sample CSV has 6 columns
+    assert len(columns) == 6
+
+
+def test_get_available_columns_includes_expected(sample_enaho_csv):
+    """Test get_available_columns includes expected column names"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    columns = reader.get_available_columns()
+    expected = ["conglome", "vivienda", "hogar", "mieperho", "gashog2d", "inghog2d"]
+    for col in expected:
+        assert col in columns
+
+
+def test_get_available_columns_order_preserved(sample_enaho_csv):
+    """Test get_available_columns preserves column order"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    columns = reader.get_available_columns()
+    # First column should be conglome
+    assert columns[0] == "conglome"
+
+
+# ============================================================================
+# TESTS FOR read_data() - CORE READING FUNCTIONALITY
+# ============================================================================
+
+
+def test_read_data_basic(sample_enaho_csv):
+    """Test basic read_data without parameters"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    df, validation = reader.read_data()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 3  # Sample has 3 rows
+    assert len(df.columns) == 6  # Sample has 6 columns
+
+
+def test_read_data_specific_columns(sample_enaho_csv):
+    """Test read_data with specific columns"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    df, validation = reader.read_data(columns=["conglome", "vivienda", "mieperho"])
+    assert len(df.columns) == 3
+    assert "conglome" in df.columns
+    assert "vivienda" in df.columns
+    assert "mieperho" in df.columns
+
+
+def test_read_data_with_chunk_size(sample_enaho_csv):
+    """Test read_data with chunk_size parameter"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    # chunk_size controls rows per chunk when use_chunks=True
+    df, validation = reader.read_data(use_chunks=False, chunk_size=1000)
+    # Without use_chunks, chunk_size is ignored and full DataFrame is returned
+    assert isinstance(df, pd.DataFrame)
+
+
+def test_read_data_returns_validation_result(sample_enaho_csv):
+    """Test read_data returns validation result"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    df, validation = reader.read_data()
+    from enahopy.loader.io.validators.results import ColumnValidationResult
+
+    assert isinstance(validation, ColumnValidationResult)
+
+
+def test_read_data_case_insensitive_columns(sample_enaho_csv):
+    """Test read_data with case-insensitive column matching"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    df, validation = reader.read_data(columns=["CONGLOME", "Vivienda"])
+    assert len(df.columns) >= 2
+
+
+def test_read_data_with_use_dask_false(sample_enaho_csv):
+    """Test read_data returns pandas DataFrame (not dask)"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    # By default, returns pandas DataFrame
+    df, validation = reader.read_data()
+    assert isinstance(df, pd.DataFrame)
+    # Not a dask DataFrame
+    assert not hasattr(df, "compute")
+
+
+def test_read_data_with_use_chunks_false(sample_enaho_csv):
+    """Test read_data with use_chunks=False"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    df, validation = reader.read_data(use_chunks=False)
+    assert isinstance(df, pd.DataFrame)
+
+
+def test_read_data_empty_columns_list(sample_enaho_csv):
+    """Test read_data with empty columns list returns empty DataFrame"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    # Empty columns list is treated as "read no columns", returns empty DataFrame
+    df, validation = reader.read_data(columns=[])
+    # This is expected behavior - empty columns list means no columns to read
+    assert isinstance(df, pd.DataFrame)
+    assert len(df.columns) == 0
+
+
+def test_read_data_nonexistent_columns(sample_enaho_csv):
+    """Test read_data with non-existent columns"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    df, validation = reader.read_data(columns=["nonexistent_col"])
+    # Should still return DataFrame, validation will report missing columns
+    assert isinstance(df, pd.DataFrame)
+
+
+# ============================================================================
+# TESTS FOR extract_metadata()
+# ============================================================================
+
+
+def test_extract_metadata_returns_dict(sample_enaho_csv):
+    """Test extract_metadata returns dictionary"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    metadata = reader.extract_metadata()
+    assert isinstance(metadata, dict)
+
+
+def test_extract_metadata_has_file_info(sample_enaho_csv):
+    """Test extract_metadata includes file_info"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    metadata = reader.extract_metadata()
+    assert "file_info" in metadata
+    assert isinstance(metadata["file_info"], dict)
+
+
+def test_extract_metadata_has_variables(sample_enaho_csv):
+    """Test extract_metadata includes variables"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    metadata = reader.extract_metadata()
+    assert "variables" in metadata
+    assert isinstance(metadata["variables"], dict)
+
+
+def test_extract_metadata_caching(sample_enaho_csv):
+    """Test extract_metadata caches results"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    metadata1 = reader.extract_metadata()
+    metadata2 = reader.extract_metadata()
+    # Should return same object (cached)
+    assert metadata1 is metadata2
+
+
+def test_extract_metadata_column_count(sample_enaho_csv):
+    """Test extract_metadata reports correct column count"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    metadata = reader.extract_metadata()
+    assert "variables" in metadata
+    if "column_count" in metadata["variables"]:
+        assert metadata["variables"]["column_count"] == 6
+
+
+def test_extract_metadata_includes_column_names(sample_enaho_csv):
+    """Test extract_metadata includes column names"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    metadata = reader.extract_metadata()
+    if "variables" in metadata and "column_names" in metadata["variables"]:
+        columns = metadata["variables"]["column_names"]
+        assert "conglome" in columns
+        assert "vivienda" in columns
+
+
+# ============================================================================
+# TESTS FOR FORMAT DETECTION AND READER FACTORY
+# ============================================================================
+
+
+def test_format_detection_csv(sample_enaho_csv):
+    """Test automatic format detection for CSV files"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    # Should create CSV reader
+    assert reader.reader is not None
+    assert str(reader.file_path).endswith(".csv")
+
+
+def test_format_detection_parquet(tmp_path):
+    """Test automatic format detection for Parquet files"""
+    parquet_file = tmp_path / "test.parquet"
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    df.to_parquet(parquet_file)
+
+    reader = ENAHOLocalReader(str(parquet_file))
+    assert reader.reader is not None
+
+
+def test_init_creates_column_validator(sample_enaho_csv):
+    """Test initialization creates column validator"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    from enahopy.loader.io.validators.columns import ColumnValidator
+
+    assert isinstance(reader.column_validator, ColumnValidator)
+
+
+def test_init_creates_enaho_validator(sample_enaho_csv):
+    """Test initialization creates ENAHO validator"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    from enahopy.loader.io.validators.enaho import ENAHOValidator
+
+    assert isinstance(reader.validator, ENAHOValidator)
+
+
+# ============================================================================
+# ERROR HANDLING AND EDGE CASES
+# ============================================================================
+
+
+def test_read_data_with_invalid_nrows(sample_enaho_csv):
+    """Test read_data with invalid nrows parameter"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    # Negative nrows might raise error or be handled
+    try:
+        df, validation = reader.read_data(nrows=-1)
+        # If it doesn't raise, should return empty or handle gracefully
+    except (ValueError, TypeError):
+        # Expected behavior for invalid input
+        pass
+
+
+def test_save_data_with_none_dataframe(sample_enaho_csv, tmp_path):
+    """Test save_data with None DataFrame"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    output_path = tmp_path / "output.csv"
+
+    with pytest.raises((TypeError, AttributeError, ValueError)):
+        reader.save_data(None, str(output_path))
+
+
+def test_get_summary_info_before_reading(sample_enaho_csv):
+    """Test get_summary_info can be called before reading data"""
+    reader = ENAHOLocalReader(sample_enaho_csv)
+    summary = reader.get_summary_info()
+    assert isinstance(summary, dict)
