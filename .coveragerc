@@ -1,0 +1,106 @@
+[run]
+# Coverage configuration for ENAHOPY
+# Focus on active production modules only (v0.5.0 scope)
+source = enahopy
+branch = True
+omit =
+    # Test files
+    */tests/*
+    */test_*.py
+    */*_test.py
+
+    # Cache and temporary files
+    */__pycache__/*
+    */.enaho_cache/*
+    */temp/*
+    */site-packages/*
+
+    # Unused/incomplete modules (not part of v0.5.0)
+    */performance/*
+    */econometrics/*
+    */reporting.py
+    */statistical_analysis.py
+    */data_quality.py
+    */validation.py
+
+    # Untested/unused implementation files (0% coverage)
+    */merger/convenience.py
+    */loader/io/downloaders/async_downloader.py
+    */null_analysis/utils/utils.py
+    */null_analysis/visualization/factory.py
+    */null_analysis/io/exporters.py
+    */null_analysis/io/importers.py
+    */null_analysis/reports/templates.py
+
+    # ML imputation strategies - EXCLUDED (datasets are pre-imputed)
+    # These modules are not needed for production use
+    */null_analysis/strategies/ml_imputation.py
+    */null_analysis/strategies/advanced_ml_imputation.py
+    */null_analysis/strategies/enaho_pattern_imputation.py
+    */null_analysis/strategies/imputation_quality_assessment.py
+
+    # Benchmark and analysis scripts (not production code)
+    */verify_imports.py
+    */loader/core/cache_benchmark.py
+    */loader/io/loader_benchmark.py
+    */merger_analysis.py
+    */analyzer.py
+
+    # Setup and configuration
+    setup.py
+    */conf.py
+
+[report]
+# Reporting configuration
+precision = 2
+show_missing = True
+skip_covered = False
+skip_empty = False
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard pragmas
+    pragma: no cover
+
+    # Debug/development code
+    def __repr__
+    def __str__
+
+    # Defensive programming
+    raise AssertionError
+    raise NotImplementedError
+
+    # Main block
+    if __name__ == .__main__.:
+
+    # Type checking
+    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
+
+    # Abstract methods
+    @abstractmethod
+    @abc.abstractmethod
+
+    # Ellipsis for protocols/stubs
+    \.\.\.
+
+    # Pass statements in abstract classes
+    pass
+
+# Sort report by coverage percentage
+sort = Cover
+
+[html]
+# HTML report configuration
+directory = htmlcov
+title = ENAHOPY Coverage Report
+
+[xml]
+# XML report for CI/CD integration
+output = coverage.xml
+
+[json]
+# JSON report for programmatic access
+output = .coverage_reports/coverage.json
+pretty_print = True
+show_contexts = True
