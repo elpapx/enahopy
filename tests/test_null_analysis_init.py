@@ -686,7 +686,7 @@ def test_generate_null_report_unexpected_error_path(sample_df_with_nulls, tmp_pa
 
 def test_generate_null_report_critical_error_path(monkeypatch):
     """Test critical error handling in generate_null_report (lines 596-599)"""
-    from enahopy.null_analysis import generate_null_report, NullAnalysisError
+    from enahopy.null_analysis import NullAnalysisError, generate_null_report
 
     # Pass invalid data to trigger critical error
     try:
