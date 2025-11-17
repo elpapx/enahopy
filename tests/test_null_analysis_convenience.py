@@ -546,9 +546,7 @@ class TestEdgeCases:
 
 def test_create_null_visualizations_static_mode():
     """Test create_null_visualizations with interactive=False (lines 61-73)"""
-    df = pd.DataFrame(
-        {"A": [1, None, 3, 4, 5], "B": [None, 2, 3, None, 5], "C": [1, 2, 3, 4, 5]}
-    )
+    df = pd.DataFrame({"A": [1, None, 3, 4, 5], "B": [None, 2, 3, None, 5], "C": [1, 2, 3, 4, 5]})
 
     # Test static visualization mode - may not be fully implemented
     try:
@@ -987,7 +985,11 @@ class TestAnalyzeCommonMissingPatternsEdgeCases:
     def test_analyze_patterns_column_names_in_interpretation(self):
         """Test that column names are correctly extracted (line 327)"""
         df = pd.DataFrame(
-            {"Variable_A": [None] * 15, "Variable_B": list(range(15)), "Variable_C": list(range(15))}
+            {
+                "Variable_A": [None] * 15,
+                "Variable_B": list(range(15)),
+                "Variable_C": list(range(15)),
+            }
         )
 
         result = analyze_common_missing_patterns(df, min_pattern_frequency=10)

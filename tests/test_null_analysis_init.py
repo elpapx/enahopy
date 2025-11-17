@@ -554,6 +554,7 @@ def test_get_imputation_recommendations_invalid_variable(null_analyzer, sample_d
 
 def test_analyze_with_core_analyzer_exception(null_analyzer, sample_df_with_nulls, monkeypatch):
     """Test analyze fallback when core analyzer raises exception (lines 281-289)"""
+
     # Mock the core analyzer to raise an exception
     def mock_analyze_raises(*args, **kwargs):
         raise RuntimeError("Mock core analyzer error")
@@ -572,6 +573,7 @@ def test_analyze_with_core_analyzer_exception(null_analyzer, sample_df_with_null
 
 def test_analyze_with_pattern_analyzer_exception(null_analyzer, sample_df_with_nulls, monkeypatch):
     """Test analyze handling pattern detection errors (lines 292-297)"""
+
     # Mock pattern analyzer to raise exception
     def mock_pattern_raises(*args, **kwargs):
         raise ValueError("Mock pattern error")
@@ -627,7 +629,9 @@ def test_get_imputation_recommendations_moderate_strategy(null_analyzer):
         assert recommendations["strategy"] in ["simple", "moderate"]
 
 
-def test_generate_null_report_with_output_path_save_error(sample_df_with_nulls, tmp_path, monkeypatch):
+def test_generate_null_report_with_output_path_save_error(
+    sample_df_with_nulls, tmp_path, monkeypatch
+):
     """Test report saving with file system error (lines 567, 569-574)"""
     from enahopy.null_analysis import generate_null_report
 
@@ -778,9 +782,7 @@ class TestAnalyzeErrorHandling:
             raise RuntimeError("Report generation failed")
 
         if hasattr(analyzer, "report_generator") and analyzer.report_generator:
-            monkeypatch.setattr(
-                analyzer.report_generator, "generate_report", mock_report_raises
-            )
+            monkeypatch.setattr(analyzer.report_generator, "generate_report", mock_report_raises)
 
         # Should handle exception and continue
         result = analyzer.analyze(sample_df_with_nulls, generate_report=True)
@@ -815,9 +817,7 @@ class TestAnalyzeErrorHandling:
             raise ValueError("Bars visualization failed")
 
         if hasattr(analyzer, "visualizer") and analyzer.visualizer:
-            monkeypatch.setattr(
-                analyzer.visualizer, "visualize_null_bars", mock_viz_bars_raises
-            )
+            monkeypatch.setattr(analyzer.visualizer, "visualize_null_bars", mock_viz_bars_raises)
 
         result = analyzer.analyze(sample_df_with_nulls, include_visualizations=True)
 
@@ -1017,9 +1017,7 @@ class TestGenerateComprehensiveReport:
         assert metadata["output_path"] == output_path
         assert metadata["dataframe_shape"] == sample_df_with_nulls.shape
 
-    def test_generate_comprehensive_report_with_all_params(
-        self, sample_df_with_nulls, tmp_path
-    ):
+    def test_generate_comprehensive_report_with_all_params(self, sample_df_with_nulls, tmp_path):
         """Test comprehensive report with all parameters (lines 449-473)"""
         analyzer = ENAHONullAnalyzer(verbose=False)
         output_path = str(tmp_path / "full_report.html")
@@ -1065,7 +1063,9 @@ class TestGetImputationRecommendationsEdgeCases:
         if "strategy" in recommendations:
             assert recommendations["strategy"] == "advanced"
             assert "methods" in recommendations
-            assert "mice" in recommendations["methods"] or "missforest" in recommendations["methods"]
+            assert (
+                "mice" in recommendations["methods"] or "missforest" in recommendations["methods"]
+            )
 
 
 # ============================================================================
