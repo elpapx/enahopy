@@ -227,3 +227,46 @@ dist/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Internal development documentation
+# Session notes and completion reports
+COVERAGE_*.md
+SESSION_SUMMARY_*.md
+BUILD_PHASE_*.md
+CI_CD_ARCHITECTURE.md
+CI_CD_COVERAGE_INTEGRATION.md
+CI_CD_FIX_SESSION.md
+CI_CD_QUICKSTART.md
+MO-*.md
+DE-*.md
+DS_*.md
+PE-*.md
+ORCHESTRATION_*.md
+POVERTY_NOTEBOOK_*.md
+GEOGRAPHIC_VALIDATORS_COVERAGE_SESSION.md
+TEST_FIX_*.md
+REFACTORING_*.md
+NEXT_STEPS_*.md
+SPEC_ALIGNMENT_*.md
+TEST_COVERAGE_*.md
+PHASE_*.txt
+OPTIMIZACIONES_*.md
+TECHNICAL_DEBT.md
+DOCSTRING_TEMPLATE.md
+CONTEXT.md
+test_failure_categorization.md
+
+# Development/analysis scripts
+analyze_notebook*.py
+comprehensive_fix_notebook.py
+clean_organized_code.py
+astreus.py
+analyzer.py
+improve_poverty_notebook.py
+fix_notebook.py
+organize_notebook.py
+
+# R data and analysis files
+*.rds
+*.Rhistory
+*.RData
