@@ -1,0 +1,265 @@
+name: Release Pipeline
+
+# This workflow is triggered when a new tag is pushed
+# Tag format: v*.*.* (e.g., v0.5.0, v1.0.0)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  # Step 1: Run full test suite (including slow tests)
+  test:
+    name: Full Test Suite (Release)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Run ALL tests (including slow tests)
+        run: |
+          pytest tests/ -v --cov=enahopy --cov-report=term-missing --cov-report=xml --cov-fail-under=40
+        timeout-minutes: 30
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-coverage-reports
+          path: |
+            coverage.xml
+            htmlcov/
+          retention-days: 90
+
+  # Step 2: Build distributions
+  build:
+    name: Build Release Distributions
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine check-manifest
+
+      - name: Verify version tag matches package version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          PACKAGE_VERSION=$(python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "Tag version: $TAG_VERSION"
+          echo "Package version: $PACKAGE_VERSION"
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "❌ Version mismatch: tag=$TAG_VERSION, package=$PACKAGE_VERSION"
+            exit 1
+          fi
+          echo "✅ Version match confirmed"
+        shell: bash
+
+      - name: Build source and wheel distributions
+        run: python -m build
+
+      - name: Check distributions
+        run: twine check dist/*
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+          retention-days: 90
+
+  # Step 3: Run installation tests (verify installability)
+  test-install:
+    name: Test Installation
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.10", "3.12"]
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+
+      - name: Install from wheel
+        run: |
+          pip install --find-links dist/ enahopy
+        shell: bash
+
+      - name: Test basic import
+        run: |
+          python -c "import enahopy; print(f'✅ Successfully imported enahopy {enahopy.__version__}')"
+        shell: bash
+
+      - name: Test basic functionality
+        run: |
+          python -c "from enahopy.loader import get_info; info = get_info(); print('✅ Basic functionality test passed')"
+        shell: bash
+
+  # Step 4: Create GitHub Release (manual approval)
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [test, build, test-install]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog (basic)
+        id: changelog
+        run: |
+          # Get commits since last tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%an)" --no-merges)
+          else
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%an)" --no-merges)
+          fi
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## ENAHOPY v${{ steps.version.outputs.VERSION }}
+
+            ### What's Changed
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ### Installation
+            ```bash
+            pip install enahopy==${{ steps.version.outputs.VERSION }}
+            ```
+
+            ### Full Changelog
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+            ---
+            **Note:** This is an automated release. For PyPI publication, manual approval is required.
+          files: dist/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Step 5: Publish to PyPI (MANUAL APPROVAL REQUIRED)
+  publish-pypi:
+    name: Publish to PyPI (Manual Approval)
+    runs-on: ubuntu-latest
+    needs: create-release
+    environment:
+      name: pypi
+      url: https://pypi.org/project/enahopy/
+    permissions:
+      id-token: write  # Required for trusted publishing
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Using trusted publishing (no token needed if configured)
+          # Alternatively, use: password: ${{ secrets.PYPI_API_TOKEN }}
+          print-hash: true
+          verbose: true
+
+  # Step 6: Post-release validation
+  verify-release:
+    name: Verify PyPI Release
+    runs-on: ubuntu-latest
+    needs: publish-pypi
+    steps:
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Wait for PyPI availability (60s)
+        run: sleep 60
+
+      - name: Install from PyPI
+        run: |
+          pip install enahopy --no-cache-dir
+        timeout-minutes: 5
+
+      - name: Verify installation
+        run: |
+          python -c "import enahopy; print(f'✅ Successfully installed enahopy {enahopy.__version__} from PyPI')"
+
+      - name: Test basic functionality
+        run: |
+          python -c "from enahopy.loader import get_info; info = get_info(); print('✅ PyPI release verification passed')"
+
+  # Final summary
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [test, build, test-install, create-release, publish-pypi, verify-release]
+    if: always()
+    steps:
+      - name: Release status
+        run: |
+          echo "## Release Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Full Test Suite: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Installation Tests: ${{ needs.test-install.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Release: ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- PyPI Publication: ${{ needs.publish-pypi.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- PyPI Verification: ${{ needs.verify-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.verify-release.result }}" = "success" ]; then
+            echo "✅ Release Pipeline Completed Successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Package is now available on PyPI!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Release Pipeline Failed or Incomplete" >> $GITHUB_STEP_SUMMARY
+          fi

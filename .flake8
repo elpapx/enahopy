@@ -1,0 +1,44 @@
+[flake8]
+# Configuration for flake8 linting
+
+# Maximum line length (aligned with black)
+max-line-length = 100
+
+# Extend ignore list (E203 conflicts with black, W503 is outdated, E501 handled by black)
+extend-ignore = E203,W503,E501
+
+# Exclude directories
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .eggs,
+    *.egg-info,
+    .tox,
+    .venv,
+    venv,
+    env,
+    htmlcov,
+    .coverage*,
+    .pytest_cache,
+    node_modules,
+    .enaho_cache,
+    test_env
+
+# Maximum complexity (McCabe)
+max-complexity = 15
+
+# Show source code for errors
+show-source = True
+
+# Count errors
+count = True
+
+# Statistics
+statistics = True
+
+# Per-file ignores (if needed)
+per-file-ignores =
+    __init__.py:F401,F403
+    tests/*.py:F401,F811

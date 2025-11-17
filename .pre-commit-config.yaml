@@ -1,0 +1,145 @@
+# Pre-commit hooks for ENAHOPY
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Code formatting with black
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        args: [--line-length=100]
+        files: ^(enahopy|tests)/.*\.py$
+
+  # Import sorting with isort
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=100]
+        files: ^(enahopy|tests)/.*\.py$
+
+  # Linting with flake8
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args:
+          - --max-line-length=100
+          - --extend-ignore=E203,W503
+          - --exclude=.git,__pycache__,build,dist,.eggs,*.egg-info,.tox,.venv,venv
+        files: ^enahopy/.*\.py$
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevent committing large files
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+        exclude: \.svg$
+
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+        exclude: \.md$
+
+      # Check YAML syntax
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+
+      # Check TOML syntax
+      - id: check-toml
+
+      # Check JSON syntax
+      - id: check-json
+
+      # Prevent committing to main branch directly
+      - id: no-commit-to-branch
+        args: [--branch=main, --branch=master]
+
+      # Check for merge conflict markers
+      - id: check-merge-conflict
+
+      # Check for debugger imports
+      - id: debug-statements
+
+      # Ensure Python tests are named correctly
+      - id: name-tests-test
+        args: [--pytest-test-first]
+        files: ^tests/.*\.py$
+
+      # Check for case conflicts in filenames
+      - id: check-case-conflict
+
+      # Check for files that would conflict on case-insensitive filesystems
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Security checks with bandit
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        args: [-c, pyproject.toml, -r, enahopy/]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^tests/
+
+  # Docstring coverage check (optional - can be strict)
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
+    hooks:
+      - id: interrogate
+        args: [
+          --verbose,
+          --fail-under=50,
+          --ignore-init-method,
+          --ignore-init-module,
+          --ignore-magic,
+          --ignore-module,
+          --ignore-nested-functions,
+          --exclude=tests,
+          enahopy/
+        ]
+        pass_filenames: false
+
+  # Check for common Python mistakes
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      # Check for deprecated unittest aliases
+      - id: python-check-blanket-noqa
+
+      # Check for deprecated mock imports
+      - id: python-check-mock-methods
+
+      # Check for wrong use of eval()
+      - id: python-no-eval
+
+      # Check for wrong use of log statements
+      - id: python-no-log-warn
+
+      # Check for blanket type: ignore
+      - id: python-use-type-annotations
+
+      # Enforce typing over comments
+      - id: text-unicode-replacement-char
+
+# Configuration for specific hooks
+default_language_version:
+  python: python3
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [flake8, bandit, interrogate]  # Skip heavy checks in pre-commit.ci
+  submodules: false
