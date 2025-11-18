@@ -119,7 +119,7 @@ jobs:
 
       - name: Test basic functionality
         run: |
-          python -c "from enahopy.loader import get_info; info = get_info(); print('✅ Basic functionality test passed')"
+          python -c "from enahopy.loader import get_available_data; data = get_available_data(); print('✅ Basic functionality test passed')"
         shell: bash
 
   # Step 4: Create GitHub Release (manual approval)
@@ -235,7 +235,7 @@ jobs:
 
       - name: Test basic functionality
         run: |
-          python -c "from enahopy.loader import get_info; info = get_info(); print('✅ PyPI release verification passed')"
+          python -c "from enahopy.loader import get_available_data; data = get_available_data(); print('✅ PyPI release verification passed')"
 
   # Final summary
   release-summary:
