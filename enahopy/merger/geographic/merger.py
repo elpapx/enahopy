@@ -6,6 +6,8 @@ Specialized merger for integrating geographic information with ENAHO data.
 Handles UBIGEO-based joins, territorial validation, and geographic enrichment.
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -18,6 +20,7 @@ from ..exceptions import GeoMergeError
 
 class GeographicMerger:
     """Specialized merger for geographic data integration with ENAHO surveys.
+
 
     Provides lightweight geographic merging capabilities for adding administrative
     division information (departamento, provincia, distrito) and geographic

@@ -5,6 +5,9 @@ ENAHO Null Analysis - Análisis de Valores Nulos
 Módulo completo para análisis de valores nulos en datos ENAHO.
 """
 
+from __future__ import annotations
+
+
 import logging
 from typing import Any, Dict, List, Optional, Union
 
@@ -210,20 +213,73 @@ except ImportError:
 
 
 class ENAHONullAnalyzer:
-    """
-    Analizador principal de valores nulos para datos ENAHO
+    """Comprehensive null value analyzer for ENAHO household survey data.
 
-    Esta clase orquesta todo el análisis de valores nulos,
-    incluyendo detección de patrones y generación de reportes.
+    Orchestrates complete missing data analysis workflow including automatic
+    pattern detection, quality assessment, and actionable recommendations for
+    imputation strategies. Supports hierarchical analysis by geographic region,
+    household type, and other categorical dimensions.
+
+    This analyzer handles the unique characteristics of ENAHO data including:
+    - Hierarchical missing patterns (household to person level)
+    - Geographic variation in data completeness
+    - Module-specific missing data patterns
+    - Temporal patterns in survey responses
+
+    Attributes:
+        config (NullAnalysisConfig): Analysis configuration including thresholds
+            for missing data identification and quality parameters.
+        verbose (bool): If True, displays detailed analysis progress and results.
+        logger (logging.Logger): Logger instance for operation tracking.
+        pattern_detector (PatternDetector): Automatic missing data pattern detector.
+        pattern_analyzer (NullPatternAnalyzer): Analyzer for detected patterns.
+        report_generator (ReportGenerator): Generates formatted analysis reports.
+        visualizer (NullVisualizer): Creates visualizations of null patterns.
+
+    Examples:
+        Basic null analysis:
+
+        >>> from enahopy.null_analysis import ENAHONullAnalyzer
+        >>> import pandas as pd
+        >>>
+        >>> df = pd.DataFrame({
+        ...     'conglome': ['001', '002', '003'],
+        ...     'ingreso': [2000, None, 1800],
+        ...     'edad': [35, 42, None]
+        ... })
+        >>>
+        >>> analyzer = ENAHONullAnalyzer()
+        >>> results = analyzer.analyze(df)
+        >>> print(f"Null percentage: {results['summary']['null_percentage']:.1f}%")
+
+        With grouped analysis:
+
+        >>> results = analyzer.analyze_null_patterns(
+        ...     df,
+        ...     group_by='conglome'
+        ... )
+        >>> print(results['group_analysis'])
+
+    Note:
+        - Automatically detects MCAR, MAR, and MNAR patterns
+        - Provides imputation recommendations based on missingness
+        - Memory-efficient for large surveys (>500K records)
+        - Handles both numeric and categorical data
+
+    See Also:
+        - :func:`analyze_null_patterns`: Quick pattern analysis
+        - :func:`generate_null_report`: Generate detailed report
+        - :class:`~enahopy.null_analysis.config.NullAnalysisConfig`: Config options
     """
 
     def __init__(self, config: Optional[NullAnalysisConfig] = None, verbose: bool = True):
-        """
-        Inicializa el analizador
+        """Initialize the null analyzer with optional configuration.
 
         Args:
-            config: Configuración opcional del análisis
-            verbose: Si mostrar mensajes de log (default: True)
+            config: Optional NullAnalysisConfig for controlling analysis behavior.
+                If None, uses default configuration. Defaults to None.
+            verbose: If True, displays detailed progress messages and results.
+                Defaults to True.
         """
         self.config = config or NullAnalysisConfig() if NullAnalysisConfig else {}
         self.verbose = verbose
@@ -511,15 +567,39 @@ class ENAHONullAnalyzer:
 def analyze_null_patterns(
     df: pd.DataFrame, config: Optional[NullAnalysisConfig] = None
 ) -> Dict[str, Any]:
-    """
-    Función de conveniencia para análisis rápido de patrones de nulos
+    """Quick analysis of missing data patterns in ENAHO DataFrame.
+
+    Performs rapid missing data analysis without full report generation,
+    suitable for exploratory data analysis and quick quality checks.
 
     Args:
-        df: DataFrame a analizar
-        config: Configuración opcional
+        df: ENAHO DataFrame to analyze for missing values.
+        config: Optional NullAnalysisConfig for custom analysis settings.
+            If None, uses default configuration. Defaults to None.
 
     Returns:
-        Resultados del análisis
+        Dict[str, Any]: Analysis results including:
+            - summary: Missing value statistics (counts, percentages)
+            - patterns: Detected missing data patterns if available
+            - metrics: Detailed quality metrics
+            - recommendations: Suggested imputation methods
+
+    Examples:
+        Quick null pattern analysis:
+
+        >>> from enahopy.null_analysis import analyze_null_patterns
+        >>> import pandas as pd
+        >>>
+        >>> df = pd.DataFrame({
+        ...     'ingreso': [2000, None, 1800],
+        ...     'edad': [35, 42, None]
+        ... })
+        >>> results = analyze_null_patterns(df)
+        >>> print(f"Missing percentage: {results['summary']['null_percentage']:.1f}%")
+
+    See Also:
+        - :func:`generate_null_report`: Full report generation
+        - :class:`ENAHONullAnalyzer`: Advanced analysis class
     """
     analyzer = ENAHONullAnalyzer(config)
     return analyzer.analyze(df, generate_report=False)
@@ -531,26 +611,65 @@ def generate_null_report(
     format: str = "html",
     include_visualizations: bool = True,
 ) -> Any:
-    """
-    Genera reporte completo de análisis de nulos.
+    """Generate comprehensive null analysis report for ENAHO data.
+
+    Creates detailed missing data analysis report with visualizations,
+    statistical summaries, and imputation recommendations. Saves report
+    to file if output path is specified.
 
     Args:
-        df: DataFrame a analizar.
-        output_path: Ruta para guardar el reporte (opcional).
-        format: Formato del reporte ('html', 'json', 'pdf'). Default: 'html'.
-        include_visualizations: Si incluir visualizaciones en el reporte.
+        df: ENAHO DataFrame to analyze for missing values.
+        output_path: Optional file path to save generated report.
+            If None, report is returned but not saved. Defaults to None.
+        format: Output format for saved report.
+            Options: "html" (interactive), "json" (structured),
+            "pdf" (printable). Defaults to "html".
+        include_visualizations: If True, includes charts, heatmaps,
+            and distribution plots in report. Defaults to True.
 
     Returns:
-        Objeto NullAnalysisReport generado, o None si el análisis falló.
+        Any: NullAnalysisReport object containing analysis results,
+            metrics, and recommendations. None if report generation fails.
 
     Raises:
-        NullAnalysisError: Si el análisis del DataFrame falla críticamente.
+        NullAnalysisError: If DataFrame analysis fails critically,
+            preventing report generation.
 
-    Example:
+    Examples:
+        Generate and save null analysis report:
+
+        >>> from enahopy.null_analysis import generate_null_report
         >>> import pandas as pd
-        >>> df = pd.DataFrame({"a": [1, None, 3]})
-        >>> report = generate_null_report(df, output_path="report.html")
-        >>> print(f"Report generated: {report is not None}")
+        >>>
+        >>> df = pd.DataFrame({
+        ...     'ingreso': [1000, None, 1500, None, 2000],
+        ...     'edad': [35, 40, None, 38, 42]
+        ... })
+        >>> report = generate_null_report(
+        ...     df,
+        ...     output_path='null_analysis_report.html',
+        ...     format='html',
+        ...     include_visualizations=True
+        ... )
+        >>> print(f"Report created: {report is not None}")
+
+        Without saving to file:
+
+        >>> report = generate_null_report(df, include_visualizations=False)
+        >>> if report:
+        ...     print(f"Completeness: {report.completeness_score:.1f}%")
+
+    Note:
+        - Report includes missing percentage per variable
+        - Identifies missing data patterns (MCAR, MAR, MNAR)
+        - Provides imputation strategy recommendations
+        - Visualizations use matplotlib and seaborn
+        - Large reports (>100K records) may take time to generate
+
+    See Also:
+        - :func:`analyze_null_patterns`: Quick pattern analysis
+        - :class:`ENAHONullAnalyzer`: Full analyzer class
+        - :class:`~enahopy.null_analysis.config.NullAnalysisConfig`: Config
     """
     logger = logging.getLogger(__name__)
 

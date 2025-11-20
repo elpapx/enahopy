@@ -15,9 +15,13 @@ Correcciones aplicadas:
 - Documentación mejorada
 """
 
+from __future__ import annotations
+
 """
 Imports centralizados para evitar errores de dependencias.
 """
+
+
 
 import logging
 

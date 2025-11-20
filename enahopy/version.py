@@ -5,8 +5,8 @@ Este archivo centraliza la información de versión para evitar
 problemas de importación circular y facilitar el mantenimiento.
 """
 
-__version__ = "0.1.2"
-__version_info__ = (0, 1, 2)
+__version__ = "1.0.0"
+__version_info__ = (1, 0, 0)
 
 
 def get_version():

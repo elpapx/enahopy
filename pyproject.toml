@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "enahopy"
-version = "0.9.0"
+version = "1.0.0"
 authors = [
     {name = "Paul Camacho", email = "pcamacho447@gmail.com"}
 ]
 description = "Libreria Python para analisis de microdatos ENAHO del INEI Peru"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "MIT"
 requires-python = ">=3.9"
 
 keywords = [
@@ -19,10 +19,9 @@ keywords = [
 ]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Information Analysis",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -80,9 +79,20 @@ dev = [
     "check-manifest>=0.49"
 ]
 
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "nbsphinx>=0.8.0",
+    "myst-parser>=0.18.0"
+]
+
+[project.scripts]
+enahopy = "enahopy.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/elpapx/enahopy"
 Repository = "https://github.com/elpapx/enahopy"
+Documentation = "https://enahopy.readthedocs.io"
 Issues = "https://github.com/elpapx/enahopy/issues"
 
 [tool.setuptools.packages.find]
