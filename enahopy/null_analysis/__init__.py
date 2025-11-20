@@ -7,7 +7,6 @@ Módulo completo para análisis de valores nulos en datos ENAHO.
 
 from __future__ import annotations
 
-
 import logging
 from typing import Any, Dict, List, Optional, Union
 

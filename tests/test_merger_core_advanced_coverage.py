@@ -33,7 +33,6 @@ from enahopy.merger.exceptions import (
     GeoMergeError,
 )
 
-
 # ============================================================================
 # SECTION 1: FALLBACK LOGGING AND SETUP
 # Target lines: 115-137

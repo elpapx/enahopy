@@ -33,7 +33,6 @@ from enahopy.merger.exceptions import (
     ModuleMergeError,
 )
 
-
 # ============================================================================
 # SECTION 1: INITIALIZATION AND CONFIGURATION VALIDATION
 # Target lines: 416-500

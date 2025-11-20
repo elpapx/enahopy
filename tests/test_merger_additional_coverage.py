@@ -7,17 +7,17 @@ import logging
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
-from enahopy.merger.core import ENAHOGeoMerger, check_dependencies
 from enahopy.merger.config import (
     GeoMergeConfiguration,
     ModuleMergeConfig,
     TipoManejoDuplicados,
     TipoManejoErrores,
 )
+from enahopy.merger.core import ENAHOGeoMerger, check_dependencies
 from enahopy.merger.exceptions import (
     ConfigurationError,
     DataQualityError,
@@ -438,11 +438,7 @@ class TestModuleExports:
 
     def test_exception_exports(self):
         """Test that exception exports are correct"""
-        from enahopy.merger.exceptions import (
-            GeoMergeError,
-            ModuleMergeError,
-            MergeValidationError,
-        )
+        from enahopy.merger.exceptions import GeoMergeError, MergeValidationError, ModuleMergeError
 
         assert GeoMergeError is not None
         assert ModuleMergeError is not None

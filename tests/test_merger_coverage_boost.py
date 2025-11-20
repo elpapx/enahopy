@@ -43,7 +43,6 @@ from enahopy.merger.geographic.strategies import (
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 from enahopy.merger.modules.validator import ModuleValidator
 
-
 # =====================================================
 # PART 1: GEOGRAPHIC STRATEGIES TESTS (strategies.py)
 # =====================================================
