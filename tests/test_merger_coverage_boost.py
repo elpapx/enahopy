@@ -192,9 +192,7 @@ class TestAggregateStrategyExtended:
         config = GeoMergeConfiguration(manejo_duplicados=TipoManejoDuplicados.AGGREGATE)
         df = pd.DataFrame({"ubigeo": ["150101", "150101"], "value": [10, 20]})
 
-        with pytest.raises(
-            DuplicateHandlingError, match="Se requieren funciones_agregacion"
-        ):
+        with pytest.raises(DuplicateHandlingError, match="Se requieren funciones_agregacion"):
             strategy.handle_duplicates(df, "ubigeo", config)
 
     def test_handle_duplicates_no_duplicates(self, strategy):
@@ -306,9 +304,7 @@ class TestBestQualityStrategyExtended:
 
     def test_handle_duplicates_missing_columna_calidad(self, strategy):
         """Test error when columna_calidad is missing"""
-        config = GeoMergeConfiguration(
-            manejo_duplicados=TipoManejoDuplicados.BEST_QUALITY
-        )
+        config = GeoMergeConfiguration(manejo_duplicados=TipoManejoDuplicados.BEST_QUALITY)
         df = pd.DataFrame({"ubigeo": ["150101", "150101"], "value": [10, 20]})
 
         with pytest.raises(DuplicateHandlingError, match="Se requiere columna_calidad"):
@@ -409,9 +405,7 @@ class TestKeepAllStrategyExtended:
     def test_handle_duplicates_with_suffix(self, strategy, caplog):
         """Test that duplicates get unique suffixes"""
         config = GeoMergeConfiguration(sufijo_duplicados="_dup_")
-        df = pd.DataFrame(
-            {"ubigeo": ["150101", "150101", "150101"], "value": [10, 20, 30]}
-        )
+        df = pd.DataFrame({"ubigeo": ["150101", "150101", "150101"], "value": [10, 20, 30]})
 
         with caplog.at_level(logging.INFO):
             result = strategy.handle_duplicates(df, "ubigeo", config)
@@ -426,9 +420,7 @@ class TestKeepAllStrategyExtended:
         """Test warning when >20% duplicates"""
         config = GeoMergeConfiguration()
         # Create DataFrame with >20% duplicates
-        df = pd.DataFrame(
-            {"ubigeo": ["150101"] * 8 + ["150102"] * 2, "value": range(10)}
-        )
+        df = pd.DataFrame({"ubigeo": ["150101"] * 8 + ["150102"] * 2, "value": range(10)})
 
         with caplog.at_level(logging.WARNING):
             result = strategy.handle_duplicates(df, "ubigeo", config)
@@ -453,9 +445,7 @@ class TestMostRecentStrategyExtended:
         config = GeoMergeConfiguration()
         df = pd.DataFrame({"ubigeo": ["150101", "150101"], "value": [10, 20]})
 
-        with pytest.raises(
-            DuplicateHandlingError, match="No se encontró columna de fecha"
-        ):
+        with pytest.raises(DuplicateHandlingError, match="No se encontró columna de fecha"):
             strategy.handle_duplicates(df, "ubigeo", config)
 
     def test_handle_duplicates_with_specified_date_column(self, strategy, caplog):
@@ -537,27 +527,21 @@ class TestDuplicateStrategyFactory:
     def test_create_strategy_first(self):
         """Test creating FIRST strategy"""
         logger = logging.getLogger("test")
-        strategy = DuplicateStrategyFactory.create_strategy(
-            TipoManejoDuplicados.FIRST, logger
-        )
+        strategy = DuplicateStrategyFactory.create_strategy(TipoManejoDuplicados.FIRST, logger)
 
         assert isinstance(strategy, FirstLastStrategy)
 
     def test_create_strategy_last(self):
         """Test creating LAST strategy"""
         logger = logging.getLogger("test")
-        strategy = DuplicateStrategyFactory.create_strategy(
-            TipoManejoDuplicados.LAST, logger
-        )
+        strategy = DuplicateStrategyFactory.create_strategy(TipoManejoDuplicados.LAST, logger)
 
         assert isinstance(strategy, FirstLastStrategy)
 
     def test_create_strategy_aggregate(self):
         """Test creating AGGREGATE strategy"""
         logger = logging.getLogger("test")
-        strategy = DuplicateStrategyFactory.create_strategy(
-            TipoManejoDuplicados.AGGREGATE, logger
-        )
+        strategy = DuplicateStrategyFactory.create_strategy(TipoManejoDuplicados.AGGREGATE, logger)
 
         assert isinstance(strategy, AggregateStrategy)
 
@@ -573,9 +557,7 @@ class TestDuplicateStrategyFactory:
     def test_create_strategy_keep_all(self):
         """Test creating KEEP_ALL strategy"""
         logger = logging.getLogger("test")
-        strategy = DuplicateStrategyFactory.create_strategy(
-            TipoManejoDuplicados.KEEP_ALL, logger
-        )
+        strategy = DuplicateStrategyFactory.create_strategy(TipoManejoDuplicados.KEEP_ALL, logger)
 
         assert isinstance(strategy, KeepAllStrategy)
 
@@ -738,15 +720,15 @@ class TestModuleValidatorExtended:
             }
         )
 
-        warnings = validator._validate_hogar_level_module(df, "01", ["conglome", "vivienda", "hogar"])
+        warnings = validator._validate_hogar_level_module(
+            df, "01", ["conglome", "vivienda", "hogar"]
+        )
 
         assert any("múltiples registros" in w for w in warnings)
 
     def test_validate_sumaria_missing_key_vars(self, validator):
         """Test detection of missing key sumaria variables"""
-        df = pd.DataFrame(
-            {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"], "other": [1]}
-        )
+        df = pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"], "other": [1]})
 
         warnings = validator._validate_sumaria_module(df)
 
@@ -837,9 +819,7 @@ class TestModuleValidatorExtended:
         df1 = pd.DataFrame({"col": [1]})
         df2 = pd.DataFrame({"col": [1]})
 
-        result = validator.check_module_compatibility(
-            df1, df2, "99", "01", ModuleMergeLevel.HOGAR
-        )
+        result = validator.check_module_compatibility(df1, df2, "99", "01", ModuleMergeLevel.HOGAR)
 
         # Module "99" is treated as intermediate (digits) so it's compatible
         assert result["compatible"] is True
@@ -859,9 +839,7 @@ class TestModuleValidatorExtended:
 
     def test_check_module_compatibility_incompatible_levels(self, validator):
         """Test compatibility check with valid modules"""
-        df1 = pd.DataFrame(
-            {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-        )
+        df1 = pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]})
         df2 = pd.DataFrame(
             {
                 "conglome": ["001"],
@@ -908,9 +886,7 @@ class TestModuleValidatorExtended:
             }
         )
 
-        result = validator.check_module_compatibility(
-            df1, df2, "34", "01", ModuleMergeLevel.HOGAR
-        )
+        result = validator.check_module_compatibility(df1, df2, "34", "01", ModuleMergeLevel.HOGAR)
 
         assert result["compatible"] is True
         assert result.get("potential_matches", 0) >= 0  # May or may not have this field
@@ -1128,9 +1104,7 @@ class TestModuleValidatorExtended:
 
     def test_generate_validation_report_with_warnings(self, validator):
         """Test report includes warnings"""
-        df = pd.DataFrame(
-            {"other_col": [1, 2, 3]}  # Missing required columns
-        )
+        df = pd.DataFrame({"other_col": [1, 2, 3]})  # Missing required columns
 
         report = validator.generate_validation_report(df, "34")
 
@@ -1195,9 +1169,7 @@ class TestENAHOModuleMergerExtended:
     def test_merge_modules_missing_merge_keys(self, merger):
         """Test merge with missing merge keys"""
         left_df = pd.DataFrame({"conglome": ["001"]})  # Missing hogar keys
-        right_df = pd.DataFrame(
-            {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-        )
+        right_df = pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]})
 
         with pytest.raises(MergeKeyError):
             merger.merge_modules(left_df, right_df, "34", "01")
@@ -1386,9 +1358,7 @@ class TestENAHOModuleMergerExtended:
         """Test multi-module merge with empty base module"""
         modules_dict = {
             "34": pd.DataFrame(),  # Empty
-            "01": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "01": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
         }
 
         with pytest.raises(ValueError, match="está vacío"):
@@ -1397,27 +1367,21 @@ class TestENAHOModuleMergerExtended:
     def test_merge_multiple_modules_auto_select_base(self, merger, caplog):
         """Test automatic base module selection"""
         modules_dict = {
-            "01": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "01": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
             "34": pd.DataFrame(
                 {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"], "value": [10]}
             ),
         }
 
         with caplog.at_level(logging.INFO):
-            result = merger.merge_multiple_modules(
-                modules_dict, base_module="99"  # Non-existent
-            )
+            result = merger.merge_multiple_modules(modules_dict, base_module="99")  # Non-existent
 
         assert "seleccionado automáticamente" in caplog.text
 
     def test_merge_multiple_modules_skip_empty(self, merger, caplog):
         """Test skipping empty modules in multi-merge"""
         modules_dict = {
-            "34": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "34": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
             "01": pd.DataFrame(),  # Empty
             "05": pd.DataFrame(  # Use 05 instead of 02 to avoid persona-level complexity
                 {
@@ -1441,13 +1405,9 @@ class TestENAHOModuleMergerExtended:
         merger_tolerant = ENAHOModuleMerger(config, logging.getLogger())
 
         modules_dict = {
-            "34": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "34": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
             "invalid_xxx": pd.DataFrame({"invalid": [1]}),  # Will cause error
-            "01": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "01": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
         }
 
         # Should continue despite error or skip invalid module
@@ -1508,17 +1468,13 @@ class TestENAHOModuleMergerExtended:
             {"conglome": ["001", "002"], "vivienda": ["01", "01"], "hogar": ["1", "1"]}
         )
 
-        warning = merger._detect_and_warn_cardinality(
-            df1, df2, ["conglome", "vivienda", "hogar"]
-        )
+        warning = merger._detect_and_warn_cardinality(df1, df2, ["conglome", "vivienda", "hogar"])
 
         assert warning is None  # One-to-one is ideal
 
     def test_detect_and_warn_cardinality_one_to_many(self, merger):
         """Test cardinality detection for one-to-many relationship"""
-        df1 = pd.DataFrame(
-            {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-        )
+        df1 = pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]})
         df2 = pd.DataFrame(
             {
                 "conglome": ["001", "001"],  # Duplicates
@@ -1527,9 +1483,7 @@ class TestENAHOModuleMergerExtended:
             }
         )
 
-        warning = merger._detect_and_warn_cardinality(
-            df1, df2, ["conglome", "vivienda", "hogar"]
-        )
+        warning = merger._detect_and_warn_cardinality(df1, df2, ["conglome", "vivienda", "hogar"])
 
         assert warning is not None
         assert "uno-a-muchos" in warning.lower()
@@ -1551,9 +1505,7 @@ class TestENAHOModuleMergerExtended:
             }
         )
 
-        warning = merger._detect_and_warn_cardinality(
-            df1, df2, ["conglome", "vivienda", "hogar"]
-        )
+        warning = merger._detect_and_warn_cardinality(df1, df2, ["conglome", "vivienda", "hogar"])
 
         assert warning is not None
         assert "muchos-a-muchos" in warning.lower()
@@ -1607,9 +1559,7 @@ class TestENAHOModuleMergerExtended:
         """Test feasibility analysis with all empty modules"""
         modules_dict = {"34": pd.DataFrame(), "01": pd.DataFrame()}
 
-        analysis = merger.analyze_merge_feasibility(
-            modules_dict, ModuleMergeLevel.HOGAR
-        )
+        analysis = merger.analyze_merge_feasibility(modules_dict, ModuleMergeLevel.HOGAR)
 
         assert analysis["feasible"] is False
         assert len(analysis["modules_empty"]) == 2
@@ -1618,14 +1568,10 @@ class TestENAHOModuleMergerExtended:
         """Test feasibility analysis with missing merge keys"""
         modules_dict = {
             "34": pd.DataFrame({"other": [1, 2]}),  # Missing required keys
-            "01": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "01": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
         }
 
-        analysis = merger.analyze_merge_feasibility(
-            modules_dict, ModuleMergeLevel.HOGAR
-        )
+        analysis = merger.analyze_merge_feasibility(modules_dict, ModuleMergeLevel.HOGAR)
 
         assert analysis["feasible"] is False
         assert len(analysis["potential_issues"]) > 0
@@ -1641,9 +1587,7 @@ class TestENAHOModuleMergerExtended:
             ),
         }
 
-        analysis = merger.analyze_merge_feasibility(
-            modules_dict, ModuleMergeLevel.HOGAR
-        )
+        analysis = merger.analyze_merge_feasibility(modules_dict, ModuleMergeLevel.HOGAR)
 
         assert analysis["feasible"] is True
         assert "memory_estimate_mb" in analysis
@@ -1662,12 +1606,8 @@ class TestENAHOModuleMergerExtended:
     def test_create_merge_plan_auto_change_base(self, merger):
         """Test merge plan auto-changes inappropriate base module"""
         modules_dict = {
-            "34": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
-            "01": pd.DataFrame(
-                {"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}
-            ),
+            "34": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
+            "01": pd.DataFrame({"conglome": ["001"], "vivienda": ["01"], "hogar": ["1"]}),
         }
 
         plan = merger.create_merge_plan(modules_dict, target_module="99")
@@ -1716,9 +1656,7 @@ class TestENAHOGeoMergerCoreExtended:
             merge_strategy=ModuleMergeStrategy.KEEP_LEFT,
         )
 
-        merger = ENAHOGeoMerger(
-            geo_config=geo_config, module_config=module_config, verbose=True
-        )
+        merger = ENAHOGeoMerger(geo_config=geo_config, module_config=module_config, verbose=True)
 
         assert merger.geo_config.manejo_duplicados == TipoManejoDuplicados.AGGREGATE
         assert merger.module_config.merge_level == ModuleMergeLevel.PERSONA
@@ -1745,7 +1683,7 @@ class TestENAHOGeoMergerCoreExtended:
 
         # Logger exists and is configured (level may vary due to logger reuse in tests)
         assert merger.logger is not None
-        assert hasattr(merger.logger, 'level')
+        assert hasattr(merger.logger, "level")
 
     def test_merge_multiple_modules_integration(self, merger):
         """Test full multi-module merge integration"""
@@ -1768,9 +1706,7 @@ class TestENAHOGeoMergerCoreExtended:
 
         modules_dict = {"34": df_sumaria, "01": df_vivienda}
 
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict, base_module="34"
-        )
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
         assert not result.merged_df.empty
         assert len(result.merged_df) == 2
@@ -1798,18 +1734,14 @@ class TestENAHOGeoMergerCoreExtended:
 
         modules_dict = {"34": df_sumaria, "01": df_vivienda}
 
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict, base_module="34"
-        )
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
         # Left join should preserve all sumaria records
         assert len(result.merged_df) == 3
 
     def test_merge_geographic_data_basic(self, merger):
         """Test basic geographic merge"""
-        df_principal = pd.DataFrame(
-            {"ubigeo": ["150101", "150102"], "value": [10, 20]}
-        )
+        df_principal = pd.DataFrame({"ubigeo": ["150101", "150102"], "value": [10, 20]})
         df_geografia = pd.DataFrame(
             {
                 "ubigeo": ["150101", "150102"],
@@ -1840,9 +1772,7 @@ class TestENAHOGeoMergerCoreExtended:
         )
         merge_keys = ["conglome", "vivienda", "hogar"]
 
-        result = merger.module_merger._prepare_for_merge_robust(
-            df, merge_keys, "test"
-        )
+        result = merger.module_merger._prepare_for_merge_robust(df, merge_keys, "test")
 
         # All keys should be string type
         for key in merge_keys:
@@ -1861,9 +1791,7 @@ class TestENAHOGeoMergerCoreExtended:
         merge_keys = ["conglome", "vivienda", "hogar"]
 
         with caplog.at_level(logging.WARNING):
-            result = merger.module_merger._prepare_for_merge_robust(
-                df, merge_keys, "test"
-            )
+            result = merger.module_merger._prepare_for_merge_robust(df, merge_keys, "test")
 
         assert len(result) == 1
         assert "eliminados" in caplog.text

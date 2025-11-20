@@ -30,27 +30,31 @@ from enahopy.merger.exceptions import (
 @pytest.fixture
 def sample_enaho_df():
     """Create a sample ENAHO DataFrame"""
-    return pd.DataFrame({
-        "ubigeo": ["150101", "150102", "150103", "150104", "150105"],
-        "conglome": ["001", "002", "003", "004", "005"],
-        "vivienda": ["01", "01", "01", "01", "01"],
-        "hogar": ["01", "01", "01", "01", "01"],
-        "codperso": ["01", "02", "01", "02", "01"],
-        "p208a": [1, 2, 1, 2, 1],
-        "i524a1": [1000.0, 2000.0, 1500.0, 2500.0, 3000.0],
-    })
+    return pd.DataFrame(
+        {
+            "ubigeo": ["150101", "150102", "150103", "150104", "150105"],
+            "conglome": ["001", "002", "003", "004", "005"],
+            "vivienda": ["01", "01", "01", "01", "01"],
+            "hogar": ["01", "01", "01", "01", "01"],
+            "codperso": ["01", "02", "01", "02", "01"],
+            "p208a": [1, 2, 1, 2, 1],
+            "i524a1": [1000.0, 2000.0, 1500.0, 2500.0, 3000.0],
+        }
+    )
 
 
 @pytest.fixture
 def sample_geo_df():
     """Create a sample geographic reference DataFrame"""
-    return pd.DataFrame({
-        "ubigeo": ["150101", "150102", "150103", "150104", "150105"],
-        "departamento": ["LIMA", "LIMA", "LIMA", "LIMA", "LIMA"],
-        "provincia": ["LIMA", "LIMA", "LIMA", "LIMA", "LIMA"],
-        "distrito": ["Lima", "Ancon", "Ate", "Barranco", "Brena"],
-        "region": ["COSTA", "COSTA", "COSTA", "COSTA", "COSTA"],
-    })
+    return pd.DataFrame(
+        {
+            "ubigeo": ["150101", "150102", "150103", "150104", "150105"],
+            "departamento": ["LIMA", "LIMA", "LIMA", "LIMA", "LIMA"],
+            "provincia": ["LIMA", "LIMA", "LIMA", "LIMA", "LIMA"],
+            "distrito": ["Lima", "Ancon", "Ate", "Barranco", "Brena"],
+            "region": ["COSTA", "COSTA", "COSTA", "COSTA", "COSTA"],
+        }
+    )
 
 
 @pytest.fixture
@@ -85,9 +89,7 @@ class TestENAHOGeoMergerInit:
 
     def test_init_with_custom_geo_config(self):
         """Test initialization with custom geo config"""
-        custom_config = GeoMergeConfiguration(
-            manejo_duplicados=TipoManejoDuplicados.FIRST
-        )
+        custom_config = GeoMergeConfiguration(manejo_duplicados=TipoManejoDuplicados.FIRST)
         merger = ENAHOGeoMerger(geo_config=custom_config)
         assert merger.geo_config.manejo_duplicados == TipoManejoDuplicados.FIRST
 
@@ -99,9 +101,7 @@ class TestENAHOGeoMergerInit:
 
     def test_init_with_both_configs(self):
         """Test initialization with both geo and module configs"""
-        geo_config = GeoMergeConfiguration(
-            manejo_duplicados=TipoManejoDuplicados.LAST
-        )
+        geo_config = GeoMergeConfiguration(manejo_duplicados=TipoManejoDuplicados.LAST)
         module_config = ModuleMergeConfig()
         merger = ENAHOGeoMerger(geo_config=geo_config, module_config=module_config, verbose=False)
         assert merger.geo_config.manejo_duplicados == TipoManejoDuplicados.LAST
@@ -114,9 +114,7 @@ class TestMergeGeographicData:
     def test_merge_geographic_data_basic(self, merger, sample_enaho_df, sample_geo_df):
         """Test basic geographic merge"""
         result, validation = merger.merge_geographic_data(
-            df_principal=sample_enaho_df,
-            df_geografia=sample_geo_df,
-            columna_union="ubigeo"
+            df_principal=sample_enaho_df, df_geografia=sample_geo_df, columna_union="ubigeo"
         )
 
         assert isinstance(result, pd.DataFrame)
@@ -126,8 +124,7 @@ class TestMergeGeographicData:
     def test_merge_geographic_data_auto_detect(self, merger, sample_enaho_df, sample_geo_df):
         """Test geographic merge with auto-detection"""
         result, validation = merger.merge_geographic_data(
-            df_principal=sample_enaho_df,
-            df_geografia=sample_geo_df
+            df_principal=sample_enaho_df, df_geografia=sample_geo_df
         )
 
         assert isinstance(result, pd.DataFrame)
@@ -138,20 +135,18 @@ class TestMergeGeographicData:
 
         with pytest.raises(Exception):  # Could be various exceptions
             merger.merge_geographic_data(
-                df_principal=empty_df,
-                df_geografia=sample_geo_df,
-                columna_union="ubigeo"
+                df_principal=empty_df, df_geografia=sample_geo_df, columna_union="ubigeo"
             )
 
-    def test_merge_geographic_data_missing_ubigeo_column(self, merger, sample_enaho_df, sample_geo_df):
+    def test_merge_geographic_data_missing_ubigeo_column(
+        self, merger, sample_enaho_df, sample_geo_df
+    ):
         """Test geographic merge with missing ubigeo column"""
         df_no_ubigeo = sample_enaho_df.drop(columns=["ubigeo"])
 
         with pytest.raises(Exception):  # Could be KeyError, GeoMergeError, etc.
             merger.merge_geographic_data(
-                df_principal=df_no_ubigeo,
-                df_geografia=sample_geo_df,
-                columna_union="ubigeo"
+                df_principal=df_no_ubigeo, df_geografia=sample_geo_df, columna_union="ubigeo"
             )
 
 
@@ -207,54 +202,56 @@ class TestMergeModulesMethod:
 
     def test_merge_multiple_modules_basic(self, merger):
         """Test basic module merge"""
-        df1 = pd.DataFrame({
-            "conglome": ["001", "002", "003"],
-            "vivienda": ["01", "01", "01"],
-            "hogar": ["01", "01", "01"],
-            "var1": [1, 2, 3],
-        })
-
-        df2 = pd.DataFrame({
-            "conglome": ["001", "002", "003"],
-            "vivienda": ["01", "01", "01"],
-            "hogar": ["01", "01", "01"],
-            "var2": [4, 5, 6],
-        })
-
-        modules_dict = {"34": df1, "01": df2}
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict,
-            base_module="34"
+        df1 = pd.DataFrame(
+            {
+                "conglome": ["001", "002", "003"],
+                "vivienda": ["01", "01", "01"],
+                "hogar": ["01", "01", "01"],
+                "var1": [1, 2, 3],
+            }
         )
 
-        assert hasattr(result, 'merged_df')
+        df2 = pd.DataFrame(
+            {
+                "conglome": ["001", "002", "003"],
+                "vivienda": ["01", "01", "01"],
+                "hogar": ["01", "01", "01"],
+                "var2": [4, 5, 6],
+            }
+        )
+
+        modules_dict = {"34": df1, "01": df2}
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
+
+        assert hasattr(result, "merged_df")
         assert isinstance(result.merged_df, pd.DataFrame)
         assert "var1" in result.merged_df.columns
         assert "var2" in result.merged_df.columns
 
     def test_merge_multiple_modules_with_names(self, merger):
         """Test module merge with multiple modules"""
-        df1 = pd.DataFrame({
-            "conglome": ["001", "002"],
-            "vivienda": ["01", "01"],
-            "hogar": ["01", "01"],
-            "var1": [1, 2],
-        })
-
-        df2 = pd.DataFrame({
-            "conglome": ["001", "002"],
-            "vivienda": ["01", "01"],
-            "hogar": ["01", "01"],
-            "var2": [3, 4],
-        })
-
-        modules_dict = {"34": df1, "01": df2}
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict,
-            base_module="34"
+        df1 = pd.DataFrame(
+            {
+                "conglome": ["001", "002"],
+                "vivienda": ["01", "01"],
+                "hogar": ["01", "01"],
+                "var1": [1, 2],
+            }
         )
 
-        assert hasattr(result, 'merged_df')
+        df2 = pd.DataFrame(
+            {
+                "conglome": ["001", "002"],
+                "vivienda": ["01", "01"],
+                "hogar": ["01", "01"],
+                "var2": [3, 4],
+            }
+        )
+
+        modules_dict = {"34": df1, "01": df2}
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
+
+        assert hasattr(result, "merged_df")
         assert isinstance(result.merged_df, pd.DataFrame)
 
     def test_merge_multiple_modules_empty_dict(self, merger):
@@ -275,28 +272,29 @@ class TestErrorHandling:
 
     def test_merge_with_nan_keys(self, merger):
         """Test merge with NaN values in key columns"""
-        df1 = pd.DataFrame({
-            "conglome": ["001", None, "003"],
-            "vivienda": ["01", "01", "01"],
-            "hogar": ["01", "01", "01"],
-            "var1": [1, 2, 3],
-        })
+        df1 = pd.DataFrame(
+            {
+                "conglome": ["001", None, "003"],
+                "vivienda": ["01", "01", "01"],
+                "hogar": ["01", "01", "01"],
+                "var1": [1, 2, 3],
+            }
+        )
 
-        df2 = pd.DataFrame({
-            "conglome": ["001", "002", "003"],
-            "vivienda": ["01", "01", "01"],
-            "hogar": ["01", "01", "01"],
-            "var2": [4, 5, 6],
-        })
+        df2 = pd.DataFrame(
+            {
+                "conglome": ["001", "002", "003"],
+                "vivienda": ["01", "01", "01"],
+                "hogar": ["01", "01", "01"],
+                "var2": [4, 5, 6],
+            }
+        )
 
         modules_dict = {"34": df1, "01": df2}
         # Should handle NaN gracefully or raise appropriate error
         try:
-            result = merger.merge_multiple_modules(
-                modules_dict=modules_dict,
-                base_module="34"
-            )
-            assert hasattr(result, 'merged_df')
+            result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
+            assert hasattr(result, "merged_df")
         except Exception:
             pass  # Expected in some cases
 
@@ -316,61 +314,59 @@ class TestDuplicateHandling:
 
     def test_merge_with_duplicates_first(self):
         """Test merge keeping first duplicate"""
-        config = GeoMergeConfiguration(
-            manejo_duplicados=TipoManejoDuplicados.FIRST
-        )
+        config = GeoMergeConfiguration(manejo_duplicados=TipoManejoDuplicados.FIRST)
         merger = ENAHOGeoMerger(geo_config=config, verbose=False)
 
-        df1 = pd.DataFrame({
-            "conglome": ["001", "001", "002"],
-            "vivienda": ["01", "01", "01"],
-            "hogar": ["01", "01", "01"],
-            "var1": [1, 2, 3],
-        })
-
-        df2 = pd.DataFrame({
-            "conglome": ["001", "002"],
-            "vivienda": ["01", "01"],
-            "hogar": ["01", "01"],
-            "var2": [4, 5],
-        })
-
-        modules_dict = {"34": df1, "01": df2}
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict,
-            base_module="34"
+        df1 = pd.DataFrame(
+            {
+                "conglome": ["001", "001", "002"],
+                "vivienda": ["01", "01", "01"],
+                "hogar": ["01", "01", "01"],
+                "var1": [1, 2, 3],
+            }
         )
 
-        assert hasattr(result, 'merged_df')
+        df2 = pd.DataFrame(
+            {
+                "conglome": ["001", "002"],
+                "vivienda": ["01", "01"],
+                "hogar": ["01", "01"],
+                "var2": [4, 5],
+            }
+        )
+
+        modules_dict = {"34": df1, "01": df2}
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
+
+        assert hasattr(result, "merged_df")
 
     def test_merge_with_duplicates_last(self):
         """Test merge keeping last duplicate"""
-        config = GeoMergeConfiguration(
-            manejo_duplicados=TipoManejoDuplicados.LAST
-        )
+        config = GeoMergeConfiguration(manejo_duplicados=TipoManejoDuplicados.LAST)
         merger = ENAHOGeoMerger(geo_config=config, verbose=False)
 
-        df1 = pd.DataFrame({
-            "conglome": ["001", "001", "002"],
-            "vivienda": ["01", "01", "01"],
-            "hogar": ["01", "01", "01"],
-            "var1": [1, 2, 3],
-        })
-
-        df2 = pd.DataFrame({
-            "conglome": ["001", "002"],
-            "vivienda": ["01", "01"],
-            "hogar": ["01", "01"],
-            "var2": [4, 5],
-        })
-
-        modules_dict = {"34": df1, "01": df2}
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict,
-            base_module="34"
+        df1 = pd.DataFrame(
+            {
+                "conglome": ["001", "001", "002"],
+                "vivienda": ["01", "01", "01"],
+                "hogar": ["01", "01", "01"],
+                "var1": [1, 2, 3],
+            }
         )
 
-        assert hasattr(result, 'merged_df')
+        df2 = pd.DataFrame(
+            {
+                "conglome": ["001", "002"],
+                "vivienda": ["01", "01"],
+                "hogar": ["01", "01"],
+                "var2": [4, 5],
+            }
+        )
+
+        modules_dict = {"34": df1, "01": df2}
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
+
+        assert hasattr(result, "merged_df")
 
 
 class TestMemoryOptimization:
@@ -380,25 +376,26 @@ class TestMemoryOptimization:
         """Test merge with larger DataFrames for memory handling"""
         # Create moderate-sized DataFrames
         n_rows = 500
-        df1 = pd.DataFrame({
-            "conglome": [f"{i:05d}" for i in range(n_rows)],
-            "vivienda": ["01"] * n_rows,
-            "hogar": ["01"] * n_rows,
-            "var1": np.random.rand(n_rows),
-        })
+        df1 = pd.DataFrame(
+            {
+                "conglome": [f"{i:05d}" for i in range(n_rows)],
+                "vivienda": ["01"] * n_rows,
+                "hogar": ["01"] * n_rows,
+                "var1": np.random.rand(n_rows),
+            }
+        )
 
-        df2 = pd.DataFrame({
-            "conglome": [f"{i:05d}" for i in range(n_rows)],
-            "vivienda": ["01"] * n_rows,
-            "hogar": ["01"] * n_rows,
-            "var2": np.random.rand(n_rows),
-        })
+        df2 = pd.DataFrame(
+            {
+                "conglome": [f"{i:05d}" for i in range(n_rows)],
+                "vivienda": ["01"] * n_rows,
+                "hogar": ["01"] * n_rows,
+                "var2": np.random.rand(n_rows),
+            }
+        )
 
         modules_dict = {"34": df1, "01": df2}
-        result = merger.merge_multiple_modules(
-            modules_dict=modules_dict,
-            base_module="34"
-        )
+        result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
         assert len(result.merged_df) == n_rows
 
@@ -410,9 +407,7 @@ class TestGetMethods:
         """Test getting merge statistics"""
         # Perform a merge first
         result, validation = merger.merge_geographic_data(
-            df_principal=sample_enaho_df,
-            df_geografia=sample_geo_df,
-            columna_union="ubigeo"
+            df_principal=sample_enaho_df, df_geografia=sample_geo_df, columna_union="ubigeo"
         )
 
         # Check if stats available

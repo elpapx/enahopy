@@ -60,7 +60,7 @@ class TestFallbackLogging:
         logger = setup_logging(verbose=False)
         assert logger is not None
         # Fallback logger should be configured
-        assert hasattr(logger, 'handlers')
+        assert hasattr(logger, "handlers")
 
     @patch("enahopy.merger.core.LOADER_AVAILABLE", False)
     def test_setup_logging_fallback_structured(self):
@@ -354,9 +354,7 @@ class TestPrepareGeographicDFAdvanced:
 
     def test_prepare_with_prefix_suffix(self):
         """Test preparation with prefix and suffix configuration"""
-        geo_config = GeoMergeConfiguration(
-            prefijo_columnas="geo_", sufijo_columnas="_data"
-        )
+        geo_config = GeoMergeConfiguration(prefijo_columnas="geo_", sufijo_columnas="_data")
         merger = ENAHOGeoMerger(geo_config=geo_config)
 
         df = pd.DataFrame(

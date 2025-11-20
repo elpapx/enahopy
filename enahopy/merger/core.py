@@ -22,7 +22,6 @@ Imports centralizados para evitar errores de dependencias.
 """
 
 
-
 import logging
 
 # Imports estándar de Python (siempre disponibles)

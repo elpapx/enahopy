@@ -317,7 +317,9 @@ class TestMergeGeographicData:
     def test_merge_geographic_data_missing_column(self, merger):
         """Test merge with missing ubigeo column"""
         df_principal = pd.DataFrame({"ingreso": [2000, 1500]})  # No ubigeo
-        df_geografia = pd.DataFrame({"ubigeo": ["150101", "150102"], "departamento": ["Lima", "Lima"]})
+        df_geografia = pd.DataFrame(
+            {"ubigeo": ["150101", "150102"], "departamento": ["Lima", "Lima"]}
+        )
 
         with pytest.raises((ValueError, KeyError)):
             merger.merge_geographic_data(
@@ -530,7 +532,9 @@ class TestMergeModulesWithGeography:
         assert "module_merge" in report
         assert "geographic_merge" in report
 
-    def test_merge_modules_with_geography_custom_configs(self, merger, sample_modules_with_ubigeo, sample_geografia):
+    def test_merge_modules_with_geography_custom_configs(
+        self, merger, sample_modules_with_ubigeo, sample_geografia
+    ):
         """Test with custom configurations"""
         module_config = ModuleMergeConfig(min_match_rate=0.5)
         geo_config = GeoMergeConfiguration(chunk_size=10000)
@@ -898,9 +902,7 @@ class TestPerformanceOptimization:
 
     def test_large_dataset_chunking_enabled(self):
         """Test that chunking can be enabled for large datasets"""
-        geo_config = GeoMergeConfiguration(
-            chunk_size=1000, optimizar_memoria=True
-        )
+        geo_config = GeoMergeConfiguration(chunk_size=1000, optimizar_memoria=True)
         merger = ENAHOGeoMerger(geo_config=geo_config)
 
         assert merger.geo_config.chunk_size == 1000
