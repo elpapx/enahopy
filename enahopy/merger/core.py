@@ -132,7 +132,7 @@ except ImportError:
                 file_handler.setFormatter(formatter)
                 logger.addHandler(file_handler)
 
-            logger.setLevel(logging.INFO if verbose else logging.WARNING)
+        logger.setLevel(logging.INFO if verbose else logging.WARNING)
         return logger
 
     def log_performance(func):
