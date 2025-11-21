@@ -409,7 +409,7 @@ class ENAHOGeoMerger:
             formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(name)s: %(message)s")
             handler.setFormatter(formatter)
             logger.addHandler(handler)
-            logger.setLevel(logging.INFO if self.verbose else logging.WARNING)
+        logger.setLevel(logging.INFO if self.verbose else logging.WARNING)
         return logger
 
     def _validate_configurations(self):
