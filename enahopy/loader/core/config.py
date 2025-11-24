@@ -102,8 +102,28 @@ class ENAHOConfig:
             "07": "Gastos en Alimentos y bebidas",
             "08": "Instituciones Beneficas",
             "09": "Mantenimiento de Viviendas",
+            "10": "Transportes y Comunicaciones",
+            "11": "Servicios a la Vivienda",
+            "12": "Esparcimiento, Diversion y servicios de cultura",
+            "13": "Vestido y Calzado",
+            "15": "Gastos de Transferencias",
+            "16": "Muebles y Enseres",
+            "17": "Otros Bienes y Servicios",
+            "18": "Equipamiento del Hogar",
+            "22": "Producción Agricola",
+            "23": "Subproductos Agricolas",
+            "24": "Producción Forestal",
+            "25": "Gasos en actividades agricolas y/o forestales",
+            "26": "Producción Pecuaria",
+            "27": "Subproductos Pecuarios",
+            "28": "Gastos en Actividades Pecuarias",
             "34": "Sumarias ( Variables Calculadas )",
             "37": "Programas Sociales",
+            "77": "Ingresos del Trabajador Independiente",
+            "78": "Bienes y Servicios de cuidados personales",
+            "84": "Participación Ciudadana",
+            "85": "Gobernabilidad, Democracia y Transparencia",
+            "1825": "Beneficiarios de instituciones sin fines de lucro: Olla Comun"
         }
     )
 
