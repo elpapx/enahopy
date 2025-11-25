@@ -452,7 +452,7 @@ class TestUtilityFunctions:
 
     def test_safe_dict_merge(self):
         """Test fusión segura de diccionarios"""
-        from enahopy.null_analysis import safe_dict_merge
+        from enahopy.null_analysis.utils import safe_dict_merge
 
         dict1 = {"a": 1, "b": {"x": 1}}
         dict2 = {"b": {"y": 2}, "c": 3}

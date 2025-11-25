@@ -236,7 +236,7 @@ class TestMergeModulesMethod:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_d")
+        assert hasattr(result, "merged_df")
         assert isinstance(result.merged_df, pd.DataFrame)
 
     def test_merge_multiple_modules_empty_dict(self, merger):
@@ -279,7 +279,7 @@ class TestErrorHandling:
         # Should handle NaN gracefully or raise appropriate error
         try:
             result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
-            assert hasattr(result, "merged_d")
+            assert hasattr(result, "merged_df")
         except Exception:
             pass  # Expected in some cases
 
@@ -323,7 +323,7 @@ class TestDuplicateHandling:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_d")
+        assert hasattr(result, "merged_df")
 
     def test_merge_with_duplicates_last(self):
         """Test merge keeping last duplicate"""
@@ -351,7 +351,7 @@ class TestDuplicateHandling:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_d")
+        assert hasattr(result, "merged_df")
 
 
 class TestMemoryOptimization:
