@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="assets/enahopy_logo.png" alt="enahopy" width="500"/>
+  <img src="assets/logo.jpg" alt="enahopy" width="500"/>
 </p>
 
 <h1 align="center">enahopy</h1>
 
 <p align="center">
-  <em>Professional Python toolkit for analyzing Peru's ENAHO household survey data</em>
+  <em>Kit de herramientas profesional en Python para analizar datos de la encuesta ENAHO del Perú</em>
 </p>
 
 <p align="center">
@@ -17,33 +17,32 @@
 </p>
 
 <p align="center">
-  <a href="#-why-enahopy">Why</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-supported-modules">Modules</a> •
-  <a href="docs/">Documentation</a> •
-  <a href="examples/">Examples</a>
+  <a href="#-por-qué-enahopy">Por qué</a> •
+  <a href="#-instalación">Instalación</a> •
+  <a href="#-inicio-rápido">Inicio Rápido</a> •
+  <a href="#-características">Características</a> •
+  <a href="#-módulos-soportados">Módulos</a> •
+  <a href="examples/">Ejemplos</a>
 </p>
 
 ---
 
-## 🎯 Why enahopy?
+## 🎯 ¿Por qué enahopy?
 
-Transform Peru's ENAHO survey data from raw ZIP files to analysis-ready pandas DataFrames in **3 lines of code**.
+Transforma los datos de la encuesta ENAHO del Perú desde archivos ZIP sin procesar a DataFrames de pandas listos para análisis en **3 líneas de código**.
 
-**Before enahopy** (50+ lines of boilerplate):
+**Antes de enahopy** (50+ líneas de código repetitivo):
 ```python
-# Download ZIP from INEI website
-# Extract DBF files manually
-# Handle multiple encodings (CP1252/UTF-8)
-# Merge modules with proper keys
-# Apply factores de expansión correctly
-# Handle missing data...
-# (50+ more lines)
+# Descargar ZIP del sitio web de INEI
+# Extraer archivos DBF manualmente
+# Manejar múltiples codificaciones (CP1252/UTF-8)
+# Unir módulos con claves apropiadas
+# Aplicar factores de expansión correctamente
+# Manejar datos faltantes...
+# (50+ líneas más)
 ```
 
-**With enahopy** (3 lines):
+**Con enahopy** (3 líneas):
 ```python
 import enahopy as enaho
 loader = enaho.ENAHOLoader(year=2022)
@@ -52,30 +51,30 @@ df = loader.load_module("01")  # ¡Listo! 🎉
 
 ---
 
-## 📦 Installation
+## 📦 Instalación
 
-### Basic installation
+### Instalación básica
 ```bash
 pip install enahopy
 ```
 
-### With all features
+### Con todas las funcionalidades
 ```bash
 pip install enahopy[all]
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
-### Example 1: Download and Load Data
+### Ejemplo 1: Descargar y Cargar Datos
 ```python
 from enahopy.loader import ENAHODataDownloader
 
-# Initialize downloader
+# Inicializar descargador
 downloader = ENAHODataDownloader(verbose=True)
 
-# Download housing characteristics data
+# Descargar datos de características de la vivienda
 data = downloader.download(
     modules=['01'],
     years=['2024'],
@@ -84,28 +83,28 @@ data = downloader.download(
 )
 
 df_hogar = data[('2024', '01')]['enaho01-2024-100']
-print(f"✓ Loaded {len(df_hogar):,} households")
+print(f"✓ Cargados {len(df_hogar):,} hogares")
 ```
 
-### Example 2: Weighted Statistics (Professional)
+### Ejemplo 2: Estadísticas Ponderadas (Profesional)
 ```python
 import pandas as pd
 import numpy as np
 
-# Load sumaria module with poverty indicators
+# Cargar módulo sumaria con indicadores de pobreza
 df_sumaria = data[('2024', '34')]['sumaria-2024']
 
-# ✅ CORRECT: Weighted statistics using factores de expansión
-factor = df_sumaria['factor07']  # Expansion factor
+# ✅ CORRECTO: Estadísticas ponderadas usando factores de expansión
+factor = df_sumaria['factor07']  # Factor de expansión
 
-# Calculate weighted poverty rate
+# Calcular tasa de pobreza ponderada
 pobreza_rate = (
-    (df_sumaria['pobreza'] <= 2) * factor  # 1=extreme poor, 2=poor
+    (df_sumaria['pobreza'] <= 2) * factor  # 1=pobreza extrema, 2=pobre
 ).sum() / factor.sum() * 100
 
 print(f"Tasa de pobreza (ponderada): {pobreza_rate:.2f}%")
 
-# Weighted analysis by geographic domain
+# Análisis ponderado por dominio geográfico
 def weighted_stats(group):
     w = group['factor07']
     return pd.Series({
@@ -118,30 +117,30 @@ print("\nIndicadores por Dominio (ponderado):")
 print(analisis_geografico)
 ```
 
-**[📚 See full tutorials with notebooks →](examples/)**
+**[📚 Ver tutoriales completos con notebooks →](examples/)**
 
 ---
 
-## ✨ Key Features
+## ✨ Características Principales
 
-- 🎯 **One-line data loading** from INEI servers or local files
-- 🔢 **60+ ENAHO modules** supported (all modules from 01 to 100, years 2015-2024)
-- ⚖️ **Expansion factors** (factor07) for proper population estimates
-- 🔗 **Smart module merging** at household/person/dwelling level
-- 💾 **Intelligent caching** (save bandwidth & time on repeated downloads)
-- 🧹 **Automatic data cleaning** (encodings, dtypes, nulls)
-- 📊 **Multiple formats**: DBF, SPSS (.sav), Stata (.dta), CSV, Parquet
-- 🗺️ **Geographic integration** with UBIGEO (departamento/provincia/distrito)
-- 🕳️ **Missing data analysis** with ML-powered imputation strategies
-- 🐍 **100% Python** - No R or external dependencies required
+- 🎯 **Carga de datos en una línea** desde servidores INEI o archivos locales
+- 🔢 **60+ módulos ENAHO** soportados (todos los módulos del 01 al 100, años 2015-2024)
+- ⚖️ **Factores de expansión** (factor07) para estimaciones poblacionales apropiadas
+- 🔗 **Unión inteligente de módulos** a nivel de hogar/persona/vivienda
+- 💾 **Caché inteligente** (ahorra ancho de banda y tiempo en descargas repetidas)
+- 🧹 **Limpieza automática de datos** (codificaciones, tipos de datos, nulos)
+- 📊 **Múltiples formatos**: DBF, SPSS (.sav), Stata (.dta), CSV, Parquet
+- 🗺️ **Integración geográfica** con UBIGEO (departamento/provincia/distrito)
+- 🕳️ **Análisis de datos faltantes** con estrategias de imputación potenciadas por ML
+- 🐍 **100% Python** - No requiere R ni dependencias externas
 
 ---
 
-## 📦 Supported ENAHO Modules
+## 📦 Módulos ENAHO Soportados
 
-### Most Common Modules
+### Módulos Más Comunes
 
-| Module | Description | Level | Years |
+| Módulo | Descripción | Nivel | Años |
 |--------|-------------|-------|-------|
 | `01` | Características de la vivienda y del hogar | Hogar | 2015-2024 |
 | `02` | Características de los miembros del hogar | Persona | 2015-2024 |
@@ -153,103 +152,91 @@ print(analisis_geografico)
 | `85` | Sumaria de pobreza (línea de pobreza) | Hogar | 2015-2024 |
 | `sumaria` | Indicadores agregados (gasto, ingreso, pobreza) | Hogar | 2015-2024 |
 
-### Additional Modules Available
+### Módulos Adicionales Disponibles
 
-The library supports **all ENAHO modules** (01-100) across years 2015-2024, including:
-- **Labor market**: Modules 05, 18 (informal sector)
-- **Income & expenditure**: Modules 37, 85, sumaria
-- **Social programs**: Module 34 (Juntos, Qali Warma, Pensión 65)
-- **Housing infrastructure**: Module 01 (water, sanitation, electricity)
-- **Education**: Module 03 (enrollment, literacy, school completion)
-- **Health**: Module 04 (insurance, morbidity, healthcare access)
-
-**[📋 See complete module reference →](docs/modules.md)**
+La librería soporta **todos los módulos ENAHO** (01-100) a través de los años 2015-2024, incluyendo:
+- **Mercado laboral**: Módulos 05, 18 (sector informal)
+- **Ingresos y gastos**: Módulos 37, 85, sumaria
+- **Programas sociales**: Módulo 34 (Juntos, Qali Warma, Pensión 65)
+- **Infraestructura de vivienda**: Módulo 01 (agua, saneamiento, electricidad)
+- **Educación**: Módulo 03 (matrícula, alfabetización, culminación escolar)
+- **Salud**: Módulo 04 (seguro, morbilidad, acceso a servicios de salud)
 
 ---
 
-## 💡 Real-World Examples
+## 💡 Ejemplos del Mundo Real
 
-### Advanced: Poverty & Labor Market Analysis
+### Avanzado: Análisis de Pobreza y Mercado Laboral
 
-Complete pipeline merging 6 modules to analyze the relationship between monetary poverty and labor market conditions.
+Pipeline completo que une 6 módulos para analizar la relación entre pobreza monetaria y condiciones del mercado laboral.
 
-**Files:**
-- 📓 [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) - Interactive notebook
-- 🐍 [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py) - Reusable Python module
+**Archivos:**
+- 📓 [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) - Notebook interactivo
+- 🐍 [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py) - Módulo Python reutilizable
 
-Key features demonstrated:
-- Multi-module parallel downloads (01, 02, 03, 04, 05, 34)
-- Smart module merging at household & person level
-- Proper use of expansion factors (factor07)
-- Labor informality indicators
-- Weighted geographic analysis
+Características demostradas:
+- Descargas paralelas de múltiples módulos (01, 02, 03, 04, 05, 34)
+- Unión inteligente de módulos a nivel de hogar y persona
+- Uso apropiado de factores de expansión (factor07)
+- Indicadores de informalidad laboral
+- Análisis geográfico ponderado
 
-**[🎓 Read the full tutorial on Medium →](https://medium.com/@pcamacho447)**
-
----
-
-## 📚 More Examples
-
-### Additional Use Cases
-
-1. **[Geographic Inequality Analysis](examples/02_geographic_inequality_analysis.py)**
-   - Merge with UBIGEO data
-   - Regional poverty comparisons
-   - Weighted statistics by department
-
-2. **[Multi-module Household Analysis](examples/03_multimodule_analysis.py)**
-   - Combine housing + education + health data
-   - Create composite indicators
-   - Panel analysis across years
-
-3. **[ML-Powered Missing Data Imputation](examples/04_advanced_ml_imputation_demo.py)**
-   - Detect missing patterns (MCAR, MAR, MNAR)
-   - KNN and Random Forest imputation
-   - Quality assessment metrics
-
-4. **[Housing Quality Dashboard](examples/medium/caracteristicas_del_hogar.ipynb)**
-   - Interactive visualizations
-   - NBI (Necesidades Básicas Insatisfechas) analysis
-   - Geographic disparities
-
-**[📓 Browse all examples →](examples/)**
+**[🎓 Lee el tutorial completo en Medium →](https://medium.com/@pcamacho447)**
 
 ---
 
-## 📖 Documentation
+## 📚 Más Ejemplos
 
-- **[Getting Started](docs/getting_started.rst)** - Installation & first steps
-- **[User Guide](docs/tutorials/)** - Step-by-step tutorials
-- **[API Reference](docs/api/)** - Complete API documentation
-- **[FAQ](docs/faq.rst)** - Common questions answered
-- **[Troubleshooting](docs/troubleshooting.rst)** - Solutions to common issues
+### Casos de Uso Adicionales
+
+1. **[Análisis de Desigualdad Geográfica](examples/02_geographic_inequality_analysis.py)**
+   - Unión con datos UBIGEO
+   - Comparaciones regionales de pobreza
+   - Estadísticas ponderadas por departamento
+
+2. **[Análisis Multi-módulo de Hogares](examples/03_multimodule_analysis.py)**
+   - Combinar datos de vivienda + educación + salud
+   - Crear indicadores compuestos
+   - Análisis de panel a través de años
+
+3. **[Imputación de Datos Faltantes Potenciada por ML](examples/04_advanced_ml_imputation_demo.py)**
+   - Detectar patrones de datos faltantes (MCAR, MAR, MNAR)
+   - Imputación KNN y Random Forest
+   - Métricas de evaluación de calidad
+
+4. **[Dashboard de Calidad de Vivienda](examples/medium/caracteristicas_del_hogar.ipynb)**
+   - Visualizaciones interactivas
+   - Análisis NBI (Necesidades Básicas Insatisfechas)
+   - Disparidades geográficas
+
+**[📓 Explorar todos los ejemplos →](examples/)**
 
 ---
 
-## 🏗️ Package Architecture
+## 🏗️ Arquitectura del Paquete
 
 ```
 enahopy/
-├── loader/              # Data download and loading
-│   ├── core/           # Configuration and exceptions
-│   ├── io/             # Format readers (DTA, SAV, CSV, Parquet) and downloaders
-│   └── utils/          # Utilities and helpers
-├── merger/             # Module and geographic merging
-│   ├── geographic/     # UBIGEO handling and validation
-│   ├── modules/        # ENAHO module merging (01, 02, 05, 34, sumaria)
-│   └── strategies/     # Merge strategies (household, person, panel)
-└── null_analysis/      # Missing data analysis
-    ├── core/          # Analysis engine and classification
-    ├── patterns/      # Pattern detection (MCAR, MAR, MNAR)
-    ├── strategies/    # Imputation strategies (mean, KNN, ML)
-    └── reports/       # Report generation and visualizations
+├── loader/              # Descarga y carga de datos
+│   ├── core/           # Configuración y excepciones
+│   ├── io/             # Lectores de formato (DTA, SAV, CSV, Parquet) y descargadores
+│   └── utils/          # Utilidades y helpers
+├── merger/             # Unión de módulos y geográfica
+│   ├── geographic/     # Manejo y validación de UBIGEO
+│   ├── modules/        # Unión de módulos ENAHO (01, 02, 05, 34, sumaria)
+│   └── strategies/     # Estrategias de unión (hogar, persona, panel)
+└── null_analysis/      # Análisis de datos faltantes
+    ├── core/          # Motor de análisis y clasificación
+    ├── patterns/      # Detección de patrones (MCAR, MAR, MNAR)
+    ├── strategies/    # Estrategias de imputación (media, KNN, ML)
+    └── reports/       # Generación de reportes y visualizaciones
 ```
 
 ---
 
-## 🔧 Advanced Configuration
+## 🔧 Configuración Avanzada
 
-### Cache & Performance
+### Caché y Rendimiento
 
 ```python
 from enahopy.loader import ENAHOConfig, ENAHODataDownloader
@@ -257,18 +244,18 @@ from enahopy.loader import ENAHOConfig, ENAHODataDownloader
 config = ENAHOConfig(
     cache_dir='.enaho_cache',
     enable_cache=True,
-    max_workers=4,           # Parallel downloads
+    max_workers=4,           # Descargas paralelas
     chunk_size=50000,
     enable_validation=True
 )
 
 downloader = ENAHODataDownloader(config=config)
 
-# First run: ~30 seconds (downloads from INEI)
-# Second run: <1 second (reads from local cache)
+# Primera ejecución: ~30 segundos (descarga desde INEI)
+# Segunda ejecución: <1 segundo (lee desde caché local)
 ```
 
-### Strict Validation in Mergers
+### Validación Estricta en Uniones
 
 ```python
 from enahopy.merger import MergerConfig, ENAHOMerger
@@ -285,83 +272,83 @@ merger = ENAHOMerger(config=config)
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contribuir
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+¡Las contribuciones son bienvenidas! Ver [CONTRIBUTING.md](CONTRIBUTING.md) para lineamientos.
 
-### Development Setup
+### Configuración de Desarrollo
 
 ```bash
-# Clone repository
+# Clonar repositorio
 git clone https://github.com/elpapx/enahopy.git
 cd enahopy
 
-# Install in development mode
+# Instalar en modo desarrollo
 pip install -e .[dev]
 
-# Install pre-commit hooks
+# Instalar hooks de pre-commit
 pre-commit install
 
-# Run tests
+# Ejecutar tests
 pytest tests/ -v --cov=enahopy
 
-# Code quality checks
+# Verificaciones de calidad de código
 black enahopy/ tests/
 flake8 enahopy/
 isort enahopy/ tests/
 ```
 
-### CI/CD Status
+### Estado CI/CD
 
-All PRs are automatically validated:
-- ✅ **Quality Checks**: black, flake8, isort
-- ✅ **Multi-platform Tests**: Ubuntu, Windows, macOS
-- ✅ **Python Matrix**: 3.8, 3.9, 3.10, 3.11, 3.12
-- ✅ **Coverage**: Minimum 40% required
-- ✅ **Build Validation**: PyPI packaging
-
----
-
-## 📈 Roadmap
-
-**Upcoming features:**
-- [ ] ENDES support (Demographic and Family Health Survey)
-- [ ] ENAPRES integration (National Survey of Budget Programs)
-- [ ] Interactive Streamlit dashboard
-- [ ] R format exports (RData, feather)
-- [ ] Longitudinal analysis (multi-year panels)
-- [ ] REST API for web services
+Todos los PRs son automáticamente validados:
+- ✅ **Verificaciones de Calidad**: black, flake8, isort
+- ✅ **Tests Multi-plataforma**: Ubuntu, Windows, macOS
+- ✅ **Matriz de Python**: 3.8, 3.9, 3.10, 3.11, 3.12
+- ✅ **Cobertura**: Mínimo 40% requerido
+- ✅ **Validación de Build**: Empaquetado PyPI
 
 ---
 
-## 👤 Author
+## 📈 Hoja de Ruta
+
+**Próximas funcionalidades:**
+- [ ] Soporte para ENDES (Encuesta Demográfica y de Salud Familiar)
+- [ ] Integración con ENAPRES (Encuesta Nacional de Programas Estratégicos)
+- [ ] Dashboard interactivo con Streamlit
+- [ ] Exportación a formatos R (RData, feather)
+- [ ] Análisis longitudinal (paneles multi-año)
+- [ ] API REST para servicios web
+
+---
+
+## 👤 Autor
 
 **Pablo Camacho**
 
-- 📝 **Medium**: [@pcamacho447](https://medium.com/@pcamacho447) - Tutorials and use cases
+- 📝 **Medium**: [@pcamacho447](https://medium.com/@pcamacho447) - Tutoriales y casos de uso
 - 💻 **GitHub**: [@elpapx](https://github.com/elpapx)
 - 📧 **Email**: pcamacho447@gmail.com
 
 ---
 
-## 📄 License
+## 📄 Licencia
 
-MIT License - see [LICENSE](LICENSE) for details.
+Licencia MIT - ver [LICENSE](LICENSE) para detalles.
 
 ---
 
-## 🙏 Acknowledgments
+## 🙏 Agradecimientos
 
-- **INEI (Instituto Nacional de Estadística e Informática)** for making microdata publicly available
-- Peru's social research and data science community
-- All contributors and users of this project
+- **INEI (Instituto Nacional de Estadística e Informática)** por hacer los microdatos públicamente disponibles
+- Comunidad de investigación social y ciencia de datos del Perú
+- Todos los contribuidores y usuarios de este proyecto
 
 ---
 
 <p align="center">
-  <strong>Made with ❤️ for social researchers and data scientists in Peru</strong>
+  <strong>Hecho con ❤️ para investigadores sociales y científicos de datos en el Perú</strong>
 </p>
 
 <p align="center">
-  <a href="https://en.wikipedia.org/wiki/Peru"><img src="https://img.shields.io/badge/Made%20in-Peru-red.svg" alt="Made in Peru"></a>
+  <a href="https://en.wikipedia.org/wiki/Peru"><img src="https://img.shields.io/badge/Hecho%20en-Perú-red.svg" alt="Hecho en Perú"></a>
 </p>
