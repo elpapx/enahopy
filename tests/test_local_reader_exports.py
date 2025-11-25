@@ -17,7 +17,7 @@ from enahopy.loader.io.local_reader import ENAHOLocalReader
 
 # Check for optional dependencies
 try:
-    pass
+    import openpyxl  # noqa: F401
 
     OPENPYXL_AVAILABLE = True
 except ImportError:

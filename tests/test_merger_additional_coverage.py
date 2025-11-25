@@ -208,7 +208,7 @@ class TestMergeModulesMethod:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_d")
+        assert hasattr(result, "merged_df")
         assert isinstance(result.merged_df, pd.DataFrame)
         assert "var1" in result.merged_df.columns
         assert "var2" in result.merged_df.columns
