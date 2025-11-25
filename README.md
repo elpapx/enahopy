@@ -1,508 +1,367 @@
-# ENAHOPY 🇵🇪
+<p align="center">
+  <img src="assets/enahopy_logo.png" alt="enahopy" width="500"/>
+</p>
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![CI Pipeline](https://github.com/elpapx/enahopy/actions/workflows/ci.yml/badge.svg)](https://github.com/elpapx/enahopy/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/elpapx/enahopy/branch/main/graph/badge.svg)](https://codecov.io/gh/elpapx/enahopy)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<h1 align="center">enahopy</h1>
 
-**Librería Python para análisis de microdatos ENAHO del INEI (Perú)**
+<p align="center">
+  <em>Professional Python toolkit for analyzing Peru's ENAHO household survey data</em>
+</p>
 
-Herramienta completa y robusta para descargar, procesar, fusionar y analizar microdatos de la Encuesta Nacional de Hogares (ENAHO). Diseñada específicamente para investigadores, analistas y profesionales que trabajan con datos sociales y económicos del Perú.
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://github.com/elpapx/enahopy/actions/workflows/ci.yml"><img src="https://github.com/elpapx/enahopy/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline"></a>
+  <a href="https://codecov.io/gh/elpapx/enahopy"><img src="https://codecov.io/gh/elpapx/enahopy/branch/main/graph/badge.svg" alt="codecov"></a>
+  <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black"></a>
+</p>
 
-## ✨ Características Principales
+<p align="center">
+  <a href="#-why-enahopy">Why</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-supported-modules">Modules</a> •
+  <a href="docs/">Documentation</a> •
+  <a href="examples/">Examples</a>
+</p>
 
-- **📥 Descarga Automática**: Descarga directa desde servidores oficiales del INEI
-- **📊 Multi-formato**: Compatible con DTA (Stata), SAV (SPSS), CSV, Parquet
-- **✅ Validación Inteligente**: Validación automática de columnas y mapeo de variables
-- **🔗 Fusión de Módulos**: Sistema avanzado para combinar módulos ENAHO (hogar, personas, ingresos)
-- **🗺️ Análisis Geográfico**: Integración con datos UBIGEO (departamento/provincia/distrito)
-- **🕳️ Análisis de Valores Nulos**: Detección de patrones missing y estrategias de imputación
-- **⚡ Sistema de Cache**: Optimización automática de descargas repetidas
-- **🚀 Alto Rendimiento**: Procesamiento eficiente con bajo uso de memoria
-- **📈 Visualizaciones**: Gráficos especializados para datos de encuestas sociales
+---
 
-## 📦 Instalación
+## 🎯 Why enahopy?
 
-### Instalación básica
+Transform Peru's ENAHO survey data from raw ZIP files to analysis-ready pandas DataFrames in **3 lines of code**.
+
+**Before enahopy** (50+ lines of boilerplate):
+```python
+# Download ZIP from INEI website
+# Extract DBF files manually
+# Handle multiple encodings (CP1252/UTF-8)
+# Merge modules with proper keys
+# Apply factores de expansión correctly
+# Handle missing data...
+# (50+ more lines)
+```
+
+**With enahopy** (3 lines):
+```python
+import enahopy as enaho
+loader = enaho.ENAHOLoader(year=2022)
+df = loader.load_module("01")  # ¡Listo! 🎉
+```
+
+---
+
+## 📦 Installation
+
+### Basic installation
 ```bash
 pip install enahopy
 ```
 
-### Instalación con todas las características
+### With all features
 ```bash
 pip install enahopy[all]
 ```
 
-## 🚀 Inicio Rápido
+---
 
-### 1. Descargar datos ENAHO
+## 🚀 Quick Start
 
+### Example 1: Download and Load Data
 ```python
 from enahopy.loader import ENAHODataDownloader
 
-# Inicializar downloader
+# Initialize downloader
 downloader = ENAHODataDownloader(verbose=True)
 
-# Descargar múltiples módulos en paralelo
-data_multi = downloader.download(
-    modules=['01', '02', '05', '34'],  # Hogar, Persona, Empleo, Sumaria
+# Download housing characteristics data
+data = downloader.download(
+    modules=['01'],
     years=['2024'],
     output_dir='./data',
-    decompress=True,
-    load_dta=True,
-    parallel=True,
-    max_workers=3
-)
-
-# Extraer datasets
-df_hogar = data_multi[('2024', '01')]['enaho01-2024-100']
-df_persona = data_multi[('2024', '02')]['enaho01-2024-200']
-df_empleo = data_multi[('2024', '05')]['enaho01a-2024-500']
-df_sumaria = data_multi[('2024', '34')]['sumaria-2024']
-
-print(f"✓ Hogares: {len(df_hogar):,} registros")
-print(f"✓ Personas: {len(df_persona):,} registros")
-```
-
-### 2. Fusionar módulos
-
-```python
-from enahopy.merger import ENAHOModuleMerger
-from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel
-
-# Configurar merger para nivel persona
-config = ModuleMergeConfig(merge_level=ModuleMergeLevel.PERSONA)
-merger = ENAHOModuleMerger(config)
-
-# Fusionar módulos individuales
-modules_dict = {
-    '02': df_persona,
-    '05': df_empleo
-}
-
-result = merger.merge_multiple_modules(
-    modules_dict=modules_dict,
-    base_module='02',
-    merge_config=config
-)
-
-df_merged = result.merged_df
-print(f"✓ Fusionado: {df_merged.shape}")
-```
-
-### 3. Análisis geográfico
-
-```python
-from enahopy.merger.geographic.merger import GeographicMerger
-import pandas as pd
-
-# Cargar tabla UBIGEO
-df_ubigeo = pd.read_excel('UBIGEO_2024.xlsx')
-df_ubigeo = df_ubigeo[['IDDIST', 'NOMBDEP', 'NOMBPROV', 'NOMBDIST']]
-df_ubigeo = df_ubigeo.rename(columns={'IDDIST': 'ubigeo'})
-
-# Fusionar con datos geográficos
-merger_geo = GeographicMerger()
-df_geo, report = merger_geo.merge(df_sumaria, df_ubigeo, columna_union='ubigeo')
-
-print(f"✓ Registros con geografía: {report['output_rows']}")
-```
-
-### 4. Análisis de valores nulos
-
-```python
-from enahopy.null_analysis import ENAHONullAnalyzer
-
-# Análisis completo de valores faltantes
-analyzer = ENAHONullAnalyzer(complexity='advanced')
-result = analyzer.analyze(df_merged)
-
-# Generar reporte HTML
-analyzer.export_report(result, 'reporte_nulos.html')
-```
-
-## 💡 Ejemplos Prácticos
-
-### 🏆 Análisis Completo de Pobreza Monetaria y Laboral (Avanzado)
-
-Este ejemplo muestra un **pipeline completo** de análisis fusionando 6 módulos ENAHO para estudiar la relación entre pobreza monetaria y características laborales.
-
-**Archivos del ejemplo:**
-- 📓 [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) - Notebook interactivo con análisis completo
-- 🐍 [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py) - Módulo Python con funciones de ingeniería de características
-
-> **📝 Nota**: El módulo `.py` contiene toda la lógica de procesamiento, cálculo de variables derivadas, y transformaciones. El notebook lo importa para mantener el código organizado y reutilizable.
-
-**Funciones principales del módulo `analisis_pob_mon_lab.py`:**
-- `pipeline_completo()`: Ejecuta todo el flujo de procesamiento end-to-end
-- `crear_caracteristicas_individuales()`: Calcula variables derivadas (informalidad, seguro de salud, grupos etarios, etc.)
-- `extraer_jefe_hogar_completo()`: Extrae características del jefe de hogar (educación, ocupación, sector económico)
-- `agregar_a_nivel_hogar()`: Agrega datos individuales a nivel hogar
-- `calcular_variables_objetivo()`: Calcula pobreza monetaria y laboral
-- `analisis_descriptivo_ponderado()`: Análisis con pesos muestrales (factor de expansión)
-
-```python
-from enahopy.loader import ENAHODataDownloader
-from enahopy.merger import ENAHOModuleMerger
-from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel
-import pandas as pd
-
-# Importar funciones del módulo auxiliar
-from analisis_pob_mon_lab import pipeline_completo, analisis_descriptivo_ponderado
-
-# ==================================================
-# PASO 1: Descargar múltiples módulos en paralelo
-# ==================================================
-
-downloader = ENAHODataDownloader(verbose=True)
-
-# Descargar 6 módulos simultáneamente
-data_multi = downloader.download(
-    modules=['01', '02', '03', '04', '05', '34'],  # Hogar, Persona, Educación, Salud, Empleo, Sumaria
-    years=['2024'],
-    output_dir='./data',
-    parallel=True,
-    max_workers=3,
     load_dta=True
 )
 
-# Extraer datasets individuales
-df_hogar = data_multi[('2024', '01')]['enaho01-2024-100']
-df_persona = data_multi[('2024', '02')]['enaho01-2024-200']
-df_educacion = data_multi[('2024', '03')]['enaho01a-2024-300']
-df_salud = data_multi[('2024', '04')]['enaho01a-2024-400']
-df_empleo = data_multi[('2024', '05')]['enaho01a-2024-500']
-df_sumaria = data_multi[('2024', '34')]['sumaria-2024']
+df_hogar = data[('2024', '01')]['enaho01-2024-100']
+print(f"✓ Loaded {len(df_hogar):,} households")
+```
 
-print(f"✓ Datasets descargados:")
-print(f"  • Hogares: {df_hogar.shape[0]:,} registros")
-print(f"  • Personas: {df_persona.shape[0]:,} registros")
+### Example 2: Weighted Statistics (Professional)
+```python
+import pandas as pd
+import numpy as np
 
-# ==================================================
-# PASO 2: Fusionar módulos a nivel PERSONA
-# ==================================================
+# Load sumaria module with poverty indicators
+df_sumaria = data[('2024', '34')]['sumaria-2024']
 
-# Configurar merger para nivel persona
-config_persona = ModuleMergeConfig(merge_level=ModuleMergeLevel.PERSONA)
-merger_persona = ENAHOModuleMerger(config_persona)
+# ✅ CORRECT: Weighted statistics using factores de expansión
+factor = df_sumaria['factor07']  # Expansion factor
 
-# Fusionar módulos individuales (persona + educación + salud + empleo)
-modules_dict = {
-    '02': df_persona,
-    '03': df_educacion,
-    '04': df_salud,
-    '05': df_empleo
-}
+# Calculate weighted poverty rate
+pobreza_rate = (
+    (df_sumaria['pobreza'] <= 2) * factor  # 1=extreme poor, 2=poor
+).sum() / factor.sum() * 100
 
-merge_result = merger_persona.merge_multiple_modules(
-    modules_dict=modules_dict,
-    base_module='02',
-    merge_config=config_persona
-)
+print(f"Tasa de pobreza (ponderada): {pobreza_rate:.2f}%")
 
-df_individuos = merge_result.merged_df
-print(f"✓ Módulos individuales fusionados: {df_individuos.shape}")
+# Weighted analysis by geographic domain
+def weighted_stats(group):
+    w = group['factor07']
+    return pd.Series({
+        'pobreza_pct': ((group['pobreza'] <= 2) * w).sum() / w.sum() * 100,
+        'ingreso_promedio': np.average(group['inghog2d'], weights=w)
+    })
 
-# ==================================================
-# PASO 3: Fusionar módulos a nivel HOGAR
-# ==================================================
-
-config_hogar = ModuleMergeConfig(merge_level=ModuleMergeLevel.HOGAR)
-merger_hogar = ENAHOModuleMerger(config_hogar)
-
-# Fusionar sumaria + características de hogar
-merge_hogar = merger_hogar.merge_modules(
-    left_df=df_sumaria,
-    right_df=df_hogar,
-    left_module='34',
-    right_module='01',
-    merge_config=config_hogar
-)
-
-df_hogares = merge_hogar.merged_df
-print(f"✓ Módulos de hogar fusionados: {df_hogares.shape}")
-
-# ==================================================
-# PASO 4: Análisis de pobreza monetaria y laboral
-# ==================================================
-
-# Calcular informalidad laboral (ocupados sin contrato ni beneficios)
-df_individuos['es_informal'] = (
-    (df_individuos['ocu500'] == 1) &  # Ocupado
-    (df_individuos['p507'].isin([7, 8, 9]))  # Sin contrato
-).astype(int)
-
-# Agregar a nivel hogar
-df_hogar_stats = df_individuos.groupby(['conglome', 'vivienda', 'hogar']).agg({
-    'codperso': 'count',  # Personas en el hogar
-    'es_informal': 'sum'  # Informales en el hogar
-}).rename(columns={'codperso': 'n_personas', 'es_informal': 'n_informales'})
-
-# Fusionar con datos de hogar
-df_final = df_hogares.merge(df_hogar_stats, on=['conglome', 'vivienda', 'hogar'])
-
-# Calcular tasa de informalidad por hogar
-df_final['tasa_informalidad'] = df_final['n_informales'] / df_final['n_personas']
-
-# Clasificar pobreza monetaria (usando línea de pobreza INEI)
-df_final['es_pobre_monetario'] = (df_final['pobreza'] <= 2).astype(int)  # 1=pobre extremo, 2=pobre
-
-# Clasificar pobreza laboral (alta informalidad + bajos ingresos)
-df_final['pobreza_laboral'] = (
-    (df_final['tasa_informalidad'] >= 0.5) &
-    (df_final['inghog2d'] < df_final['inghog2d'].quantile(0.4))
-).astype(int)
-
-# ==================================================
-# PASO 5: Análisis descriptivo
-# ==================================================
-
-# Resumen general
-print(f"\n{'='*60}")
-print(f"RESULTADOS DEL ANÁLISIS")
-print(f"{'='*60}")
-print(f"Total de hogares analizados: {len(df_final):,}")
-print(f"\nPobreza Monetaria:")
-print(f"  • Hogares pobres: {df_final['es_pobre_monetario'].sum():,} ({df_final['es_pobre_monetario'].mean()*100:.1f}%)")
-print(f"\nPobreza Laboral:")
-print(f"  • Hogares con pobreza laboral: {df_final['pobreza_laboral'].sum():,} ({df_final['pobreza_laboral'].mean()*100:.1f}%)")
-print(f"\nInformalidad:")
-print(f"  • Tasa promedio de informalidad: {df_final['tasa_informalidad'].mean()*100:.1f}%")
-
-# Análisis por dominio geográfico
-analisis_geografico = df_final.groupby('dominio').agg({
-    'es_pobre_monetario': 'mean',
-    'pobreza_laboral': 'mean',
-    'tasa_informalidad': 'mean',
-    'inghog2d': 'median'
-}).round(3) * 100
-
-print(f"\n{'='*60}")
-print("Indicadores por Dominio Geográfico (%)")
-print(f"{'='*60}")
+analisis_geografico = df_sumaria.groupby('dominio').apply(weighted_stats)
+print("\nIndicadores por Dominio (ponderado):")
 print(analisis_geografico)
-
-# Exportar dataset final
-df_final.to_csv('analisis_pobreza_completo_2024.csv', index=False)
-print(f"\n✓ Dataset final guardado: {df_final.shape[0]:,} hogares × {df_final.shape[1]} variables")
 ```
 
-**Output esperado:**
-```
-✓ Datasets descargados:
-  • Hogares: 33,691 registros
-  • Personas: 117,755 registros
-✓ Módulos individuales fusionados: (117755, 45)
-✓ Módulos de hogar fusionados: (33691, 28)
-
-============================================================
-RESULTADOS DEL ANÁLISIS
-============================================================
-Total de hogares analizados: 33,691
-
-Pobreza Monetaria:
-  • Hogares pobres: 6,812 (20.2%)
-
-Pobreza Laboral:
-  • Hogares con pobreza laboral: 16,352 (48.5%)
-
-Informalidad:
-  • Tasa promedio de informalidad: 72.9%
-
-✓ Dataset final guardado: 33,691 hogares × 68 variables
-```
-
-**Código completo del ejemplo:** Ver [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) y [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py)
+**[📚 See full tutorials with notebooks →](examples/)**
 
 ---
 
-### 🗺️ Merge Geográfico con UBIGEO
+## ✨ Key Features
 
-Ejemplo simple de cómo agregar información geográfica (departamento, provincia, distrito) usando la tabla UBIGEO oficial del INEI.
+- 🎯 **One-line data loading** from INEI servers or local files
+- 🔢 **60+ ENAHO modules** supported (all modules from 01 to 100, years 2015-2024)
+- ⚖️ **Expansion factors** (factor07) for proper population estimates
+- 🔗 **Smart module merging** at household/person/dwelling level
+- 💾 **Intelligent caching** (save bandwidth & time on repeated downloads)
+- 🧹 **Automatic data cleaning** (encodings, dtypes, nulls)
+- 📊 **Multiple formats**: DBF, SPSS (.sav), Stata (.dta), CSV, Parquet
+- 🗺️ **Geographic integration** with UBIGEO (departamento/provincia/distrito)
+- 🕳️ **Missing data analysis** with ML-powered imputation strategies
+- 🐍 **100% Python** - No R or external dependencies required
 
-**Archivo:** [`examples/investigacion/merger_enahopy_geografico.py`](examples/investigacion/merger_enahopy_geografico.py)
+---
 
-```python
-from enahopy.merger.geographic.merger import GeographicMerger
-import pandas as pd
+## 📦 Supported ENAHO Modules
 
-# Cargar datos finales del análisis
-df = pd.read_csv('dataframe_final_2024.csv')
+### Most Common Modules
 
-# Cargar tabla UBIGEO oficial (1,891 distritos)
-df_ubigeo = pd.read_excel('UBIGEO_2022_1891_distritos.xlsx')
-df_ubigeo = df_ubigeo[['IDDIST', 'NOMBDEP', 'NOMBPROV', 'NOMBDIST']]
-df_ubigeo = df_ubigeo.rename(columns={'IDDIST': 'ubigeo'})
-df_ubigeo = df_ubigeo.dropna()
+| Module | Description | Level | Years |
+|--------|-------------|-------|-------|
+| `01` | Características de la vivienda y del hogar | Hogar | 2015-2024 |
+| `02` | Características de los miembros del hogar | Persona | 2015-2024 |
+| `03` | Educación | Persona | 2015-2024 |
+| `04` | Salud | Persona | 2015-2024 |
+| `05` | Empleo e ingresos | Persona | 2015-2024 |
+| `34` | Programas sociales, alimentación | Hogar | 2015-2024 |
+| `37` | Gastos del hogar | Hogar | 2015-2024 |
+| `85` | Sumaria de pobreza (línea de pobreza) | Hogar | 2015-2024 |
+| `sumaria` | Indicadores agregados (gasto, ingreso, pobreza) | Hogar | 2015-2024 |
 
-# Fusionar con GeographicMerger
-merger = GeographicMerger()
-df_geo, report = merger.merge(df, df_ubigeo, columna_union='ubigeo')
+### Additional Modules Available
 
-print(f"✓ Registros con geografía: {report['output_rows']}")
-print(f"✓ Columnas agregadas: NOMBDEP, NOMBPROV, NOMBDIST")
+The library supports **all ENAHO modules** (01-100) across years 2015-2024, including:
+- **Labor market**: Modules 05, 18 (informal sector)
+- **Income & expenditure**: Modules 37, 85, sumaria
+- **Social programs**: Module 34 (Juntos, Qali Warma, Pensión 65)
+- **Housing infrastructure**: Module 01 (water, sanitation, electricity)
+- **Education**: Module 03 (enrollment, literacy, school completion)
+- **Health**: Module 04 (insurance, morbidity, healthcare access)
 
-# Guardar resultado
-df_geo.to_csv('dataframe_final_completo_geografico_2024.csv', index=False)
-```
+**[📋 See complete module reference →](docs/modules.md)**
 
-**Output:**
-```
-✓ Registros con geografía: 33,691
-✓ Columnas agregadas: NOMBDEP, NOMBPROV, NOMBDIST
-```
+---
 
-## 🏗️ Arquitectura del Paquete
+## 💡 Real-World Examples
+
+### Advanced: Poverty & Labor Market Analysis
+
+Complete pipeline merging 6 modules to analyze the relationship between monetary poverty and labor market conditions.
+
+**Files:**
+- 📓 [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) - Interactive notebook
+- 🐍 [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py) - Reusable Python module
+
+Key features demonstrated:
+- Multi-module parallel downloads (01, 02, 03, 04, 05, 34)
+- Smart module merging at household & person level
+- Proper use of expansion factors (factor07)
+- Labor informality indicators
+- Weighted geographic analysis
+
+**[🎓 Read the full tutorial on Medium →](https://medium.com/@pcamacho447)**
+
+---
+
+## 📚 More Examples
+
+### Additional Use Cases
+
+1. **[Geographic Inequality Analysis](examples/02_geographic_inequality_analysis.py)**
+   - Merge with UBIGEO data
+   - Regional poverty comparisons
+   - Weighted statistics by department
+
+2. **[Multi-module Household Analysis](examples/03_multimodule_analysis.py)**
+   - Combine housing + education + health data
+   - Create composite indicators
+   - Panel analysis across years
+
+3. **[ML-Powered Missing Data Imputation](examples/04_advanced_ml_imputation_demo.py)**
+   - Detect missing patterns (MCAR, MAR, MNAR)
+   - KNN and Random Forest imputation
+   - Quality assessment metrics
+
+4. **[Housing Quality Dashboard](examples/medium/caracteristicas_del_hogar.ipynb)**
+   - Interactive visualizations
+   - NBI (Necesidades Básicas Insatisfechas) analysis
+   - Geographic disparities
+
+**[📓 Browse all examples →](examples/)**
+
+---
+
+## 📖 Documentation
+
+- **[Getting Started](docs/getting_started.rst)** - Installation & first steps
+- **[User Guide](docs/tutorials/)** - Step-by-step tutorials
+- **[API Reference](docs/api/)** - Complete API documentation
+- **[FAQ](docs/faq.rst)** - Common questions answered
+- **[Troubleshooting](docs/troubleshooting.rst)** - Solutions to common issues
+
+---
+
+## 🏗️ Package Architecture
 
 ```
 enahopy/
-├── loader/              # Descarga y lectura de datos ENAHO
-│   ├── core/           # Configuración y excepciones
-│   ├── io/             # Readers (DTA, SAV, CSV, Parquet) y downloaders
-│   └── utils/          # Utilidades y funciones auxiliares
-├── merger/             # Fusión de módulos y datos geográficos
-│   ├── geographic/     # Manejo de UBIGEO y validación geográfica
-│   ├── modules/        # Fusión entre módulos ENAHO (01, 02, 05, 34, sumaria)
-│   └── strategies/     # Estrategias de fusión (hogar, persona, panel)
-└── null_analysis/      # Análisis de valores faltantes
-    ├── core/          # Motor de análisis y clasificación
-    ├── patterns/      # Detección de patrones (MCAR, MAR, MNAR)
-    ├── strategies/    # Estrategias de imputación (media, KNN, ML)
-    └── reports/       # Generación de reportes y visualizaciones
+├── loader/              # Data download and loading
+│   ├── core/           # Configuration and exceptions
+│   ├── io/             # Format readers (DTA, SAV, CSV, Parquet) and downloaders
+│   └── utils/          # Utilities and helpers
+├── merger/             # Module and geographic merging
+│   ├── geographic/     # UBIGEO handling and validation
+│   ├── modules/        # ENAHO module merging (01, 02, 05, 34, sumaria)
+│   └── strategies/     # Merge strategies (household, person, panel)
+└── null_analysis/      # Missing data analysis
+    ├── core/          # Analysis engine and classification
+    ├── patterns/      # Pattern detection (MCAR, MAR, MNAR)
+    ├── strategies/    # Imputation strategies (mean, KNN, ML)
+    └── reports/       # Report generation and visualizations
 ```
 
-## 📚 Módulos ENAHO Soportados
+---
 
-| Módulo | Descripción | Nivel |
-|--------|-------------|-------|
-| `01` | Características de la vivienda y del hogar | Hogar |
-| `02` | Características de los miembros del hogar | Persona |
-| `03` | Educación | Persona |
-| `04` | Salud | Persona |
-| `05` | Empleo e ingresos | Persona |
-| `34` | Programas sociales | Hogar |
-| `37` | Gastos del hogar | Hogar |
-| `sumaria` | Indicadores agregados (gasto, ingreso, pobreza) | Hogar |
+## 🔧 Advanced Configuration
 
-## 🔧 Configuración Avanzada
-
-### Cache y Performance
+### Cache & Performance
 
 ```python
 from enahopy.loader import ENAHOConfig, ENAHODataDownloader
 
-# Configuración con cache habilitado
 config = ENAHOConfig(
-    cache_dir='.enaho_cache',       # Directorio de cache
-    enable_cache=True,               # Habilitar sistema de cache
-    max_workers=4,                   # Workers para descarga paralela
-    chunk_size=50000,                # Tamaño de chunks para lectura
-    enable_validation=True           # Validar columnas al cargar
+    cache_dir='.enaho_cache',
+    enable_cache=True,
+    max_workers=4,           # Parallel downloads
+    chunk_size=50000,
+    enable_validation=True
 )
 
 downloader = ENAHODataDownloader(config=config)
 
-# Primera descarga: ~30 segundos (descarga desde INEI)
-# Segunda descarga: <1 segundo (lee desde cache local)
-df = downloader.download_module(year=2023, module='sumaria', format='dta')
+# First run: ~30 seconds (downloads from INEI)
+# Second run: <1 second (reads from local cache)
 ```
 
-### Validación Estricta en Mergers
+### Strict Validation in Mergers
 
 ```python
 from enahopy.merger import MergerConfig, ENAHOMerger
 
-# Configuración con validación estricta
 config = MergerConfig(
-    validate_merge=True,      # Validar antes de fusionar
-    strict_mode=True,         # Modo estricto (falla si hay errores)
-    allow_duplicates=False,   # No permitir duplicados
-    validate_ubigeo=True      # Validar códigos UBIGEO
+    validate_merge=True,
+    strict_mode=True,
+    allow_duplicates=False,
+    validate_ubigeo=True
 )
 
 merger = ENAHOMerger(config=config)
 ```
 
-## 📊 Ejemplos y Tutoriales
+---
 
-El repositorio incluye scripts de demostración completos:
+## 🤝 Contributing
 
-- [`01_complete_poverty_analysis.py`](examples/01_complete_poverty_analysis.py) - Análisis end-to-end de pobreza monetaria
-- [`02_geographic_inequality_analysis.py`](examples/02_geographic_inequality_analysis.py) - Desigualdad territorial con UBIGEO
-- [`03_multimodule_analysis.py`](examples/03_multimodule_analysis.py) - Fusión avanzada de múltiples módulos
-- [`04_advanced_ml_imputation_demo.py`](examples/04_advanced_ml_imputation_demo.py) - Imputación con Machine Learning
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-También hay Jupyter notebooks en `examples/`:
-- [`tutorial_01_loader.ipynb`](examples/tutorial_01_loader.ipynb) - Descarga y lectura básica
-- [`tutorial_02_merger.ipynb`](examples/tutorial_02_merger.ipynb) - Fusión de módulos
-- [`tutorial_03_null_analysis.ipynb`](examples/tutorial_03_null_analysis.ipynb) - Análisis de valores nulos
+### Development Setup
 
-## 🤝 Contribuir
-
-¡Las contribuciones son bienvenidas! Ver [CONTRIBUTING.md](CONTRIBUTING.md) para detalles completos.
-
-### Setup de desarrollo:
 ```bash
-# Clonar repositorio
+# Clone repository
 git clone https://github.com/elpapx/enahopy.git
 cd enahopy
 
-# Instalar en modo desarrollo con dependencias
+# Install in development mode
 pip install -e .[dev]
 
-# Instalar pre-commit hooks
+# Install pre-commit hooks
 pre-commit install
 
-# Ejecutar tests
-pytest tests/ -v
+# Run tests
+pytest tests/ -v --cov=enahopy
 
-# Verificar estilo de código
+# Code quality checks
 black enahopy/ tests/
 flake8 enahopy/
 isort enahopy/ tests/
-
-# Generar reporte de cobertura
-pytest tests/ --cov=enahopy --cov-report=html
 ```
 
-### Estado del CI/CD
+### CI/CD Status
 
-Todos los PRs son validados automáticamente:
+All PRs are automatically validated:
 - ✅ **Quality Checks**: black, flake8, isort
 - ✅ **Multi-platform Tests**: Ubuntu, Windows, macOS
 - ✅ **Python Matrix**: 3.8, 3.9, 3.10, 3.11, 3.12
-- ✅ **Coverage**: Cobertura mínima 40%
-- ✅ **Build Validation**: Empaquetado PyPI
-
-## 📈 Roadmap
-
-**Próximas características:**
-- [ ] Soporte para ENDES (Encuesta Demográfica y de Salud Familiar)
-- [ ] Integración con ENAPRES (Encuesta Nacional de Programas Presupuestales)
-- [ ] Dashboard interactivo con Streamlit
-- [ ] Exportación a formatos R (RData, feather)
-- [ ] Análisis longitudinal (paneles multi-año)
-- [ ] API REST para servicios web
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver [LICENSE](LICENSE) para detalles.
-
-## 📞 Soporte
-
-- 📧 Email: pcamacho447@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/elpapx/enahopy/issues)
-- 💬 Discusiones: [GitHub Discussions](https://github.com/elpapx/enahopy/discussions)
-
-## 🙏 Agradecimientos
-
-- **INEI (Instituto Nacional de Estadística e Informática)** por la disponibilización de microdatos públicos
-- Comunidad de investigadores y analistas de datos sociales en Perú
-- Todos los contribuidores y usuarios del proyecto
+- ✅ **Coverage**: Minimum 40% required
+- ✅ **Build Validation**: PyPI packaging
 
 ---
 
-**Desarrollado con ❤️ para la comunidad de investigación social y económica en Perú**
+## 📈 Roadmap
 
-[![Made in Peru](https://img.shields.io/badge/Made%20in-Peru-red.svg)](https://en.wikipedia.org/wiki/Peru)
+**Upcoming features:**
+- [ ] ENDES support (Demographic and Family Health Survey)
+- [ ] ENAPRES integration (National Survey of Budget Programs)
+- [ ] Interactive Streamlit dashboard
+- [ ] R format exports (RData, feather)
+- [ ] Longitudinal analysis (multi-year panels)
+- [ ] REST API for web services
+
+---
+
+## 👤 Author
+
+**Pablo Camacho**
+
+- 📝 **Medium**: [@pcamacho447](https://medium.com/@pcamacho447) - Tutorials and use cases
+- 💻 **GitHub**: [@elpapx](https://github.com/elpapx)
+- 📧 **Email**: pcamacho447@gmail.com
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **INEI (Instituto Nacional de Estadística e Informática)** for making microdata publicly available
+- Peru's social research and data science community
+- All contributors and users of this project
+
+---
+
+<p align="center">
+  <strong>Made with ❤️ for social researchers and data scientists in Peru</strong>
+</p>
+
+<p align="center">
+  <a href="https://en.wikipedia.org/wiki/Peru"><img src="https://img.shields.io/badge/Made%20in-Peru-red.svg" alt="Made in Peru"></a>
+</p>
