@@ -27,27 +27,44 @@
 
 ---
 
-## 🎯 ¿Por qué enahopy?
+## Por qué enahopy
 
-Transforma los datos de la encuesta ENAHO del Perú desde archivos ZIP sin procesar a DataFrames de pandas listos para análisis en **3 líneas de código**.
+Transforma los datos de la encuesta ENAHO del Perú desde archivos ZIP sin procesar a DataFrames de pandas listos para análisis en **en unas cuantas líneas de código**.
 
-**Antes de enahopy** (50+ líneas de código repetitivo):
+**Antes de enahopy** (muchos procesos diferentes):
 ```python
 # Descargar ZIP del sitio web de INEI
 # Extraer archivos DBF manualmente
 # Manejar múltiples codificaciones (CP1252/UTF-8)
 # Unir módulos con claves apropiadas
-# Aplicar factores de expansión correctamente
-# Manejar datos faltantes...
-# (50+ líneas más)
 ```
 
-**Con enahopy** (3 líneas):
+**Descarga con enahopy** (con enahopy en unas cuantas líneas):
 ```python
-import enahopy as enaho
-loader = enaho.ENAHOLoader(year=2022)
-df = loader.load_module("01")  # ¡Listo! 🎉
+from enahopy.loader import ENAHODataDownloader
+
+# Módulos a descargar
+modulos_interes = {
+    "01": "Caracteristica de la vivienda y del hogar",
+    "34": "Sumarias ( Variables Calculadas )",
+}
+
+downloader = ENAHODataDownloader(verbose=True)
+
+# Descarga múltiple
+data_multi = downloader.download(
+    modules=list(modulos_interes.keys()), # ["01", "34"] también funciona
+    years=["2024"],                   # puedes descargar multiples años
+    output_dir=r"\examples\medium\data",
+    decompress=True,                  # Descomprime archivos ZIP  
+    only_dta=True,                    # Descarga solo archivos dta  
+    load_dta=True,                    # Carga datos en DataFrame pandas
+    parallel=True,                    # ¡Descarga paralela!
+    max_workers=2,                    # Puedes decidir cuantas
+    verbose=False                     # Desactiva mensajes de estado  
+)
 ```
+
 
 ---
 
@@ -56,11 +73,6 @@ df = loader.load_module("01")  # ¡Listo! 🎉
 ### Instalación básica
 ```bash
 pip install enahopy
-```
-
-### Con todas las funcionalidades
-```bash
-pip install enahopy[all]
 ```
 
 ---
@@ -76,7 +88,7 @@ downloader = ENAHODataDownloader(verbose=True)
 
 # Descargar datos de características de la vivienda
 data = downloader.download(
-    modules=['01'],
+    modules=['01'],     
     years=['2024'],
     output_dir='./data',
     load_dta=True
@@ -86,15 +98,27 @@ df_hogar = data[('2024', '01')]['enaho01-2024-100']
 print(f"✓ Cargados {len(df_hogar):,} hogares")
 ```
 
-### Ejemplo 2: Estadísticas Ponderadas (Profesional)
+### Ejemplo 2: Estadísticas Ponderadas 
 ```python
 import pandas as pd
 import numpy as np
+from enahopy.loader import ENAHODataDownloader
+
+# Inicializar descargador
+downloader = ENAHODataDownloader(verbose=True)
+
+# Descargar datos de características de la vivienda
+data = downloader.download(
+    modules=['34'],         # Puedes descargar multiples modulos    
+    years=['2024'],         # Puedes descargar multiples años
+    output_dir='./data',    # todo al mismo tiempo y en la misma carpeta
+    load_dta=True           # Y cargarlo de paso en DataFrame pandas
+)
 
 # Cargar módulo sumaria con indicadores de pobreza
-df_sumaria = data[('2024', '34')]['sumaria-2024']
+df_sumaria = data[('2024', '34')]['sumaria-2024'] # Una vez cargado, pasamos a trabajar
 
-# ✅ CORRECTO: Estadísticas ponderadas usando factores de expansión
+# Estadísticas ponderadas usando factores de expansión
 factor = df_sumaria['factor07']  # Factor de expansión
 
 # Calcular tasa de pobreza ponderada
@@ -117,6 +141,110 @@ print("\nIndicadores por Dominio (ponderado):")
 print(analisis_geografico)
 ```
 
+### Ejemplo 3: Proceso completo incluido merge entre modulos
+```
+# ========== USANDO ENAHOPY ENAHO LOADER ==========
+from enahopy.loader import ENAHODataDownloader
+from enahopy.loader.io import ENAHOLocalReader # si necesitas leer el archivo descargado
+
+
+# ========== USANDO ENAHOPY's ENAHOModuleMerger ==========
+from enahopy.merger import ENAHOModuleMerger
+from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel
+import logging
+
+
+# ========== USANDO ENAHOPY ENAHO NULL_ANALYSIS ==========
+from enahopy.null_analysis import ENAHONullAnalyzer
+
+import pandas as pd
+import numpy as np
+from datetime import datetime
+import warnings
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+warnings.filterwarnings('ignore')
+
+
+# ========== CONFIGURACIÓN ENAHOModuleMerger ==========
+
+# Configurar el merger para nivel individual (persona)
+config = ModuleMergeConfig(merge_level=ModuleMergeLevel.PERSONA)
+logger = logging.getLogger('enaho_merger')
+merger = ENAHOModuleMerger(config, logger)
+
+
+# Configurar el merger para nivel hogar
+config_hogar = ModuleMergeConfig(merge_level=ModuleMergeLevel.HOGAR)
+merger_hogar = ENAHOModuleMerger(config_hogar, logger)
+
+# ========== DESCARGA DE DATOS ==========
+
+# Seleccionar los módulos a descargar
+modulos_interes = {
+    "01": "Caracteristica de la vivienda y del hogar",
+    "34": "Sumarias ( Variables Calculadas )",
+}
+
+# Inicializar descargador
+downloader = ENAHODataDownloader(verbose=True)
+
+
+# Iniciar descarga
+data_multi = downloader.download(
+    modules=list(modulos_interes.keys()),
+    years=["2024"],
+    output_dir=r"\examples\medium\data",
+    decompress=True,
+    only_dta=True,
+    load_dta=True,
+    parallel=True,                    
+    max_workers=2,                  
+    verbose=False
+)
+
+# ========== CARGA DE DATOS ==========
+
+# Filtramos las preguntas que requerimos para nuestra investigación
+sumaria_vars = ['conglome', 'vivienda', 'hogar', 'ubigeo',
+    'pobreza','inghog2d', 'mieperho', 'dominio', 'estrato',
+    'factor07']
+
+carac_hogar_vars = [ 'conglome','vivienda', 'hogar', 'p101',
+    'p102', 'p103', 'p103a', 'p104b1', 'p110', 'p111a', 'i105b',
+    'nbi1', 'nbi2', 'nbi3', 'nbi4', 'nbi5']
+
+# Filtramos los datasets que hemos descargado
+data_caracteristica_vivienda = data_multi[('2024', '01')]['enaho01-2024-100']
+data_sumaria = data_multi[('2024', '34')]['sumaria-2024']
+
+# Filtrados los datasets, filtramos las variables que nos interesan
+data_carac_viv = data_caracteristica_vivienda[carac_hogar_vars]
+data_sum = data_sumaria[sumaria_vars]
+
+# ========== MERGE DE DATOS ==========
+print("\n" + "=" * 70)
+print(" PASO 3: UNIR CON SUMARIA (BASE A NIVEL HOGAR) ".center(70))
+print("=" * 70 + "\n")
+
+print("Uniendo datos agregados con sumaria (módulo 34)...")
+print(f"   Base (sumaria): {data_sum.shape[0]:,} hogares")
+print(f"   Datos agregados: {data_carac_viv.shape[0]:,} hogares")
+
+
+# Realizar el merge usando enahopy
+print("\n Usando ENAHOModuleMerger de enahopy para fusionar sumaria con caracteristicas de la vivienda y hogar...")
+merge_result_hogar = merger_hogar.merge_modules(
+    left_df=data_sum,           # Sumaria como base (left)
+    right_df=data_carac_viv,         # Datos agregados (right)
+    left_module='34',           # Módulo sumaria
+    right_module='01',    # Identificador para datos agregados
+    merge_config=config_hogar
+)
+```
+
 **[📚 Ver tutoriales completos con notebooks →](examples/)**
 
 ---
@@ -124,15 +252,13 @@ print(analisis_geografico)
 ## ✨ Características Principales
 
 - 🎯 **Carga de datos en una línea** desde servidores INEI o archivos locales
-- 🔢 **60+ módulos ENAHO** soportados (todos los módulos del 01 al 100, años 2015-2024)
-- ⚖️ **Factores de expansión** (factor07) para estimaciones poblacionales apropiadas
-- 🔗 **Unión inteligente de módulos** a nivel de hogar/persona/vivienda
+- 🔢 **20+ módulos ENAHO** soportados (todos los módulos del 01 al 100)
+- 🔗 **Unión inteligente de módulos** a nivel de vivienda/hogar/persona
 - 💾 **Caché inteligente** (ahorra ancho de banda y tiempo en descargas repetidas)
 - 🧹 **Limpieza automática de datos** (codificaciones, tipos de datos, nulos)
 - 📊 **Múltiples formatos**: DBF, SPSS (.sav), Stata (.dta), CSV, Parquet
 - 🗺️ **Integración geográfica** con UBIGEO (departamento/provincia/distrito)
-- 🕳️ **Análisis de datos faltantes** con estrategias de imputación potenciadas por ML
-- 🐍 **100% Python** - No requiere R ni dependencias externas
+
 
 ---
 
@@ -140,27 +266,21 @@ print(analisis_geografico)
 
 ### Módulos Más Comunes
 
-| Módulo | Descripción | Nivel | Años |
-|--------|-------------|-------|-------|
-| `01` | Características de la vivienda y del hogar | Hogar | 2015-2024 |
-| `02` | Características de los miembros del hogar | Persona | 2015-2024 |
-| `03` | Educación | Persona | 2015-2024 |
-| `04` | Salud | Persona | 2015-2024 |
-| `05` | Empleo e ingresos | Persona | 2015-2024 |
-| `34` | Programas sociales, alimentación | Hogar | 2015-2024 |
-| `37` | Gastos del hogar | Hogar | 2015-2024 |
-| `85` | Sumaria de pobreza (línea de pobreza) | Hogar | 2015-2024 |
-| `sumaria` | Indicadores agregados (gasto, ingreso, pobreza) | Hogar | 2015-2024 |
+| Módulo | Descripción                                | 
+|--------|--------------------------------------------|
+| `01`   | Características de la vivienda y del hogar |  
+| `02`   | Características de los miembros del hogar  |  
+| `03`   | Educación                                  |  
+| `04`   | Salud                                      |  
+| `05`   | Empleo e ingresos                          |  
+| `22`   | Producción Agrícola                        |  
+| `34`   | Sumaria (Variables Calculadas)             |
+| `37`   | Programas Sociales (Miembros del Hogar)    |  
+| `85`   | Gobernabilidad, Democracia y Transparencia | 
+  
 
-### Módulos Adicionales Disponibles
-
-La librería soporta **todos los módulos ENAHO** (01-100) a través de los años 2015-2024, incluyendo:
-- **Mercado laboral**: Módulos 05, 18 (sector informal)
-- **Ingresos y gastos**: Módulos 37, 85, sumaria
-- **Programas sociales**: Módulo 34 (Juntos, Qali Warma, Pensión 65)
-- **Infraestructura de vivienda**: Módulo 01 (agua, saneamiento, electricidad)
-- **Educación**: Módulo 03 (matrícula, alfabetización, culminación escolar)
-- **Salud**: Módulo 04 (seguro, morbilidad, acceso a servicios de salud)
+La librería soporta **todos los módulos ENAHO** (01-100) a través de los años que proporciona el INEI. Tanto como 
+corte transversal.
 
 ---
 
@@ -276,7 +396,7 @@ Todos los PRs son automáticamente validados:
 - ✅ **Verificaciones de Calidad**: black, flake8, isort
 - ✅ **Tests Multi-plataforma**: Ubuntu, Windows, macOS
 - ✅ **Matriz de Python**: 3.8, 3.9, 3.10, 3.11, 3.12
-- ✅ **Cobertura**: Mínimo 40% requerido
+- ✅ **Cobertura**: Mínimo 60% requerido
 - ✅ **Validación de Build**: Empaquetado PyPI
 
 ---
@@ -284,12 +404,10 @@ Todos los PRs son automáticamente validados:
 ## 📈 Hoja de Ruta
 
 **Próximas funcionalidades:**
-- [ ] Soporte para ENDES (Encuesta Demográfica y de Salud Familiar)
-- [ ] Integración con ENAPRES (Encuesta Nacional de Programas Estratégicos)
-- [ ] Dashboard interactivo con Streamlit
-- [ ] Exportación a formatos R (RData, feather)
-- [ ] Análisis longitudinal (paneles multi-año)
-- [ ] API REST para servicios web
+- Diseño Muestral
+- Metadata
+- Análisis longitudinal (paneles multi-año)
+- Análisis avanzado
 
 ---
 
