@@ -202,7 +202,7 @@ class TestDownloadBasics:
 
         # Verify it's a valid SHA256 hash
         assert len(checksum) == 64
-        assert all(c in "0123456789abcde" for c in checksum)
+        assert all(c in "0123456789abcdef" for c in checksum)
 
         # Verify it matches expected checksum
         expected = hashlib.sha256(test_content).hexdigest()
