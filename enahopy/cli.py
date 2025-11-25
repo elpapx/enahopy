@@ -4,7 +4,6 @@ Command Line Interface para enahopy
 
 import argparse
 import sys
-from pathlib import Path
 
 from . import __version__
 
@@ -130,7 +129,7 @@ def analyze_command(args):
         # Realizar análisis
         if args.report == "nulls":
             result = analyze_null_patterns(df)
-            print(f"Análisis de valores nulos completado")
+            print("Análisis de valores nulos completado")
             print(f"Completitud general: {result['completeness']:.1%}")
 
         # Guardar reporte si se especifica

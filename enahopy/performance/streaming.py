@@ -6,28 +6,22 @@ Advanced streaming system for processing large ENAHO datasets with minimal memor
 Supports various file formats, parallel processing, and intelligent data pipeline optimization.
 """
 
-import asyncio
 import gc
 import logging
 import multiprocessing as mp
 import tempfile
-import threading
 import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from queue import Empty, Queue
-from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 try:
     import dask.dataframe as dd
     from dask.distributed import Client
-    from dask.distributed import as_completed as dask_as_completed
 
     DASK_AVAILABLE = True
 except ImportError:
@@ -35,7 +29,6 @@ except ImportError:
 
 try:
     import pyarrow as pa
-    import pyarrow.csv as pa_csv
     import pyarrow.parquet as pq
 
     ARROW_AVAILABLE = True
@@ -43,7 +36,7 @@ except ImportError:
     ARROW_AVAILABLE = False
 
 try:
-    import polars as pl
+    pass
 
     POLARS_AVAILABLE = True
 except ImportError:
@@ -92,17 +85,14 @@ class StreamingReader(ABC):
     @abstractmethod
     def read_chunks(self, chunk_size: int) -> Generator[pd.DataFrame, None, None]:
         """Read file in chunks"""
-        pass
 
     @abstractmethod
     def get_total_rows(self) -> Optional[int]:
         """Get total number of rows if available"""
-        pass
 
     @abstractmethod
     def get_column_info(self) -> Dict[str, Any]:
         """Get column information"""
-        pass
 
 
 class CSVStreamingReader(StreamingReader):
@@ -131,7 +121,7 @@ class CSVStreamingReader(StreamingReader):
             try:
                 with open(self.file_path, "r", encoding="utf-8") as f:
                     self._total_rows = sum(1 for _ in f) - 1  # Subtract header
-            except:
+            except Exception:
                 self._total_rows = None
         return self._total_rows
 
@@ -173,7 +163,7 @@ class ParquetStreamingReader(StreamingReader):
         try:
             parquet_file = pq.ParquetFile(self.file_path)
             return parquet_file.metadata.num_rows
-        except:
+        except Exception:
             return None
 
     def get_column_info(self) -> Dict[str, Any]:
@@ -183,7 +173,7 @@ class ParquetStreamingReader(StreamingReader):
             schema = parquet_file.schema
 
             return {"columns": schema.names, "count": len(schema.names), "schema": schema}
-        except:
+        except Exception:
             return {"columns": [], "count": 0}
 
 
@@ -420,7 +410,6 @@ class StreamingProcessor:
 
         # Use incremental aggregation with temporary storage
         temp_files = []
-        chunk_results = []
 
         try:
             with memory_optimized_context():
@@ -481,7 +470,7 @@ class StreamingProcessor:
             for temp_file in temp_files:
                 try:
                     temp_file.unlink()
-                except:
+                except Exception:
                     pass
 
         # Save final result if requested

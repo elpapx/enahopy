@@ -2,8 +2,6 @@
 Tests específicos de importaciones para cada módulo
 """
 
-import sys
-from pathlib import Path
 
 import pytest
 

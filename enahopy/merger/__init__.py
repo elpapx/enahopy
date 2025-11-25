@@ -458,7 +458,7 @@ def merge_modules_with_geography(
 
     if verbose:
         print(
-            f"""
+            """
 🔗🗺️  MERGE COMBINADO COMPLETADO
 ===============================
 Módulos procesados: {report['processing_summary']['modules_processed']}
@@ -693,9 +693,9 @@ def validate_module_compatibility(
     compatibility = merger.validate_module_compatibility(modules_dict, level)
 
     if verbose:
-        status = "✅ COMPATIBLE" if compatibility["overall_compatible"] else "⚠️  CON PROBLEMAS"
+        "✅ COMPATIBLE" if compatibility["overall_compatible"] else "⚠️  CON PROBLEMAS"
         print(
-            f"""
+            """
 📋 REPORTE DE COMPATIBILIDAD
 ===========================
 Estado: {status}
@@ -709,7 +709,7 @@ Recomendaciones:
 
         if compatibility["potential_issues"]:
             print(
-                f"""
+                """
 ⚠️  Problemas detectados:
 {chr(10).join(['  - ' + issue for issue in compatibility['potential_issues']])}
             """

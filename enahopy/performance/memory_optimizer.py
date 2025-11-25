@@ -8,15 +8,13 @@ Includes intelligent memory management, streaming capabilities, and performance 
 
 import gc
 import logging
-import os
-import sys
 import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -29,22 +27,21 @@ except ImportError:
     PSUTIL_AVAILABLE = False
 
 try:
-    from memory_profiler import LineProfiler, profile
+    pass
 
     MEMORY_PROFILER_AVAILABLE = True
 except ImportError:
     MEMORY_PROFILER_AVAILABLE = False
 
 try:
-    import dask.dataframe as dd
+    pass
 
     DASK_AVAILABLE = True
 except ImportError:
     DASK_AVAILABLE = False
 
 try:
-    import pyarrow as pa
-    import pyarrow.parquet as pq
+    pass
 
     ARROW_AVAILABLE = True
 except ImportError:

@@ -8,15 +8,12 @@ and scenario analysis for evidence-based policy making.
 """
 
 import logging
-import warnings
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from scipy import optimize, stats
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
 
 
@@ -463,7 +460,7 @@ class PolicyImpactEvaluator:
 
         # Calculate concentration index for taxes
         df_sorted = df.sort_values(income_col)
-        n = len(df_sorted)
+        len(df_sorted)
         cumulative_income = df_sorted[income_col].cumsum()
         cumulative_tax = df_sorted[tax_col].cumsum()
 
@@ -848,7 +845,7 @@ class PolicyScenarios:
         top_cost_effective = comparison_results["ranking"]["by_cost_effectiveness"][0]
         recommendations.append(
             f"For maximum cost-effectiveness, implement '{top_cost_effective}' "
-            f"(welfare gain per dollar: "
+            "(welfare gain per dollar: "
             f"{comparison_results['cost_effectiveness'][top_cost_effective]['welfare_gain_per_dollar']:.2f})"
         )
 
@@ -857,7 +854,7 @@ class PolicyScenarios:
         if top_poverty_impact != top_cost_effective:
             recommendations.append(
                 f"For maximum poverty reduction, consider '{top_poverty_impact}' "
-                f"(reduces poverty for "
+                "(reduces poverty for "
                 f"{comparison_results['scenario_summary'][top_poverty_impact]['poverty_reduction']} households)"
             )
 

@@ -14,4 +14,3 @@ class MergeStrategy(ABC):
         self, left: pd.DataFrame, right: pd.DataFrame, keys: List[str], **kwargs
     ) -> pd.DataFrame:
         """Ejecuta la estrategia de merge"""
-        pass

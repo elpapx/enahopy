@@ -25,18 +25,13 @@ Imports centralizados para evitar errores de dependencias.
 import logging
 
 # Imports estándar de Python (siempre disponibles)
-import os
-import sys
 import time
 import warnings
-from collections import Counter, defaultdict
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 # Imports científicos (verificar disponibilidad)
 try:
-    import numpy as np
     import pandas as pd
 
     HAS_PANDAS = True
@@ -44,8 +39,7 @@ except ImportError:
     HAS_PANDAS = False
 
 try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    pass
 
     HAS_PLOTTING = True
 except ImportError:
@@ -79,14 +73,7 @@ from .config import (
     TipoManejoDuplicados,
     TipoManejoErrores,
 )
-from .exceptions import (
-    ConfigurationError,
-    DataQualityError,
-    GeoMergeError,
-    MergeValidationError,
-    ModuleMergeError,
-    ValidationThresholdError,
-)
+from .exceptions import ConfigurationError, DataQualityError, GeoMergeError, MergeValidationError
 from .geographic.patterns import GeoPatternDetector
 from .geographic.strategies import DuplicateStrategyFactory
 from .geographic.validators import GeoDataQualityValidator, TerritorialValidator, UbigeoValidator
@@ -1009,7 +996,7 @@ class ENAHOGeoMerger:
             raise GeoMergeError(
                 f"Se encontraron {n_duplicates} duplicados en '{columna_union}'. "
                 f"UBIGEOs afectados: {list(ubigeos_duplicados[:5])}... "
-                f"Use otra estrategia de manejo_duplicados si desea procesarlos."
+                "Use otra estrategia de manejo_duplicados si desea procesarlos."
             )
 
         try:
@@ -1218,7 +1205,7 @@ class ENAHOGeoMerger:
             )
 
         self.logger.info(
-            f"Iniciando merge geográfico: "
+            "Iniciando merge geográfico: "
             f"{len(df_principal)} registros principales × "
             f"{len(df_geografia)} registros geográficos"
         )
@@ -1436,7 +1423,7 @@ class ENAHOGeoMerger:
             if "Buffer dtype mismatch" in str(e):
                 self.logger.warning(
                     f"Buffer dtype mismatch detected for column '{on}'. "
-                    f"Converting to string for merge compatibility."
+                    "Converting to string for merge compatibility."
                 )
                 # Convert merge columns to string as fallback
                 df1[on] = df1[on].astype(str)

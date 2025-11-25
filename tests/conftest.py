@@ -58,4 +58,4 @@ def mock_enaho_config():
         }
         YEAR_MAP_TRANSVERSAL = {"2023": "952", "2022": "950"}
 
-    retur
+    return MockConfig

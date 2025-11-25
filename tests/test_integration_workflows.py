@@ -5,7 +5,6 @@ Tests complete pipelines: download → read → merge → analyze
 
 import shutil
 import tempfile
-from pathlib import Path
 
 import pandas as pd
 import pytest

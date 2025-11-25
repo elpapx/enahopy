@@ -16,7 +16,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
 from enahopy.exceptions import ENAHOCacheError
 from enahopy.loader.core.cache import CacheManager
@@ -698,7 +698,7 @@ class TestCacheAnalytics(unittest.TestCase):
         self.cache_manager.set_metadata("test_key", test_data)
 
         # Read data (should be a hit)
-        result = self.cache_manager.get_metadata("test_key")
+        self.cache_manager.get_metadata("test_key")
 
         analytics = self.cache_manager.get_analytics()
         self.assertEqual(analytics["hits"], 1)
@@ -708,7 +708,7 @@ class TestCacheAnalytics(unittest.TestCase):
     def test_analytics_miss_tracking(self):
         """Test that cache misses are tracked correctly."""
         # Try to read non-existent key (should be a miss)
-        result = self.cache_manager.get_metadata("nonexistent_key")
+        self.cache_manager.get_metadata("nonexistent_key")
 
         analytics = self.cache_manager.get_analytics()
         self.assertEqual(analytics["hits"], 0)

@@ -11,7 +11,7 @@ Detector automático de columnas geográficas y patrones territoriales.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict
 
 import pandas as pd
 
@@ -329,7 +329,7 @@ class GeoPatternDetector:
 
                     score += en_rango * 0.5
 
-        except:
+        except Exception:
             pass
 
         return min(1.0, score)

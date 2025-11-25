@@ -11,7 +11,6 @@ import hashlib
 import logging
 import zipfile
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urljoin
 
 import requests
@@ -204,7 +203,7 @@ class ENAHODownloader:
             if "timeout" in str(e).lower():
                 raise ENAHOTimeoutError(f"Timeout descargando {url}")
             raise ENAHODownloadError(f"Error de red descargando {url}: {str(e)}")
-        except Exception as e:
+        except Exception:
             temp_path.unlink(missing_ok=True)
             raise
 

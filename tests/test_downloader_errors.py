@@ -18,7 +18,6 @@ Date: 2025-11-13
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -267,7 +266,6 @@ class TestDownloadConfigurationEdgeCases:
         """Test parallel download configuration."""
         # Test that parallel parameter and max_workers are accepted
         # Would need mocking to avoid actual downloads
-        pass
 
     def test_download_with_progress_callback(self, downloader, temp_dir):
         """Test download with progress callback."""
@@ -277,7 +275,6 @@ class TestDownloadConfigurationEdgeCases:
             callback_calls.append((task, completed, total))
 
         # Would need mocking to test without actual download
-        pass
 
 
 # ==============================================================================

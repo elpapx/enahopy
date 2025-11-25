@@ -20,7 +20,7 @@ try:
     )
 
     ML_IMPUTATION_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     ML_IMPUTATION_AVAILABLE = False
 
     # Create dummy classes to maintain API compatibility
@@ -63,7 +63,7 @@ try:
     )
 
     ENAHO_PATTERN_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     ENAHO_PATTERN_AVAILABLE = False
 
     class ENAHOMissingPattern:
@@ -93,7 +93,7 @@ try:
     )
 
     QUALITY_ASSESSMENT_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     QUALITY_ASSESSMENT_AVAILABLE = False
 
     class QualityMetricType:

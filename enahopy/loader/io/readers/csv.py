@@ -15,11 +15,8 @@ Optimizations (DE-2):
 
 from __future__ import annotations
 
-import logging
-from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Union
+from typing import Dict, Iterator, List, Union
 
-import numpy as np
 import pandas as pd
 
 from ...io.base import DASK_AVAILABLE

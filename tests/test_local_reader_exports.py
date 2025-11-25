@@ -9,8 +9,6 @@ Goal: Test export methods (lines 520-663) to achieve 60-65% coverage (+2-3% over
 """
 
 import json
-import tempfile
-from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -19,7 +17,7 @@ from enahopy.loader.io.local_reader import ENAHOLocalReader
 
 # Check for optional dependencies
 try:
-    import openpyxl
+    pass
 
     OPENPYXL_AVAILABLE = True
 except ImportError:

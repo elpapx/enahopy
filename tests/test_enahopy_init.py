@@ -15,7 +15,6 @@ Goal: Achieve 55-65% coverage (+2-3% overall project coverage)
 import importlib
 import sys
 from io import StringIO
-from unittest import mock
 
 import pytest
 
@@ -528,7 +527,7 @@ def test_reimport_enahopy_maintains_state():
     import enahopy
 
     # Store initial state
-    initial_loader = enahopy._loader_available
+    enahopy._loader_available
 
     # Re-import
     importlib.reload(enahopy)
@@ -639,9 +638,9 @@ def test_getattr_caching_mechanism():
     # Clear cache first
     cache_key = "performance"
     if cache_key in enahopy._imported_modules:
-        initial_cache_size = len(enahopy._imported_modules)
+        len(enahopy._imported_modules)
     else:
-        initial_cache_size = len(enahopy._imported_modules)
+        len(enahopy._imported_modules)
 
     try:
         # First access should trigger import and cache
@@ -710,7 +709,7 @@ def test_lazy_loading_updates_availability_flags():
     """Test that lazy loading properly updates availability flags"""
     import enahopy
 
-    initial_perf_status = enahopy._performance_available
+    enahopy._performance_available
 
     try:
         # Attempt lazy load
@@ -1131,7 +1130,7 @@ def test_lazy_loading_success_updates_cache_properly():
 
     # Try to load a module that might be available
     # We'll use a conditional approach
-    initial_cache_size = len(enahopy._imported_modules)
+    len(enahopy._imported_modules)
 
     try:
         # Attempt to load performance module via lazy loading

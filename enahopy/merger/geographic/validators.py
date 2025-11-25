@@ -12,7 +12,6 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 from ..config import DEPARTAMENTOS_VALIDOS, TipoValidacionUbigeo
-from ..exceptions import TerritorialInconsistencyError, UbigeoValidationError
 
 
 class UbigeoValidator:

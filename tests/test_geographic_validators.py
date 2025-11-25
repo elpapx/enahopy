@@ -7,14 +7,12 @@ Comprehensive tests for UBIGEO validation and territorial consistency checks.
 
 import logging
 import unittest
-from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from enahopy.merger.config import TipoValidacionUbigeo
-from enahopy.merger.exceptions import TerritorialInconsistencyError, UbigeoValidationError
 from enahopy.merger.geographic.validators import TerritorialValidator, UbigeoValidator
 
 
@@ -280,7 +278,7 @@ class TestUbigeoValidatorPerformance(unittest.TestCase):
     def test_large_series_validation(self):
         """Should handle large series efficiently."""
         # Create large series (10,000 UBIGEOs)
-        ubigeos = [f"010101"] * 5000 + [f"150101"] * 5000
+        ubigeos = ["010101"] * 5000 + ["150101"] * 5000
         serie = pd.Series(ubigeos)
 
         mask, errors = self.validator.validar_serie_ubigeos(serie, TipoValidacionUbigeo.BASIC)

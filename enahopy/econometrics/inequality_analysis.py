@@ -11,16 +11,14 @@ Comprehensive inequality analysis tools for policy research including:
 """
 
 import logging
-import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
 try:
-    from scipy import optimize, stats
-    from scipy.special import beta
+    from scipy import stats
 
     SCIPY_AVAILABLE = True
 except ImportError:
@@ -28,7 +26,6 @@ except ImportError:
 
 try:
     from sklearn.ensemble import RandomForestRegressor
-    from sklearn.model_selection import cross_val_score
     from sklearn.preprocessing import StandardScaler
 
     SKLEARN_AVAILABLE = True
@@ -397,7 +394,7 @@ class AdvancedInequalityAnalyzer:
         rf_full = RandomForestRegressor(n_estimators=100, random_state=42)
         rf_full.fit(X_full, y_income, sample_weight=weights)
 
-        predicted_income_full = rf_full.predict(X_full)
+        rf_full.predict(X_full)
 
         # Calculate inequality measures
         actual_inequality = self._calculate_gini(y_income, weights)
@@ -1086,7 +1083,6 @@ class SocialMobility:
             rank_correlation, rank_p_value = stats.spearmanr(parent_ranks, child_ranks)
         else:
             rank_correlation = parent_ranks.corr(child_ranks)
-            rank_p_value = None
 
         # Income correlation (log-log)
         log_parent = np.log(parent_income + 1)
@@ -1096,7 +1092,6 @@ class SocialMobility:
             income_correlation, income_p_value = stats.pearsonr(log_parent, log_child)
         else:
             income_correlation = log_parent.corr(log_child)
-            income_p_value = None
 
         # Create transition matrix (quintiles)
         parent_quintiles = pd.qcut(parent_income, 5, labels=[1, 2, 3, 4, 5])

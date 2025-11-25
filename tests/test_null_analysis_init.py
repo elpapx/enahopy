@@ -8,7 +8,6 @@ Target: null_analysis/__init__.py (currently 64.63% coverage)
 Goal: Achieve 75-80% coverage (+1.5-2% overall project coverage)
 """
 
-from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -690,7 +689,7 @@ def test_generate_null_report_critical_error_path(monkeypatch):
 
     # Pass invalid data to trigger critical error
     try:
-        result = generate_null_report("not a dataframe")
+        generate_null_report("not a dataframe")
         # If it doesn't raise, that's also acceptable (handled gracefully)
     except (NullAnalysisError, TypeError, AttributeError):
         # These exceptions are expected for invalid input
@@ -847,7 +846,6 @@ class TestGenerateNullReportErrorPaths:
 
     def test_generate_null_report_keyboard_interrupt(self, sample_df_with_nulls, monkeypatch):
         """Test KeyboardInterrupt handling in generate_null_report (lines 591-593)"""
-        from enahopy.null_analysis import generate_null_report
 
         def mock_analyze_keyboard_interrupt(*args, **kwargs):
             raise KeyboardInterrupt("User cancelled")

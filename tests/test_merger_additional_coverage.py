@@ -3,28 +3,13 @@ Additional tests for merger module coverage improvement
 Targets specific uncovered code paths in merger/core.py and merger/modules/merger.py
 """
 
-import logging
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.merger.config import (
-    GeoMergeConfiguration,
-    ModuleMergeConfig,
-    TipoManejoDuplicados,
-    TipoManejoErrores,
-)
+from enahopy.merger.config import GeoMergeConfiguration, ModuleMergeConfig, TipoManejoDuplicados
 from enahopy.merger.core import ENAHOGeoMerger, check_dependencies
-from enahopy.merger.exceptions import (
-    ConfigurationError,
-    DataQualityError,
-    GeoMergeError,
-    MergeValidationError,
-    ModuleMergeError,
-)
 
 
 @pytest.fixture
@@ -223,7 +208,7 @@ class TestMergeModulesMethod:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_df")
+        assert hasattr(result, "merged_d")
         assert isinstance(result.merged_df, pd.DataFrame)
         assert "var1" in result.merged_df.columns
         assert "var2" in result.merged_df.columns
@@ -251,7 +236,7 @@ class TestMergeModulesMethod:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_df")
+        assert hasattr(result, "merged_d")
         assert isinstance(result.merged_df, pd.DataFrame)
 
     def test_merge_multiple_modules_empty_dict(self, merger):
@@ -294,7 +279,7 @@ class TestErrorHandling:
         # Should handle NaN gracefully or raise appropriate error
         try:
             result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
-            assert hasattr(result, "merged_df")
+            assert hasattr(result, "merged_d")
         except Exception:
             pass  # Expected in some cases
 
@@ -338,7 +323,7 @@ class TestDuplicateHandling:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_df")
+        assert hasattr(result, "merged_d")
 
     def test_merge_with_duplicates_last(self):
         """Test merge keeping last duplicate"""
@@ -366,7 +351,7 @@ class TestDuplicateHandling:
         modules_dict = {"34": df1, "01": df2}
         result = merger.merge_multiple_modules(modules_dict=modules_dict, base_module="34")
 
-        assert hasattr(result, "merged_df")
+        assert hasattr(result, "merged_d")
 
 
 class TestMemoryOptimization:

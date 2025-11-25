@@ -5,7 +5,6 @@ Tests Unitarios para Módulo de Validación
 Tests comprehensivos para enahopy.validation
 """
 
-import numpy as np
 import pandas as pd
 import pytest
 

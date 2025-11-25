@@ -36,24 +36,20 @@ class IReader(ABC):
     @abstractmethod
     def read_columns(self, columns: List[str]) -> pd.DataFrame:
         """Lee columnas específicas del archivo y devuelve un DataFrame de Pandas."""
-        pass
 
     @abstractmethod
     def read_in_chunks(
         self, columns: List[str], chunk_size: int
     ) -> Union[dd.DataFrame, Iterator[pd.DataFrame]]:
         """Lee columnas específicas en chunks y devuelve un DataFrame de Dask o iterador."""
-        pass
 
     @abstractmethod
     def get_available_columns(self) -> List[str]:
         """Obtiene la lista de todas las columnas disponibles en el archivo."""
-        pass
 
     @abstractmethod
     def extract_metadata(self) -> Dict:
         """Extrae los metadatos completos del archivo."""
-        pass
 
 
 __all__ = ["IReader", "DASK_AVAILABLE"]

@@ -8,8 +8,7 @@ Todos los enums, métodos y parámetros han sido verificados contra el código f
 
 import logging
 import unittest
-from typing import Any, Dict
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,6 @@ import pandas as pd
 from enahopy.merger import ENAHOGeoMerger, merge_enaho_modules, merge_with_geography
 from enahopy.merger.config import (
     GeoMergeConfiguration,
-    GeoValidationResult,
     ModuleMergeConfig,
     ModuleMergeLevel,
     ModuleMergeStrategy,
@@ -26,9 +24,8 @@ from enahopy.merger.config import (
     TipoManejoErrores,
     TipoValidacionUbigeo,
 )
-from enahopy.merger.exceptions import GeoMergeError, IncompatibleModulesError, ModuleMergeError
 from enahopy.merger.geographic.patterns import GeoPatternDetector
-from enahopy.merger.geographic.validators import TerritorialValidator, UbigeoValidator
+from enahopy.merger.geographic.validators import UbigeoValidator
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 
 # =====================================================
@@ -646,12 +643,10 @@ class TestPanelCreation(unittest.TestCase):
     @unittest.skipIf(True, "Panel functionality not available")
     def test_panel_creation(self):
         """Verifica creación de panel balanceado"""
-        pass
 
     @unittest.skipIf(True, "Panel functionality not available")
     def test_panel_unbalanced(self):
         """Verifica manejo de panel no balanceado"""
-        pass
 
 
 # =====================================================

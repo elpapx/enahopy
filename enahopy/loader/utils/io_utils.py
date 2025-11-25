@@ -13,11 +13,9 @@ import warnings
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
-import numpy as np
 import pandas as pd
 
 from ..core.config import ENAHOConfig
-from ..core.exceptions import ENAHOValidationError
 from ..io.base import DASK_AVAILABLE
 from ..io.main import ENAHODataDownloader
 from ..io.validators.results import ColumnValidationResult

@@ -13,12 +13,11 @@ de módulos ENAHO.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 
 from ..config import ModuleMergeConfig, ModuleMergeLevel, ModuleType
-from ..exceptions import IncompatibleModulesError, ModuleValidationError
 
 
 class ModuleValidator:

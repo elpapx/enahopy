@@ -3,7 +3,6 @@
 Script de configuración para el entorno de testing
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -104,21 +103,21 @@ def create_test_data():
 
     # CSV
     test_data.to_csv(data_dir / "test_enaho.csv", index=False)
-    print(f"   ✅ test_enaho.csv creado")
+    print("   ✅ test_enaho.csv creado")
 
     # Parquet
     try:
         test_data.to_parquet(data_dir / "test_enaho.parquet", index=False)
-        print(f"   ✅ test_enaho.parquet creado")
-    except:
-        print(f"   ⚠️ No se pudo crear archivo parquet")
+        print("   ✅ test_enaho.parquet creado")
+    except Exception:
+        print("   ⚠️ No se pudo crear archivo parquet")
 
     # Stata
     try:
         test_data.to_stata(data_dir / "test_enaho.dta", write_index=False)
-        print(f"   ✅ test_enaho.dta creado")
-    except:
-        print(f"   ⚠️ No se pudo crear archivo stata")
+        print("   ✅ test_enaho.dta creado")
+    except Exception:
+        print("   ⚠️ No se pudo crear archivo stata")
 
     print("\n✅ Datos de prueba creados")
 
@@ -198,48 +197,48 @@ MAKEFILE = """
 .PHONY: help test coverage lint format install clean
 
 help:
-	@echo "Comandos disponibles:"
-	@echo "  make install    - Instalar dependencias"
-	@echo "  make test       - Ejecutar tests"
-	@echo "  make coverage   - Ejecutar tests con cobertura"
-	@echo "  make lint       - Verificar estilo de código"
-	@echo "  make format     - Formatear código"
-	@echo "  make clean      - Limpiar archivos temporales"
+    @echo "Comandos disponibles:"
+    @echo "  make install    - Instalar dependencias"
+    @echo "  make test       - Ejecutar tests"
+    @echo "  make coverage   - Ejecutar tests con cobertura"
+    @echo "  make lint       - Verificar estilo de código"
+    @echo "  make format     - Formatear código"
+    @echo "  make clean      - Limpiar archivos temporales"
 
 install:
-	pip install -r requirements.txt
-	pip install -r requirements-test.txt
-	python setup_test.py
+    pip install -r requirements.txt
+    pip install -r requirements-test.txt
+    python setup_test.py
 
 test:
-	pytest tests/ -v
+    pytest tests/ -v
 
 test-unit:
-	pytest tests/unit/ -v
+    pytest tests/unit/ -v
 
 test-integration:
-	pytest tests/integration/ -v
+    pytest tests/integration/ -v
 
 coverage:
-	pytest --cov=enahopy --cov-report=html --cov-report=term
+    pytest --cov=enahopy --cov-report=html --cov-report=term
 
 lint:
-	flake8 enahopy tests
-	pylint enahopy
-	mypy enahopy
+    flake8 enahopy tests
+    pylint enahopy
+    mypy enahopy
 
 format:
-	black enahopy tests
-	isort enahopy tests
+    black enahopy tests
+    isort enahopy tests
 
 clean:
-	rm -rf __pycache__ .pytest_cache htmlcov .coverage
-	rm -rf build dist *.egg-info
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
+    rm -rf __pycache__ .pytest_cache htmlcov .coverage
+    rm -rf build dist *.egg-info
+    find . -type d -name "__pycache__" -exec rm -rf {} +
+    find . -type f -name "*.pyc" -delete
 
 docs:
-	sphinx-build -b html docs docs/_build
+    sphinx-build -b html docs docs/_build
 
 all: format lint test coverage
 """

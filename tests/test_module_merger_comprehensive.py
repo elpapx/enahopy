@@ -11,7 +11,6 @@ Focus on improving coverage from 67% to 75%+ by testing:
 """
 
 import logging
-from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -23,12 +22,7 @@ from enahopy.merger.config import (
     ModuleMergeResult,
     ModuleMergeStrategy,
 )
-from enahopy.merger.exceptions import (
-    ConflictResolutionError,
-    IncompatibleModulesError,
-    MergeKeyError,
-    ModuleMergeError,
-)
+from enahopy.merger.exceptions import IncompatibleModulesError, ModuleMergeError
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 
 

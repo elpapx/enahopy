@@ -16,7 +16,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
@@ -202,7 +202,7 @@ class TestDownloadBasics:
 
         # Verify it's a valid SHA256 hash
         assert len(checksum) == 64
-        assert all(c in "0123456789abcdef" for c in checksum)
+        assert all(c in "0123456789abcde" for c in checksum)
 
         # Verify it matches expected checksum
         expected = hashlib.sha256(test_content).hexdigest()
@@ -291,7 +291,7 @@ class TestDownloadBasics:
         ]
 
         for year, module, expected_name in test_cases:
-            url = downloader._build_url(814, module)
+            downloader._build_url(814, module)
             filename = f"modulo_{module}_{year}.zip"
             assert filename == expected_name
 

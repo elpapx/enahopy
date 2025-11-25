@@ -521,7 +521,7 @@ class TestGenerateDetectionReport(unittest.TestCase):
         assert isinstance(report, str)
         assert len(report) > 0
         # Should mention detected columns
-        assert "ubigeo" in report.lower() or "geográf" in report.lower()
+        assert "ubigeo" in report.lower() or "geográ" in report.lower()
 
     def test_generate_report_empty_detections(self):
         """Test report generation with no detections"""

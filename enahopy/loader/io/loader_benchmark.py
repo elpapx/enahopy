@@ -11,7 +11,6 @@ Created for Task DE-2: Data Loading Performance Optimization
 import gc
 import json
 import logging
-import os
 import sys
 import tempfile
 import time
@@ -576,4 +575,4 @@ if __name__ == "__main__":
     print("\n" + "=" * 70)
     print("BASELINE BENCHMARK COMPLETE")
     print("=" * 70)
-    print(f"Results saved to: loader_benchmark_baseline.json")
+    print("Results saved to: loader_benchmark_baseline.json")

@@ -110,7 +110,7 @@ class TestMergerRegression:
         assert len(result.merged_df) == initial_rows, (
             f"Left join cambió cardinalidad: {initial_rows} → {len(result.merged_df)} "
             f"(factor {len(result.merged_df) / initial_rows:.2f}x). "
-            f"BUG REGRESADO: Revisar merge_type en modules/merger.py"
+            "BUG REGRESADO: Revisar merge_type en modules/merger.py"
         )
 
         # Verificar que no hay duplicados en las llaves
@@ -222,7 +222,7 @@ class TestMergerRegression:
             right_only_count = (result.merged_df["_merge"] == "right_only").sum()
             assert right_only_count == 0, (
                 f"Left join creó {right_only_count} registros 'right_only'. "
-                f"BUG: Revisar _merge_large_datasets línea 1069"
+                "BUG: Revisar _merge_large_datasets línea 1069"
             )
 
     # ========================================================================
@@ -367,7 +367,7 @@ class TestMergerRegression:
         # Assert - Con caché debe ser más rápido (al menos 10% mejor)
         improvement = (time_without_cache - time_with_cache) / time_without_cache
         assert improvement > 0.05, (
-            f"Caché no mejoró performance significativamente: "
+            "Caché no mejoró performance significativamente: "
             f"Con caché: {time_with_cache:.3f}s, Sin caché: {time_without_cache:.3f}s, "
             f"Mejora: {improvement * 100:.1f}%"
         )

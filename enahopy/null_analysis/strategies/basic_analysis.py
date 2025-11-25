@@ -21,12 +21,10 @@ class INullAnalysisStrategy(ABC):
     @abstractmethod
     def analyze(self, df: pd.DataFrame, **kwargs) -> Dict[str, Any]:
         """Ejecuta el análisis específico"""
-        pass
 
     @abstractmethod
     def get_recommendations(self, analysis_result: Dict[str, Any]) -> List[str]:
         """Genera recomendaciones basadas en el análisis"""
-        pass
 
 
 class BasicNullAnalysis(INullAnalysisStrategy):
@@ -129,7 +127,7 @@ class BasicNullAnalysis(INullAnalysisStrategy):
         if not moderate_missing.empty:
             recommendations.append(
                 f"🔧 {len(moderate_missing)} variables tienen 10-50% de faltantes. "
-                f"Evalúe técnicas de imputación."
+                "Evalúe técnicas de imputación."
             )
 
         if analysis_result["metrics"].complete_cases_percentage < 20:

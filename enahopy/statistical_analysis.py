@@ -7,23 +7,20 @@ inequality measures, and econometric utilities for household survey analysis.
 """
 
 import logging
-import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
 try:
     from scipy import stats
-    from scipy.optimize import minimize_scalar
 
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
 
 try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    pass
 
     VISUALIZATION_AVAILABLE = True
 except ImportError:
@@ -74,7 +71,7 @@ class PovertyIndicators:
         Returns:
             Poverty gap ratio (average proportional shortfall)
         """
-        poor_mask = income < poverty_line
+        income < poverty_line
         gap = np.maximum(0, poverty_line - income) / poverty_line
 
         if weights is not None:
@@ -98,7 +95,7 @@ class PovertyIndicators:
         Returns:
             Poverty severity ratio (squared poverty gap)
         """
-        poor_mask = income < poverty_line
+        income < poverty_line
         gap = np.maximum(0, poverty_line - income) / poverty_line
         severity = gap**2
 
@@ -201,7 +198,7 @@ class PovertyIndicators:
         Returns:
             DataFrame with poverty indicators by group
         """
-        weights = df[weight_col] if weight_col else None
+        df[weight_col] if weight_col else None
 
         # Calculate poverty indicators for each group
         profile_data = []

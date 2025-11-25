@@ -7,7 +7,6 @@ Incluye validación de años, módulos, directorios
 y archivos según estándares INEI.
 """
 
-import logging
 from pathlib import Path
 from typing import List, Union
 

@@ -11,27 +11,15 @@ Focuses on untested edge cases, error paths, and advanced features:
 """
 
 import logging
-import warnings
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.merger.config import (
-    GeoMergeConfiguration,
-    ModuleMergeConfig,
-    TipoManejoDuplicados,
-    TipoManejoErrores,
-    TipoValidacionUbigeo,
-)
+from enahopy.merger.config import GeoMergeConfiguration, ModuleMergeConfig, TipoManejoDuplicados
 from enahopy.merger.core import ENAHOGeoMerger
-from enahopy.merger.exceptions import (
-    ConfigurationError,
-    DataQualityError,
-    DuplicateHandlingError,
-    GeoMergeError,
-)
+from enahopy.merger.exceptions import ConfigurationError
 
 # ============================================================================
 # SECTION 1: FALLBACK LOGGING AND SETUP

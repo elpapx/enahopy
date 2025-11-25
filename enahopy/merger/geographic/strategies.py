@@ -10,7 +10,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 
 from ..config import GeoMergeConfiguration, TipoManejoDuplicados
@@ -38,7 +37,6 @@ class DuplicateHandlingStrategy(ABC):
         Returns:
             DataFrame con duplicados manejados
         """
-        pass
 
     def _validate_inputs(self, df: pd.DataFrame, columna_union: str) -> None:
         """Valida inputs básicos"""
@@ -324,7 +322,7 @@ class KeepAllStrategy(DuplicateHandlingStrategy):
         if n_duplicados > len(df) * 0.2:  # Más del 20%
             self.logger.warning(
                 f"Gran cantidad de duplicados ({n_duplicados / len(df) * 100:.1f}%), "
-                f"verifique calidad de datos"
+                "verifique calidad de datos"
             )
 
         return result
@@ -377,7 +375,7 @@ class MostRecentStrategy(DuplicateHandlingStrategy):
                 try:
                     pd.to_datetime(df[specified_col].head())
                     return specified_col
-                except:
+                except Exception:
                     pass
 
         # Buscar automáticamente

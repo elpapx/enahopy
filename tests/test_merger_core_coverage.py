@@ -4,26 +4,14 @@ Tests for enahopy.merger.core module - Coverage enhancement (FIXED)
 Focuses on testing edge cases and error paths with correct API usage
 """
 
-import warnings
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.merger.config import (
-    GeoMergeConfiguration,
-    ModuleMergeConfig,
-    TipoManejoDuplicados,
-    TipoManejoErrores,
-)
+from enahopy.merger.config import GeoMergeConfiguration, ModuleMergeConfig, TipoManejoDuplicados
 from enahopy.merger.core import ENAHOGeoMerger, check_dependencies
-from enahopy.merger.exceptions import (
-    ConfigurationError,
-    DataQualityError,
-    GeoMergeError,
-    ValidationThresholdError,
-)
 
 
 class TestDependencyChecking:
@@ -397,7 +385,7 @@ class TestConfigurationEdgeCases:
 
         # Should raise DuplicateHandlingError for invalid aggregation function
         with pytest.raises(DuplicateHandlingError, match="agregaci"):
-            result = merger._handle_duplicates(df, "ubigeo")
+            merger._handle_duplicates(df, "ubigeo")
 
     def test_aggregate_with_empty_functions(self):
         """Test AGGREGATE strategy with no aggregation functions"""
@@ -459,7 +447,7 @@ class TestEarlyExitConditions:
 
         # Should raise ValueError for missing column
         with pytest.raises(ValueError, match="no encontrada"):
-            result = merger._check_early_exit_conditions(df, "ubigeo")
+            merger._check_early_exit_conditions(df, "ubigeo")
 
     def test_early_exit_all_nan_ubigeo(self, merger):
         """Test early exit when all ubigeo values are NaN"""

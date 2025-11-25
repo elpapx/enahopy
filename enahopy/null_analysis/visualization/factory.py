@@ -219,7 +219,7 @@ class VisualizationFactory:
             cmap="RdBu_r",
             center=0,
             square=True,
-            fmt=".2f",
+            fmt=".2",
             ax=ax,
         )
 

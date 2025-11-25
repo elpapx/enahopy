@@ -419,7 +419,7 @@ class TestLegacyFunctions:
         """Test deprecation warning for LegacyNullAnalyzer"""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            analyzer = LegacyNullAnalyzer()
+            LegacyNullAnalyzer()
 
             assert len(w) == 1
             assert issubclass(w[0].category, DeprecationWarning)
@@ -458,7 +458,7 @@ class TestLegacyFunctions:
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            result = diagnostico_nulos_enaho(df)
+            diagnostico_nulos_enaho(df)
 
             assert len(w) >= 1
             # Check for deprecation warning

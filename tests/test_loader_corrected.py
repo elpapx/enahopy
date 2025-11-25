@@ -5,20 +5,15 @@ Tests corregidos para el módulo loader basados en la implementación real.
 Guardar como: tests/test_loader_corrected.py
 """
 
-import io
 import json
-import logging
 import os
 import shutil
 import sys
 import tempfile
 import unittest
-import zipfile
-from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
-import numpy as np
 import pandas as pd
 
 # Agregar path para imports
@@ -35,7 +30,6 @@ from enahopy.loader import (
     ENAHOValidationError,
     ENAHOValidator,
     ReaderFactory,
-    download_enaho_data,
     read_enaho_file,
 )
 
@@ -243,7 +237,7 @@ class TestENAHOLocalReader(unittest.TestCase):
                     reader.load()
                 except FileNotFoundError:
                     raise
-                except:
+                except Exception:
                     self.fail("Error inesperado al intentar leer archivo inexistente")
 
 

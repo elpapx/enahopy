@@ -14,7 +14,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict
 
 import numpy as np
 import pandas as pd
@@ -96,7 +96,7 @@ class BenchmarkRunner:
             "iterations": iterations,
         }
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Mean:   {result['mean_ms']:8.3f}ms ± {result['std_ms']:6.3f}ms")
         print(f"  Min:    {result['min_ms']:8.3f}ms")
         print(f"  Max:    {result['max_ms']:8.3f}ms")
@@ -113,7 +113,7 @@ class BenchmarkRunner:
             optimized_name: Nombre del benchmark optimizado
         """
         if baseline_name not in self.results or optimized_name not in self.results:
-            print(f"\nError: Missing benchmark results")
+            print("\nError: Missing benchmark results")
             return
 
         baseline = self.results[baseline_name]
@@ -290,7 +290,7 @@ def benchmark_import_time():
     if times:
         mean_time = np.mean(times) * 1000
         std_time = np.std(times) * 1000
-        print(f"\nImport Time:")
+        print("\nImport Time:")
         print(f"  Mean: {mean_time:.3f}ms ± {std_time:.3f}ms")
         print(f"  Min:  {np.min(times)*1000:.3f}ms")
         print(f"  Max:  {np.max(times)*1000:.3f}ms")

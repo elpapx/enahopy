@@ -7,9 +7,8 @@ Evaluates completeness, consistency, accuracy, and validity of household survey 
 """
 
 import logging
-import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -22,7 +21,7 @@ except ImportError:
     SCIPY_AVAILABLE = False
 
 try:
-    import re
+    pass
 
     REGEX_AVAILABLE = True
 except ImportError:
@@ -185,12 +184,10 @@ class ConsistencyAssessor:
 
         # Default consistency checks for ENAHO data
         default_rules = self._get_default_consistency_rules()
-        rules = consistency_rules or default_rules
+        consistency_rules or default_rules
 
         # Track consistency violations
         violations = {}
-        total_checks = 0
-        passed_checks = 0
 
         # Age consistency checks
         age_violations = self._check_age_consistency(df)
@@ -514,7 +511,7 @@ class AccuracyAssessor:
                 try:
                     _, p_value = stats.shapiro(col_data.sample(min(5000, len(col_data))))
                     info["normality_p_value"] = p_value
-                except:
+                except Exception:
                     info["normality_p_value"] = None
 
             distribution_info[col] = info

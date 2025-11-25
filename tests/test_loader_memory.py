@@ -175,7 +175,7 @@ class TestCSVReaderMemory(unittest.TestCase):
         mem_before_full = self.profiler.get_memory_mb()
         df_full = reader.read_columns(columns, optimize_dtypes=False)
         mem_after_full = self.profiler.get_memory_mb()
-        mem_delta_full = mem_after_full - mem_before_full
+        mem_after_full - mem_before_full
 
         del df_full
         gc.collect()
@@ -202,7 +202,7 @@ class TestCSVReaderMemory(unittest.TestCase):
                 total_rows += len(chunk)
 
         mem_after_chunked = self.profiler.get_memory_mb()
-        mem_delta_chunked = mem_after_chunked - mem_before_chunked
+        mem_after_chunked - mem_before_chunked
 
         # Should process all rows
         self.assertEqual(total_rows, 10000, "Should process all rows")

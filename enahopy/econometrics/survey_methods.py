@@ -8,16 +8,12 @@ variance estimation, and complex sample analysis methods.
 """
 
 import logging
-import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.sparse import csr_matrix
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
 
 
 @dataclass
@@ -252,7 +248,7 @@ class DesignEffects:
         weights = df.loc[y.index, weight_col]
 
         # Weighted mean
-        weighted_mean = (y * weights).sum() / weights.sum()
+        (y * weights).sum() / weights.sum()
 
         # Design-based variance (simplified Horvitz-Thompson estimator)
         design_variance = self._calculate_design_variance(
@@ -827,7 +823,7 @@ class ComplexSampleAnalysis:
 
                 results["chi_square_test"] = {
                     "chi_square": adjusted_chi_square,
-                    "df": df_chi,
+                    "d": df_chi,
                     "p_value": p_value,
                 }
             except Exception as e:

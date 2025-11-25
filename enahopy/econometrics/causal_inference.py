@@ -8,17 +8,14 @@ difference-in-differences, and instrumental variables methods.
 """
 
 import logging
-import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.optimize import minimize_scalar
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 
@@ -63,7 +60,7 @@ class PropensityScoreMatching:
             df: Input DataFrame
             treatment_col: Treatment variable column name
             covariate_cols: List of covariate column names
-            method: Method for propensity score estimation ('logistic', 'rf', 'gbm')
+            method: Method for propensity score estimation ('logistic', 'r', 'gbm')
             **kwargs: Additional parameters for the model
 
         Returns:
@@ -83,7 +80,7 @@ class PropensityScoreMatching:
             model.fit(X_scaled, y)
             propensity_scores = model.predict_proba(X_scaled)[:, 1]
 
-        elif method == "rf":
+        elif method == "r":
             model = RandomForestClassifier(n_estimators=100, **kwargs)
             model.fit(X, y)
             propensity_scores = model.predict_proba(X)[:, 1]
@@ -536,7 +533,7 @@ class RegressionDiscontinuity:
         # Center running variable
         df = df.copy()
         df["running_centered"] = df[running_var_col] - cutoff
-        df["above_cutoff"] = (df[running_var_col] >= cutoff).astype(int)
+        df["above_cutof"] = (df[running_var_col] >= cutoff).astype(int)
 
         if bandwidth is None:
             bandwidth = self._optimal_bandwidth_ik(
@@ -548,7 +545,7 @@ class RegressionDiscontinuity:
 
         # First stage: treatment ~ above_cutoff + f(running_var)
         X_first = self._build_polynomial_matrix(
-            analysis_df["running_centered"], analysis_df["above_cutoff"], polynomial_order
+            analysis_df["running_centered"], analysis_df["above_cutof"], polynomial_order
         )
 
         # Estimate first stage
@@ -607,7 +604,7 @@ class RegressionDiscontinuity:
         """
         # Simplified implementation
         running_var = df[running_var_col].values
-        outcome = df[outcome_col].values
+        df[outcome_col].values
 
         # Estimate variance components
         n = len(df)
@@ -1062,7 +1059,7 @@ class InstrumentalVariables:
         # This is a simplified implementation
         # Full implementation would be more complex
 
-        n = len(df)
+        len(df)
         n_instruments = len(instrument_cols)
         n_endogenous = 1  # Simplified for single endogenous variable
 
@@ -1131,7 +1128,7 @@ class CausalAnalyzer:
                 elif method == "rd":
                     # Regression Discontinuity
                     running_var_col = method_kwargs.get("running_var_col")
-                    cutoff = method_kwargs.get("cutoff")
+                    cutoff = method_kwargs.get("cutof")
                     if running_var_col and cutoff is not None:
                         result = self.rd.sharp_rd(df, outcome_col, running_var_col, cutoff)
                         results["rd"] = result
@@ -1191,13 +1188,13 @@ class CausalAnalyzer:
                         df, outcome_col, treatment_col, matches
                     )
                     sensitivity_results[f"caliper_{caliper}"] = result
-                except:
+                except Exception:
                     continue
 
         elif method == "rd":
             # RD sensitivity: vary bandwidth
             running_var_col = kwargs.get("running_var_col")
-            cutoff = kwargs.get("cutoff")
+            cutoff = kwargs.get("cutof")
 
             if running_var_col and cutoff is not None:
                 # Calculate range of bandwidths
@@ -1211,7 +1208,7 @@ class CausalAnalyzer:
                             df, outcome_col, running_var_col, cutoff, bandwidth=bw
                         )
                         sensitivity_results[f"bandwidth_{bw:.3f}"] = result
-                    except:
+                    except Exception:
                         continue
 
         return sensitivity_results

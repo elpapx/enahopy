@@ -7,27 +7,23 @@ Generates comprehensive reports for data quality, statistical analysis, and surv
 """
 
 import logging
-import warnings
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
 try:
-    import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from matplotlib.patches import Rectangle
 
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
 try:
-    import plotly.express as px
     import plotly.graph_objects as go
     import plotly.io as pio
     from plotly.subplots import make_subplots
@@ -37,7 +33,7 @@ except ImportError:
     PLOTLY_AVAILABLE = False
 
 try:
-    from jinja2 import Environment, FileSystemLoader, Template
+    from jinja2 import Template
 
     JINJA2_AVAILABLE = True
 except ImportError:
@@ -46,8 +42,7 @@ except ImportError:
 # Import our custom modules
 try:
     from .data_quality import DataQualityReport, assess_data_quality
-    from .null_analysis.strategies.ml_imputation import create_ml_imputation_manager
-    from .statistical_analysis import create_statistical_analyzer, quick_poverty_analysis
+    from .statistical_analysis import quick_poverty_analysis
 
     DATA_QUALITY_AVAILABLE = True
 except ImportError:
@@ -260,8 +255,8 @@ class VisualizationEngine:
             axes[1, 0].set_title("Issues by Dimension")
 
         # Sample info
-        sample_info = quality_report.sample_info
-        info_text = f"""Dataset Information:
+        quality_report.sample_info
+        info_text = """Dataset Information:
         Records: {sample_info['total_records']:,}
         Columns: {sample_info['total_columns']}
         Memory: {sample_info['memory_usage_mb']:.1f} MB
@@ -277,7 +272,7 @@ class VisualizationEngine:
             verticalalignment="center",
         )
         axes[1, 1].set_title("Dataset Summary")
-        axes[1, 1].axis("off")
+        axes[1, 1].axis("of")
 
         plt.tight_layout()
 
@@ -601,11 +596,11 @@ class ReportGenerator:
         viz_path = self.output_dir / "visualizations" / "data_quality_dashboard.html"
         self.viz_engine.create_data_quality_dashboard(quality_report, str(viz_path))
 
-        content = f"""
+        content = """
         ## Data Quality Assessment
-        
+
         **Overall Quality Score: {quality_report.overall_score:.1f}/100 (Grade: {quality_report.grade})**
-        
+
         ### Quality Dimensions:
         """
 
@@ -634,16 +629,16 @@ class ReportGenerator:
 
     def _generate_descriptive_stats_section(self, df: pd.DataFrame) -> ReportSection:
         """Generate descriptive statistics section"""
-        content = f"""
+        content = """
         ## Descriptive Statistics
-        
+
         ### Dataset Overview:
         - **Total Records**: {len(df):,}
         - **Total Columns**: {len(df.columns)}
         - **Memory Usage**: {df.memory_usage(deep=True).sum() / 1024 / 1024:.1f} MB
         - **Numeric Columns**: {len(df.select_dtypes(include=[np.number]).columns)}
         - **Categorical Columns**: {len(df.select_dtypes(include=[object, 'category']).columns)}
-        
+
         ### Summary Statistics for Numeric Variables:
         """
 
@@ -698,24 +693,24 @@ class ReportGenerator:
             df, income_col, poverty_line, group_col, str(viz_path)
         )
 
-        content = f"""
+        content = """
         ## Poverty and Inequality Analysis
-        
+
         ### Key Indicators:
         - **Poverty Headcount Ratio**: {analysis['poverty_headcount']:.1%}
         - **Poverty Gap Ratio**: {analysis['poverty_gap']:.1%}
         - **Poverty Severity Ratio**: {analysis['poverty_severity']:.1%}
-        
+
         ### Inequality Measures:
         - **Gini Coefficient**: {analysis['gini_coefficient']:.3f}
         - **Theil Index**: {analysis['theil_index']:.3f}
         - **Palma Ratio**: {analysis['palma_ratio']:.2f}
-        
+
         ### Income Distribution:
         - **Mean Income**: {analysis['mean_income']:,.2f}
         - **Median Income**: {analysis['median_income']:,.2f}
         - **Sample Size**: {analysis['sample_size']:,}
-        
+
         ### Analysis Notes:
         - Poverty line used: {poverty_line:,.2f}
         - {analysis['poverty_headcount']:.1%} of the population lives below the poverty line
@@ -748,15 +743,15 @@ class ReportGenerator:
         total_cells = df.size
         missing_pct = (total_missing / total_cells) * 100
 
-        content = f"""
+        content = """
         ## Missing Data Analysis
-        
+
         ### Overall Missing Data:
         - **Total Missing Values**: {total_missing:,}
         - **Percentage Missing**: {missing_pct:.2f}%
         - **Complete Records**: {(~df.isnull().any(axis=1)).sum():,}
         - **Records with Missing Data**: {df.isnull().any(axis=1).sum():,}
-        
+
         ### Missing Data by Column:
         """
 
@@ -778,7 +773,7 @@ class ReportGenerator:
                 pattern = "".join(["1" if x else "0" for x in row])
                 pattern_counts[pattern] = pattern_counts.get(pattern, 0) + 1
 
-            content += f"\n\n### Missing Data Patterns:\n"
+            content += "\n\n### Missing Data Patterns:\n"
             content += f"- **Unique Patterns**: {len(pattern_counts)}\n"
 
             # Most common patterns
@@ -822,13 +817,13 @@ class ReportGenerator:
 
     def _generate_executive_summary(self, df: pd.DataFrame, sections: List[ReportSection]) -> str:
         """Generate executive summary"""
-        summary = f"""
+        summary = """
         # Executive Summary
-        
-        This report presents a comprehensive analysis of ENAHO survey data containing {len(df):,} records 
-        and {len(df.columns)} variables. The analysis covers data quality assessment, descriptive statistics, 
+
+        This report presents a comprehensive analysis of ENAHO survey data containing {len(df):,} records
+        and {len(df.columns)} variables. The analysis covers data quality assessment, descriptive statistics,
         and specialized econometric indicators relevant to household survey analysis.
-        
+
         ## Key Findings:
         """
 
@@ -915,16 +910,16 @@ class ReportGenerator:
         <body>
             <h1>{{ report.title }}</h1>
             <p><strong>Generated:</strong> {{ report.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-            
+
             <div class="summary">
                 {{ report.summary | markdown }}
             </div>
-            
+
             {% for section in report.sections %}
             <div class="section">
                 <h2>{{ section.title }}</h2>
                 {{ section.content | markdown }}
-                
+
                 {% if section.visualizations %}
                 <div class="visualization">
                     {% for viz in section.visualizations %}
@@ -934,7 +929,7 @@ class ReportGenerator:
                 {% endif %}
             </div>
             {% endfor %}
-            
+
             <div class="metadata">
                 <h3>Report Metadata</h3>
                 <p><strong>Version:</strong> {{ report.version }}</p>

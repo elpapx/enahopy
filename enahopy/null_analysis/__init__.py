@@ -64,47 +64,11 @@ except ImportError:
 
 # Importar utilidades
 try:
-    from .utils import (
-        calculate_null_percentage,
-        detect_monotone_pattern,
-        find_columns_with_nulls,
-        get_null_correlation_matrix,
-        get_null_summary,
-        identify_null_patterns,
-        impute_with_strategy,
-        safe_dict_merge,
-    )
+    from .utils import calculate_null_percentage, find_columns_with_nulls, get_null_summary
 
     UTILS_AVAILABLE = True
 except ImportError:
     UTILS_AVAILABLE = False
-
-# Importar funciones de conveniencia
-try:
-    from .convenience import (
-        compare_null_patterns,
-        create_null_visualizations,
-        detect_missing_patterns_automatically,
-    )
-    from .convenience import generate_null_report as generate_comprehensive_null_report
-    from .convenience import (
-        get_data_quality_score,
-        quick_null_analysis,
-        suggest_imputation_methods,
-        validate_data_completeness,
-    )
-
-    CONVENIENCE_AVAILABLE = True
-except ImportError:
-    CONVENIENCE_AVAILABLE = False
-    quick_null_analysis = None
-    get_data_quality_score = None
-    create_null_visualizations = None
-    generate_comprehensive_null_report = None
-    compare_null_patterns = None
-    suggest_imputation_methods = None
-    validate_data_completeness = None
-    detect_missing_patterns_automatically = None
 
     # Definir funciones básicas si utils no está disponible
     def calculate_null_percentage(
@@ -169,6 +133,34 @@ except ImportError:
                 "null_percentage": (df.isnull().sum() / len(df) * 100).values,
             }
         )
+
+
+# Importar funciones de conveniencia
+try:
+    from .convenience import (
+        compare_null_patterns,
+        create_null_visualizations,
+        detect_missing_patterns_automatically,
+    )
+    from .convenience import generate_null_report as generate_comprehensive_null_report
+    from .convenience import (
+        get_data_quality_score,
+        quick_null_analysis,
+        suggest_imputation_methods,
+        validate_data_completeness,
+    )
+
+    CONVENIENCE_AVAILABLE = True
+except ImportError:
+    CONVENIENCE_AVAILABLE = False
+    quick_null_analysis = None
+    get_data_quality_score = None
+    create_null_visualizations = None
+    generate_comprehensive_null_report = None
+    compare_null_patterns = None
+    suggest_imputation_methods = None
+    validate_data_completeness = None
+    detect_missing_patterns_automatically = None
 
 
 # Importar estrategias avanzadas de imputación ML
@@ -622,7 +614,7 @@ def generate_null_report(
             If None, report is returned but not saved. Defaults to None.
         format: Output format for saved report.
             Options: "html" (interactive), "json" (structured),
-            "pdf" (printable). Defaults to "html".
+            "pd" (printable). Defaults to "html".
         include_visualizations: If True, includes charts, heatmaps,
             and distribution plots in report. Defaults to True.
 
@@ -688,14 +680,14 @@ def generate_null_report(
                 # Errores esperados de sistema de archivos - no críticos
                 logger.warning(
                     f"Failed to save report to {output_path}: {str(e)}. "
-                    f"Report object still returned for programmatic use."
+                    "Report object still returned for programmatic use."
                 )
 
             except AttributeError as e:
                 # El metodo .save() puede no existir si REPORTS_AVAILABLE=False
                 logger.warning(
                     f"Report saving not available: {str(e)}. "
-                    f"Check if reporting module is properly installed."
+                    "Check if reporting module is properly installed."
                 )
 
             except Exception as e:

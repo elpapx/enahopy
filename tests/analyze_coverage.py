@@ -219,19 +219,19 @@ class CoverageAnalyzer:
             if coverage < 60.0:
                 print(f"\n{module_name}:")
                 print(f"  - CRITICAL: Coverage is very low ({coverage:.1f}%)")
-                print(f"  - Add comprehensive unit tests")
-                print(f"  - Focus on edge cases and error handling")
+                print("  - Add comprehensive unit tests")
+                print("  - Focus on edge cases and error handling")
 
             elif coverage < 80.0:
                 print(f"\n{module_name}:")
                 print(f"  - WARNING: Coverage below recommended ({coverage:.1f}%)")
-                print(f"  - Add tests for uncovered branches")
-                print(f"  - Review missing lines in HTML report")
+                print("  - Add tests for uncovered branches")
+                print("  - Review missing lines in HTML report")
 
             else:
                 print(f"\n{module_name}:")
                 print(f"  - EXCELLENT: Coverage is good ({coverage:.1f}%)")
-                print(f"  - Maintain current test quality")
+                print("  - Maintain current test quality")
 
         # Save consolidated report
         report_path = self.coverage_dir / "consolidated_report.json"
@@ -245,14 +245,13 @@ class CoverageAnalyzer:
 def check_dependencies() -> bool:
     """Verifica que las dependencias necesarias estén instaladas."""
     try:
-        import coverage
-        import pytest
+        pass
 
         return True
     except ImportError as e:
-        print(f"\nError: Missing required dependencies")
+        print("\nError: Missing required dependencies")
         print(f"  {e}")
-        print(f"\nInstall with: pip install pytest pytest-cov")
+        print("\nInstall with: pip install pytest pytest-cov")
         return False
 
 

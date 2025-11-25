@@ -10,7 +10,6 @@ de componentes opcionales (core.analyzer, patterns, reports, etc.)
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -32,7 +31,7 @@ def is_core_analyzer_available():
         test_df = pd.DataFrame({"col": [1, np.nan]})
         result = analyzer.analyze(test_df, generate_report=False)
         return "error" not in result.get("summary", {})
-    except:
+    except Exception:
         return False
 
 

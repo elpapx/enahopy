@@ -11,9 +11,7 @@ Focus: Edge cases, error handling, untested code paths
 """
 
 import logging
-from datetime import datetime, timedelta
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -30,7 +28,6 @@ from enahopy.merger.exceptions import (
     DuplicateHandlingError,
     IncompatibleModulesError,
     MergeKeyError,
-    ModuleValidationError,
 )
 from enahopy.merger.geographic.strategies import (
     AggregateStrategy,
@@ -1163,7 +1160,7 @@ class TestENAHOModuleMergerExtended:
 
         # Should raise either IncompatibleModulesError or MergeKeyError
         with pytest.raises((IncompatibleModulesError, MergeKeyError)):
-            merger.merge_modules(left_df, right_df, "unknown_abc", "unknown_def")
+            merger.merge_modules(left_df, right_df, "unknown_abc", "unknown_de")
 
     def test_merge_modules_missing_merge_keys(self, merger):
         """Test merge with missing merge keys"""

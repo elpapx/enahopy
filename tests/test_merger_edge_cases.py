@@ -15,14 +15,13 @@ Date: 2025-10-10
 """
 
 import logging
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.exceptions import GeoMergeError
-from enahopy.merger import ENAHOGeoMerger, merge_enaho_modules
+from enahopy.merger import ENAHOGeoMerger
 from enahopy.merger.config import (
     GeoMergeConfiguration,
     ModuleMergeConfig,
@@ -31,7 +30,7 @@ from enahopy.merger.config import (
     TipoManejoDuplicados,
     TipoManejoErrores,
 )
-from enahopy.merger.geographic.validators import TerritorialValidator, UbigeoValidator
+from enahopy.merger.geographic.validators import UbigeoValidator
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 
 # ============================================================================

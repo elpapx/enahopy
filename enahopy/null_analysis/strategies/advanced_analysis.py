@@ -4,7 +4,6 @@ Estrategia de análisis avanzado de valores nulos
 
 from typing import Any, Dict, List
 
-import numpy as np
 import pandas as pd
 
 # Optional imports for advanced statistical features
@@ -24,7 +23,7 @@ except ImportError:
     KMeans = None
     HAS_SKLEARN = False
 
-from ..config import MissingDataMetrics, MissingDataPattern, NullAnalysisConfig
+from ..config import MissingDataMetrics, MissingDataPattern
 from .basic_analysis import BasicNullAnalysis
 
 
@@ -100,7 +99,7 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
 
         # Calclar diversidad con protección contra división por 0
 
-        pattern_diversity = len(pattern_counts) / max(len(df), 1)
+        len(pattern_counts) / max(len(df), 1)
 
         return {
             "total_patterns": len(pattern_counts),
@@ -281,9 +280,9 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
 
         common_patterns = patterns.get("most_common_patterns", {})
         if common_patterns:
-            most_common_pattern = str(list(common_patterns.keys())[0])
+            str(list(common_patterns.keys())[0])
         else:
-            most_common_pattern = "No patterns Found"
+            pass
 
         advanced_metrics = MissingDataMetrics(
             total_cells=basic_metrics.total_cells,
@@ -387,7 +386,7 @@ class AdvancedNullAnalysis(BasicNullAnalysis):
         if len(correlations.get("significant_correlations", [])) > 0:
             recommendations.append(
                 f"🔗 {len(correlations['significant_correlations'])} correlaciones significativas "
-                f"entre patrones de missing. Considere imputación conjunta."
+                "entre patrones de missing. Considere imputación conjunta."
             )
 
         if patterns.get("is_monotone"):

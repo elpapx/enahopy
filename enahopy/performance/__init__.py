@@ -4,7 +4,7 @@ ENAHO Performance Package - MEASURE Phase
 
 High-performance optimization suite for ENAHO data processing including:
 - Async downloading with aiohttp
-- Memory profiling and optimization  
+- Memory profiling and optimization
 - Streaming processing for large datasets
 - Performance benchmarking and monitoring
 """

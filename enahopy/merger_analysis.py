@@ -7,7 +7,6 @@ Script para verificar exactamente qué tenemos en los archivos clave
 antes de proceder con la finalización de la refactorización.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -38,7 +37,7 @@ def show_file_content(filepath, max_lines=50):
 
 def test_imports():
     """Prueba diferentes formas de importar"""
-    print(f"\n🧪 PROBANDO IMPORTS DETALLADAMENTE")
+    print("\n🧪 PROBANDO IMPORTS DETALLADAMENTE")
     print("=" * 60)
 
     # Añadir path actual al sys.path
@@ -82,7 +81,7 @@ def test_imports():
 
 def analyze_class_structure():
     """Analiza estructura de clases disponibles"""
-    print(f"\n🔍 ANALIZANDO ESTRUCTURA DE CLASES")
+    print("\n🔍 ANALIZANDO ESTRUCTURA DE CLASES")
     print("=" * 60)
 
     try:
@@ -102,11 +101,11 @@ def analyze_class_structure():
             print(f"  ... y {len(public_attrs) - 20} más")
 
         # Probar instanciación de clases clave
-        print(f"\n🏗️ PROBANDO INSTANCIACIÓN:")
+        print("\n🏗️ PROBANDO INSTANCIACIÓN:")
 
         if hasattr(merger, "ENAHOGeoMerger"):
             geo_merger = merger.ENAHOGeoMerger()
-            print(f"✅ ENAHOGeoMerger instanciado")
+            print("✅ ENAHOGeoMerger instanciado")
             print(f"   📋 Métodos: {len([m for m in dir(geo_merger) if not m.startswith('_')])}")
 
         if hasattr(merger, "ENAHOModuleMerger"):
@@ -115,7 +114,7 @@ def analyze_class_structure():
 
             config = ModuleMergeConfig()
             module_merger = merger.ENAHOModuleMerger(config)
-            print(f"✅ ENAHOModuleMerger instanciado")
+            print("✅ ENAHOModuleMerger instanciado")
             print(f"   📋 Métodos: {len([m for m in dir(module_merger) if not m.startswith('_')])}")
 
     except Exception as e:
@@ -147,7 +146,7 @@ def main():
     # 3. Analizar estructura
     analyze_class_structure()
 
-    print(f"\n🎯 CONCLUSIONES:")
+    print("\n🎯 CONCLUSIONES:")
     print("=" * 60)
     print("1. ✅ Si los imports funcionan → API está disponible")
     print("2. ❌ Si GeographicMerger es básico → Necesita completarse")

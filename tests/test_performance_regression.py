@@ -32,8 +32,6 @@ import psutil
 import pytest
 
 from enahopy.loader.core.cache import CacheManager
-from enahopy.merger import ENAHOModuleMerger
-from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel
 
 # ==============================================================================
 # Baseline Performance Metrics (from DE completion reports)
@@ -321,7 +319,7 @@ class TestMemoryEfficiency:
             temp_df["iteration"] = i
             temp_dfs.append(temp_df)
 
-        memory_peak = process.memory_info().rss / (1024 * 1024)
+        process.memory_info().rss / (1024 * 1024)
 
         # Cleanup
         del temp_dfs
@@ -391,7 +389,7 @@ class TestMergerPerformance:
         # Baseline merge
         start_baseline = time.time()
         baseline_result = pd.merge(left_df, right_df, on=merge_keys, how="left")
-        time_baseline = time.time() - start_baseline
+        time.time() - start_baseline
 
         # Second merge (validate consistency)
         start_test = time.time()

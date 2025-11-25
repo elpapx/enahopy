@@ -1,7 +1,6 @@
 # null_analysis/utils/cache.py
 """Sistema de caché para análisis de nulos"""
 
-import hashlib
 import json
 from pathlib import Path
 from typing import Any, Optional

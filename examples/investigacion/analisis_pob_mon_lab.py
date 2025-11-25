@@ -1,4 +1,4 @@
-"""
+    """
 Análisis de Pobreza Monetaria y Laboral - ENAHO
 ================================================
 
@@ -575,7 +575,7 @@ def extraer_jefe_hogar_completo(df_individuos: pd.DataFrame) -> pd.DataFrame:
     print(f"  ✓ {len(df_jefe)} jefes de hogar identificados")
 
     # Seleccionar y renombrar variables básicas (incluir ocupación y sector si existen)
-    columnas_jefe = HOGAR_KEYS + ['p208a', 'p207', 'p301a', 'anios_escolaridad', 'p505r4', 'p506r4']
+    columnas_jefe = HOGAR_KEYS + ['p208a', 'p207', 'p301a', 'anios_escolaridad', 'p505r4', 'p506r4', 'p511a']
 
     # Verificar que existan las columnas
     columnas_disponibles = [col for col in columnas_jefe if col in df_jefe.columns]
@@ -588,7 +588,8 @@ def extraer_jefe_hogar_completo(df_individuos: pd.DataFrame) -> pd.DataFrame:
         'p301a': 'jefe_educacion_original',
         'anios_escolaridad': 'jefe_anios_escolaridad',
         'p505r4': 'jefe_ocupacion_cno',
-        'p506r4': 'jefe_sector_ciiu'
+        'p506r4': 'jefe_sector_ciiu',
+        'p511a': 'jefe_tipo_contrato'
     }
     df_jefe = df_jefe.rename(columns={k: v for k, v in rename_dict.items() if k in df_jefe.columns})
 

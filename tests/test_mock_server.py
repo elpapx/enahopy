@@ -4,11 +4,10 @@ Mock INEI Server Tests
 
 Tests that verify the mock server infrastructure for reliable testing.
 
-Author: ENAHOPY Team  
+Author: ENAHOPY Team
 Date: 2025-01-03
 """
 
-import json
 import unittest
 from unittest.mock import Mock, patch
 from urllib.parse import urlparse

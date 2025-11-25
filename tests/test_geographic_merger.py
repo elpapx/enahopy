@@ -9,7 +9,6 @@ import logging
 import unittest
 
 import pandas as pd
-import pytest
 
 from enahopy.merger.config import GeoMergeConfiguration
 from enahopy.merger.geographic.merger import ENAHOGeographicMerger, GeographicMerger

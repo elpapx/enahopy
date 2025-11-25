@@ -14,8 +14,6 @@ import pandas as pd
 import pytest
 
 from enahopy.merger.strategies import MergeStrategy, StandardMergeStrategy
-from enahopy.merger.strategies.base import MergeStrategy as BaseMergeStrategy
-from enahopy.merger.strategies.standard import StandardMergeStrategy as StandardImpl
 
 
 class TestMergeStrategyBase:

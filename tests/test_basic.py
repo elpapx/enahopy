@@ -2,8 +2,6 @@
 Tests básicos para verificar la instalación de enahopy
 """
 
-import sys
-from pathlib import Path
 
 import pytest
 
@@ -86,6 +84,6 @@ def test_package_structure():
     for attr in expected_attrs:
         assert hasattr(enahopy, attr), f"Falta atributo: {attr}"
 
-    print(f"✅ Estructura del paquete correcta")
+    print("✅ Estructura del paquete correcta")
     print(f"   Versión: {enahopy.__version__}")
     print(f"   Exports: {len(enahopy.__all__)} elementos")

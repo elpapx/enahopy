@@ -19,27 +19,14 @@ Date: 2025-10-13
 """
 
 import logging
-from typing import Any, Dict
-from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.merger import ENAHOGeoMerger, merge_enaho_modules
-from enahopy.merger.config import (
-    GeoMergeConfiguration,
-    ModuleMergeConfig,
-    ModuleMergeLevel,
-    ModuleMergeStrategy,
-    TipoManejoDuplicados,
-    TipoManejoErrores,
-)
-from enahopy.merger.exceptions import (
-    ConflictResolutionError,
-    IncompatibleModulesError,
-    ModuleMergeError,
-)
+from enahopy.merger import ENAHOGeoMerger
+from enahopy.merger.config import ModuleMergeConfig, ModuleMergeLevel, ModuleMergeStrategy
+from enahopy.merger.exceptions import ConflictResolutionError, ModuleMergeError
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 
 # ============================================================================

@@ -18,9 +18,8 @@ from __future__ import annotations
 import logging
 import warnings
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Union
+from typing import Dict, Iterator, List, Union
 
-import numpy as np
 import pandas as pd
 
 from ...core.exceptions import UnsupportedFormatError

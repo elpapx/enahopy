@@ -39,13 +39,9 @@ warnings.warn(
 class MergerError(ENAHOMergeError):
     """Base merger exception - alias for ENAHOMergeError"""
 
-    pass
-
 
 class ConfigurationError(ENAHOConfigError):
     """Configuration error - alias for ENAHOConfigError"""
-
-    pass
 
 
 class ModuleValidationError(ENAHOValidationError):
@@ -78,13 +74,9 @@ class MergeValidationError(ModuleMergeError):
 class ValidationThresholdError(ENAHOValidationError):
     """Validation threshold error - alias for ENAHOValidationError"""
 
-    pass
-
 
 class ConflictResolutionError(ModuleMergeError):
     """Conflict resolution error - alias for ModuleMergeError"""
-
-    pass
 
 
 # Import utility functions from unified exception hierarchy

@@ -7,19 +7,16 @@ Tracks download speeds, processing performance, memory usage, and provides autom
 performance regression detection and optimization recommendations.
 """
 
-import asyncio
 import json
 import logging
 import os
 import platform
-import subprocess
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -32,8 +29,7 @@ except ImportError:
     PSUTIL_AVAILABLE = False
 
 try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    pass
 
     VISUALIZATION_AVAILABLE = True
 except ImportError:
@@ -80,7 +76,7 @@ class SystemInfo:
 
                 disk = psutil.disk_usage(".")
                 system_info["disk_free_gb"] = disk.free / (1024**3)
-            except:
+            except Exception:
                 pass
 
         return cls(**system_info)
@@ -313,7 +309,7 @@ class CPUMonitor:
             try:
                 cpu_percent = psutil.cpu_percent(interval=0.1)
                 self.cpu_samples.append(cpu_percent)
-            except:
+            except Exception:
                 time.sleep(0.1)
 
     def get_average_cpu(self) -> float:
@@ -430,7 +426,7 @@ class ENAHOBenchmarkSuite:
                     def simple_processing(df):
                         return df.copy()  # Simple processing
 
-                    stats = processor.process_streaming(reader, simple_processing)
+                    processor.process_streaming(reader, simple_processing)
 
                     # Clean up test file
                     test_file.unlink()
@@ -563,7 +559,7 @@ class ENAHOBenchmarkSuite:
         report_path = self.output_dir / f"benchmark_report_{timestamp_str}.md"
 
         with open(report_path, "w") as f:
-            f.write(f"# ENAHO Performance Benchmark Report\n\n")
+            f.write("# ENAHO Performance Benchmark Report\n\n")
             f.write(f"**Generated:** {suite.timestamp.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             # System information

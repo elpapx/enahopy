@@ -8,7 +8,7 @@ in ENAHO survey data with economic and demographic variables.
 
 import logging
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ try:
     from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
     from sklearn.experimental import enable_iterative_imputer  # noqa
     from sklearn.impute import IterativeImputer, KNNImputer
-    from sklearn.linear_model import BayesianRidge, LinearRegression, LogisticRegression
+    from sklearn.linear_model import BayesianRidge
     from sklearn.metrics import accuracy_score, mean_squared_error
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -28,7 +28,7 @@ except ImportError:
     SKLEARN_AVAILABLE = False
 
 try:
-    from scipy import stats
+    pass
 
     SCIPY_AVAILABLE = True
 except ImportError:

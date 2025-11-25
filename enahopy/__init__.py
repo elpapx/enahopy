@@ -176,7 +176,7 @@ def __getattr__(name: str) -> Any:
                 raise AttributeError(
                     f"Módulo '{module_path}' no disponible. "
                     f"Error: {str(e)}. "
-                    f"Instalar dependencias: pip install enahopy[all]"
+                    "Instalar dependencias: pip install enahopy[all]"
                 ) from e
 
         # Retornar atributo del módulo cacheado

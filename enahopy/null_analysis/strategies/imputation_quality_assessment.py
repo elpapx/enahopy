@@ -2,15 +2,14 @@
 Imputation Quality Assessment - ANALYZE Phase
 ==============================================
 
-Comprehensive quality assessment and validation framework for 
+Comprehensive quality assessment and validation framework for
 missing data imputation methods in ENAHO survey data.
 """
 
 import logging
-import warnings
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -26,9 +25,7 @@ except ImportError:
 
 try:
     from sklearn.ensemble import IsolationForest
-    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
     from sklearn.model_selection import cross_val_score
-    from sklearn.preprocessing import StandardScaler
 
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -300,7 +297,7 @@ class ImputationQualityAssessor:
                 chi2_stat, p_value = stats.chisquare(imputed_props + 1e-8, observed_props + 1e-8)
                 metrics["chi2_statistic"] = chi2_stat
                 metrics["chi2_p_value"] = p_value
-            except:
+            except Exception:
                 metrics["chi2_statistic"] = np.nan
                 metrics["chi2_p_value"] = np.nan
 
@@ -367,7 +364,7 @@ class ImputationQualityAssessor:
                 ks_stat, ks_pvalue = stats.ks_2samp(observed, imputed)
                 metrics["ks_statistic"] = ks_stat
                 metrics["ks_p_value"] = ks_pvalue
-            except:
+            except Exception:
                 metrics["ks_statistic"] = np.nan
                 metrics["ks_p_value"] = np.nan
 
@@ -376,7 +373,7 @@ class ImputationQualityAssessor:
             try:
                 wasserstein_dist = wasserstein_distance(observed, imputed)
                 metrics["wasserstein_distance"] = wasserstein_dist
-            except:
+            except Exception:
                 metrics["wasserstein_distance"] = np.nan
 
         # Distribution score based on KS test and moment preservation

@@ -7,7 +7,6 @@ Funciones auxiliares para análisis de valores nulos.
 
 from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 

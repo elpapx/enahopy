@@ -13,25 +13,15 @@ Focuses on testing critical production paths:
 """
 
 import warnings
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.merger.config import (
-    GeoMergeConfiguration,
-    ModuleMergeConfig,
-    TipoManejoDuplicados,
-    TipoManejoErrores,
-)
+from enahopy.merger.config import GeoMergeConfiguration, ModuleMergeConfig, TipoManejoDuplicados
 from enahopy.merger.core import ENAHOGeoMerger
-from enahopy.merger.exceptions import (
-    ConfigurationError,
-    DataQualityError,
-    GeoMergeError,
-    ModuleMergeError,
-)
+from enahopy.merger.exceptions import ConfigurationError, GeoMergeError, ModuleMergeError
 
 # ============================================================================
 # SECTION 1: INITIALIZATION AND CONFIGURATION VALIDATION

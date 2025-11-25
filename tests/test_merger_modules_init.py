@@ -14,8 +14,6 @@ import pandas as pd
 import pytest
 
 from enahopy.merger.modules import (
-    ENAHOModuleMerger,
-    ModuleValidator,
     analyze_merge_feasibility_quick,
     check_modules_compatibility_quick,
     create_optimal_merge_plan,

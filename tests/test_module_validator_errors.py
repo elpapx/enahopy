@@ -17,7 +17,6 @@ Date: 2025-11-13
 
 import logging
 
-import numpy as np
 import pandas as pd
 import pytest
 

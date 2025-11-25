@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from .exceptions import ENAHOError, format_exception_for_logging
+from .exceptions import format_exception_for_logging
 
 
 class ENAHOFormatter(logging.Formatter):

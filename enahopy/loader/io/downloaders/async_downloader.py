@@ -13,9 +13,8 @@ import logging
 import time
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 import aiofiles
@@ -36,7 +35,7 @@ except ImportError:
     PSUTIL_AVAILABLE = False
 
 try:
-    from memory_profiler import profile as memory_profile
+    pass
 
     MEMORY_PROFILER_AVAILABLE = True
 except ImportError:
@@ -109,8 +108,8 @@ class PerformanceMonitor:
 
     def get_summary(self) -> str:
         """Get performance summary"""
-        stats = self.download_stats
-        return f"""
+        self.download_stats
+        return """
 Performance Summary:
   • Files Downloaded: {stats['successful_downloads']}/{stats['total_files']}
   • Total Data: {stats['total_bytes'] / (1024*1024):.1f} MB
@@ -244,7 +243,7 @@ class StreamingDownloader:
                 if response.status != 200:
                     raise ENAHODownloadError(f"HTTP {response.status} for {url}")
 
-                total_size = int(response.headers.get("content-length", 0))
+                int(response.headers.get("content-length", 0))
 
                 # Use aiofiles for async file I/O
                 async with aiofiles.open(temp_path, "wb") as file:
@@ -277,7 +276,7 @@ class StreamingDownloader:
             # Cleanup temp file
             try:
                 await aiofiles.os.remove(temp_path)
-            except:
+            except Exception:
                 pass
 
             self.monitor.record_download(downloaded_bytes, time.time() - start_time, False)
@@ -289,7 +288,7 @@ class StreamingDownloader:
 
 
 class AsyncRetryHandler:
-    """Advanced async retry handler with exponential backoff"""
+    """Advanced async retry handler with exponential backof"""
 
     def __init__(self, config: ENAHOConfig, logger: logging.Logger, monitor: PerformanceMonitor):
         self.config = config
@@ -297,7 +296,7 @@ class AsyncRetryHandler:
         self.monitor = monitor
 
     async def retry_download(self, download_func, *args, **kwargs) -> Any:
-        """Retry download with exponential backoff"""
+        """Retry download with exponential backof"""
         last_exception = None
 
         for attempt in range(self.config.max_retries + 1):
@@ -321,7 +320,7 @@ class AsyncRetryHandler:
 
                     await asyncio.sleep(delay)
                 else:
-                    self.logger.error(f"All retry attempts failed for download")
+                    self.logger.error("All retry attempts failed for download")
 
         raise last_exception
 

@@ -22,9 +22,7 @@ Coverage Focus:
 """
 
 import logging
-import unittest
-from typing import Dict
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -38,23 +36,11 @@ from enahopy.merger.config import (
     ModuleMergeLevel,
     ModuleMergeResult,
     ModuleMergeStrategy,
-    ModuleType,
     TipoManejoDuplicados,
     TipoManejoErrores,
     TipoValidacionUbigeo,
 )
-from enahopy.merger.exceptions import (
-    ConfigurationError,
-    ConflictResolutionError,
-    DataQualityError,
-    GeoMergeError,
-    IncompatibleModulesError,
-    MergeKeyError,
-    MergeValidationError,
-    ModuleMergeError,
-    UbigeoValidationError,
-    ValidationThresholdError,
-)
+from enahopy.merger.exceptions import ConfigurationError, GeoMergeError, IncompatibleModulesError
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 from enahopy.merger.modules.validator import ModuleValidator
 

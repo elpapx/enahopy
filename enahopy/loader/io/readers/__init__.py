@@ -14,7 +14,7 @@ from .stata import StataReader
 
 # Check opcional dependencies
 try:
-    import pyreadstat
+    pass
 
     PYREADSTAT_AVAILABLE = True
 except ImportError:

@@ -11,7 +11,7 @@ Date: 2024-12-09
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class ENAHOError(Exception):
@@ -138,8 +138,6 @@ class ENAHOFileError(ENAHOError):
 class FileReaderError(ENAHOFileError):
     """Error during file reading operations."""
 
-    pass
-
 
 class UnsupportedFormatError(FileReaderError):
     """Error for unsupported file formats."""
@@ -178,8 +176,6 @@ class ENAHOCacheError(ENAHOError):
 
 class ENAHOMergeError(ENAHOError):
     """Base class for all merge-related errors."""
-
-    pass
 
 
 class GeoMergeError(ENAHOMergeError):
@@ -304,8 +300,6 @@ class DuplicateHandlingError(GeoMergeError):
 
 class ENAHONullAnalysisError(ENAHOError):
     """Base class for null analysis errors."""
-
-    pass
 
 
 class PatternDetectionError(ENAHONullAnalysisError):

@@ -16,12 +16,11 @@ Version: 1.0.0
 import gc
 import json
 import logging
-import tempfile
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -857,10 +856,10 @@ class MergerBenchmarkSuiteRunner:
                 analysis.append(f"- Memory multiplier: {memory_ratio:.1f}x\n")
 
                 if time_ratio < size_ratio * 1.2:
-                    analysis.append(f"- ✅ Performance scales nearly linearly\n")
+                    analysis.append("- ✅ Performance scales nearly linearly\n")
                 else:
                     analysis.append(
-                        f"- ⚠️ Performance degrades with scale (investigate bottlenecks)\n"
+                        "- ⚠️ Performance degrades with scale (investigate bottlenecks)\n"
                     )
 
         # Analyze geographic merges

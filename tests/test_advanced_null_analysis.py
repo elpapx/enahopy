@@ -101,7 +101,7 @@ class TestAdvancedNullAnalysisMainAnalyze:
         # Empty dataframes cause division by zero in BasicNullAnalysis
         # This is expected behavior - testing that it raises an error
         with pytest.raises(ZeroDivisionError):
-            result = analyzer.analyze(df)
+            analyzer.analyze(df)
 
 
 class TestMissingPatternsAnalysis:
@@ -495,7 +495,7 @@ class TestRecommendations:
         assert isinstance(recommendations, list)
         assert len(recommendations) > 0
         # Should mention MCAR if detected
-        mcar_mentioned = any("MCAR" in rec for rec in recommendations)
+        any("MCAR" in rec for rec in recommendations)
 
     def test_recommendations_mar(self, logger):
         """Test recommendations for MAR data."""
@@ -534,7 +534,7 @@ class TestRecommendations:
         recommendations = analyzer.get_recommendations(result)
 
         # Should mention monotone if detected
-        monotone_mentioned = any("monótono" in rec.lower() for rec in recommendations)
+        any("monótono" in rec.lower() for rec in recommendations)
 
     def test_recommendations_low_quality(self, logger):
         """Test recommendations when data quality is low."""

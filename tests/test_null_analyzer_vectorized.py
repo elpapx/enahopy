@@ -8,12 +8,11 @@ refactorizado con operaciones vectorizadas.
 
 import time
 import unittest
-from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
 
-from enahopy.null_analysis.core.analyzer import NullAnalysisConfig, NullAnalyzer
+from enahopy.null_analysis.core.analyzer import NullAnalyzer
 
 
 class TestNullAnalyzerCorrectness(unittest.TestCase):

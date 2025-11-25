@@ -242,7 +242,7 @@ def validate_dataframe_shape(
 # =====================================================
 
 
-def require_dataframe(arg_name: str = "df", allow_empty: bool = False) -> Callable[[F], F]:
+def require_dataframe(arg_name: str = "d", allow_empty: bool = False) -> Callable[[F], F]:
     """
     Decorador que valida automáticamente un argumento DataFrame.
 
@@ -328,7 +328,7 @@ def require_columns(*columns: str) -> Callable[[F], F]:
 
             if df is None:
                 raise ValueError(
-                    f"Decorador @require_columns no encontró DataFrame "
+                    "Decorador @require_columns no encontró DataFrame "
                     f"en función {func.__name__}"
                 )
 

@@ -6,10 +6,8 @@ Implementación base para lectores de archivos.
 Contiene funcionalidad común compartida entre todos los readers.
 """
 
-import logging
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict
+from typing import Dict
 
 from ...io.base import IReader
 

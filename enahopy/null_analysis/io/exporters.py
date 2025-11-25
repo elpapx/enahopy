@@ -167,9 +167,9 @@ class ReportExporter:
         """
 
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        metrics = analysis_result["metrics"]
+        analysis_result["metrics"]
 
-        resumen_metricas = f"""
+        resumen_metricas = """
         <div class="metric-card">
             <div class="metric-value">{metrics.missing_percentage:.1f}%</div>
             <div>Porcentaje total de valores faltantes</div>
@@ -209,7 +209,7 @@ class ReportExporter:
             [f'<div class="recommendation">{rec}</div>' for rec in recommendations]
         )
 
-        detalles = f"""
+        detalles = """
         <ul>
             <li><strong>Tipo de análisis:</strong> {analysis_result['analysis_type'].title()}</li>
             <li><strong>Variables analizadas:</strong> {len(summary)}</li>
@@ -229,10 +229,10 @@ class ReportExporter:
     def _generate_markdown_content(self, analysis_result: Dict[str, Any]) -> str:
         """Genera contenido Markdown del reporte"""
 
-        metrics = analysis_result["metrics"]
+        analysis_result["metrics"]
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        markdown_content = f"""# 📊 Reporte de Análisis de Valores Nulos
+        markdown_content = """# 📊 Reporte de Análisis de Valores Nulos
 
 **Fecha de generación:** {fecha}
 
@@ -278,7 +278,7 @@ class ReportExporter:
         for rec in recommendations:
             markdown_content += f"- {rec}\n"
 
-        markdown_content += f"""
+        markdown_content += """
 ## 🔧 Detalles Técnicos
 
 - **Tipo de análisis:** {analysis_result['analysis_type'].title()}

@@ -37,7 +37,7 @@ class ExportFormat(Enum):
     """Formatos de exportación de reportes"""
 
     HTML = "html"
-    PDF = "pdf"
+    PDF = "pd"
     XLSX = "xlsx"
     JSON = "json"
     MARKDOWN = "md"

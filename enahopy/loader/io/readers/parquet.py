@@ -15,9 +15,7 @@ Optimizations (DE-2):
 
 from __future__ import annotations
 
-import logging
-from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Union
+from typing import Dict, Iterator, List, Union
 
 import pandas as pd
 

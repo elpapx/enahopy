@@ -1,5 +1,5 @@
 """
-Unit tests for ENAHOPY Exception System  
+Unit tests for ENAHOPY Exception System
 ======================================
 
 Tests for the unified exception hierarchy and utility functions.
@@ -30,7 +30,6 @@ from enahopy.exceptions import (
     MergeKeyError,
     ModuleMergeError,
     PatternDetectionError,
-    TerritorialInconsistencyError,
     UbigeoValidationError,
     UnsupportedFormatError,
     VisualizationError,

@@ -2,13 +2,12 @@
 
 import logging
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
 from ..patterns.types import PatternResult
-from ..utils import calculate_null_percentage, get_null_summary
+from ..utils import get_null_summary
 
 
 class NullAnalysisReport:

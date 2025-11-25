@@ -34,19 +34,13 @@ from __future__ import annotations
 
 import gc
 import logging
-import warnings
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 from ..config import ModuleMergeConfig, ModuleMergeLevel, ModuleMergeResult, ModuleMergeStrategy
-from ..exceptions import (
-    ConflictResolutionError,
-    IncompatibleModulesError,
-    MergeKeyError,
-    ModuleMergeError,
-)
+from ..exceptions import ConflictResolutionError, IncompatibleModulesError, MergeKeyError
 from .validator import ModuleValidator
 
 
@@ -504,22 +498,22 @@ class ENAHOModuleMerger:
         if hasattr(config, "validate_cardinality") and config.validate_cardinality:
             if merge_type == "left" and abs(cardinality_change - 1.0) > 0.01:
                 warning_msg = (
-                    f"⚠️ VALIDACIÓN FALLIDA: Left join cambió cardinalidad "
+                    "⚠️ VALIDACIÓN FALLIDA: Left join cambió cardinalidad "
                     f"({len(left_df):,} → {len(final_df):,}, factor {cardinality_change:.2f}x)\n"
-                    f"   Posibles causas:\n"
-                    f"   - Duplicados en DataFrame derecho\n"
-                    f"   - Relación muchos-a-muchos\n"
-                    f"   Recomendación: Verificar duplicados en llaves de merge"
+                    "   Posibles causas:\n"
+                    "   - Duplicados en DataFrame derecho\n"
+                    "   - Relación muchos-a-muchos\n"
+                    "   Recomendación: Verificar duplicados en llaves de merge"
                 )
                 validation_warnings.append(warning_msg)
                 self.logger.warning(warning_msg)
 
             if merge_type == "inner" and len(final_df) > min(len(left_df), len(right_df)):
                 warning_msg = (
-                    f"⚠️ VALIDACIÓN FALLIDA: Inner join produjo más registros "
+                    "⚠️ VALIDACIÓN FALLIDA: Inner join produjo más registros "
                     f"que el mínimo ({len(final_df):,} > {min(len(left_df), len(right_df)):,})\n"
-                    f"   Causa: Relación muchos-a-muchos\n"
-                    f"   Recomendación: Deduplicar antes del merge"
+                    "   Causa: Relación muchos-a-muchos\n"
+                    "   Recomendación: Deduplicar antes del merge"
                 )
                 validation_warnings.append(warning_msg)
                 self.logger.warning(warning_msg)
@@ -773,7 +767,7 @@ class ENAHOModuleMerger:
                 except Exception as inner_e:
                     self.logger.warning(
                         f"{prefix}: Error convirtiendo columna '{key}' a string: {inner_e}. "
-                        f"Manteniendo tipo original."
+                        "Manteniendo tipo original."
                     )
 
         # Eliminar registros con TODAS las llaves nulas (vectorizado)
@@ -787,7 +781,7 @@ class ENAHOModuleMerger:
         if before_clean != after_clean:
             self.logger.warning(
                 f"{prefix}: {before_clean - after_clean} registros eliminados "
-                f"por tener todas las llaves nulas"
+                "por tener todas las llaves nulas"
             )
 
         return df_clean
@@ -1224,7 +1218,7 @@ class ENAHOModuleMerger:
                     # Solo advertir si explosión es significativa (>2x cualquier lado)
                     if estimated_size > len(df1) * 2 or estimated_size > len(df2) * 2:
                         return (
-                            f"⚠️ Relación muchos-a-muchos detectada. "
+                            "⚠️ Relación muchos-a-muchos detectada. "
                             f"Merge podría resultar en ~{estimated_size:,.0f} registros "
                             f"(vs {len(df1):,} y {len(df2):,} originales)"
                         )
@@ -1258,7 +1252,7 @@ class ENAHOModuleMerger:
         use_categorical = total_size > 100000  # Activar para datasets medianos-grandes
 
         if use_categorical:
-            self.logger.debug(f"🎯 Aplicando categorical encoding a merge keys para acelerar merge")
+            self.logger.debug("🎯 Aplicando categorical encoding a merge keys para acelerar merge")
             # Crear copias para no modificar originales
             left_df = left_df.copy()
             right_df = right_df.copy()
@@ -1608,7 +1602,7 @@ class ENAHOModuleMerger:
             if analysis["memory_estimate_mb"] > 1000:  # Más de 1GB
                 analysis["recommendations"].append(
                     f"⚠️ Merge requiere ~{analysis['memory_estimate_mb']:.0f} MB. "
-                    f"Considere procesamiento por chunks o liberar memoria antes del merge."
+                    "Considere procesamiento por chunks o liberar memoria antes del merge."
                 )
 
             # Recomendaciones por tamaño
@@ -1619,7 +1613,7 @@ class ENAHOModuleMerger:
 
             if large_modules:
                 analysis["recommendations"].append(
-                    f"📊 Módulos grandes detectados: {large_modules}. " f"El merge podría ser lento."
+                    f"📊 Módulos grandes detectados: {large_modules}. " "El merge podría ser lento."
                 )
 
             # Recomendaciones por duplicación
@@ -1633,7 +1627,7 @@ class ENAHOModuleMerger:
             if high_dup_modules:
                 analysis["recommendations"].append(
                     f"🔄 Alta duplicación en: {high_dup_modules}. "
-                    f"Considere estrategia 'AGGREGATE' o deduplicación previa."
+                    "Considere estrategia 'AGGREGATE' o deduplicación previa."
                 )
 
             # Recomendación de orden de merge

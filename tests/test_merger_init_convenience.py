@@ -136,7 +136,7 @@ def test_merge_enaho_modules_verbose_mode(sample_hogar_modules, capfd):
     """Test module merging with verbose output"""
     result = merge_enaho_modules(sample_hogar_modules, verbose=True)
 
-    captured = capfd.readouterr()
+    capfd.readouterr()
     assert isinstance(result, pd.DataFrame)
     # Verbose mode should print something (though exact output may vary)
 

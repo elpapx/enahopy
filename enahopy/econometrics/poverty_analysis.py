@@ -11,34 +11,28 @@ Comprehensive poverty analysis tools for policy research including:
 """
 
 import logging
-import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 try:
-    from scipy import optimize, stats
-    from scipy.spatial.distance import cdist
+    from scipy import stats
 
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
 
 try:
-    import sklearn
-    from sklearn.cluster import KMeans
-    from sklearn.decomposition import PCA
-    from sklearn.preprocessing import StandardScaler
+    pass
 
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
 try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    pass
 
     VISUALIZATION_AVAILABLE = True
 except ImportError:
@@ -624,7 +618,7 @@ class AdvancedPovertyAnalyzer:
             return 0.0
 
         gap = poverty_line - poor_income
-        normalized_gap = gap / poverty_line
+        gap / poverty_line
 
         if weights is not None:
             poor_weights = weights[poor_mask]
@@ -801,7 +795,7 @@ class PovertyDecomposition:
             for r in range(len(other_factors) + 1):
                 for coalition in combinations(other_factors, r):
                     # Calculate poverty without current factor
-                    coalition_factors = list(coalition)
+                    list(coalition)
 
                     # This is a simplified version - in practice, you would need
                     # counterfactual income without the specific factor

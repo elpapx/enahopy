@@ -9,7 +9,7 @@ mapeos de años, módulos disponibles y settings de performance.
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional
+from typing import Dict
 
 
 @dataclass(frozen=True)
@@ -123,7 +123,7 @@ class ENAHOConfig:
             "78": "Bienes y Servicios de cuidados personales",
             "84": "Participación Ciudadana",
             "85": "Gobernabilidad, Democracia y Transparencia",
-            "1825": "Beneficiarios de instituciones sin fines de lucro: Olla Comun"
+            "1825": "Beneficiarios de instituciones sin fines de lucro: Olla Comun",
         }
     )
 

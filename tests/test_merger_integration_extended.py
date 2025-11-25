@@ -11,29 +11,20 @@ Coverage Target: 45-50% (from 17.81% baseline)
 """
 
 import logging
-from typing import Any, Dict
-from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.merger import ENAHOGeoMerger, merge_enaho_modules
+from enahopy.merger import ENAHOGeoMerger
 from enahopy.merger.config import (
     GeoMergeConfiguration,
     ModuleMergeConfig,
     ModuleMergeLevel,
     ModuleMergeStrategy,
     TipoManejoDuplicados,
-    TipoManejoErrores,
 )
-from enahopy.merger.exceptions import (
-    ConflictResolutionError,
-    GeoMergeError,
-    IncompatibleModulesError,
-    ModuleMergeError,
-    UbigeoValidationError,
-)
+from enahopy.merger.exceptions import GeoMergeError
 from enahopy.merger.modules.merger import ENAHOModuleMerger
 from enahopy.merger.modules.validator import ModuleValidator
 
@@ -703,7 +694,7 @@ class TestAdvancedConfigurationOptions:
         result, _ = merger.merge_geographic_data(data, geo)
 
         # Should have prefixed/suffixed columns
-        assert any("geo_" in col or "_ref" in col for col in result.columns)
+        assert any("geo_" in col or "_re" in col for col in result.columns)
 
 
 class TestEdgeCasesAndBoundaryConditions:

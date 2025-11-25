@@ -18,17 +18,13 @@ Date: 2025-11-13
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict
-from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pandas as pd
 import pytest
 
-from enahopy.loader.core.exceptions import ENAHOError, ENAHOValidationError
+from enahopy.loader.core.exceptions import ENAHOError
 from enahopy.loader.utils.io_utils import (
     ENAHOUtils,
-    download_enaho_data,
     find_enaho_files,
     get_available_data,
     get_file_info,
@@ -302,7 +298,7 @@ class TestENAHOUtilsValidateKeys:
         """Test validation at hogar level with valid keys."""
         result = ENAHOUtils.validate_enaho_keys(sample_dataframe, level="hogar")
 
-        assert result["is_valid"] == True
+        assert result["is_valid"] is True
         assert result["level"] == "hogar"
         assert result["duplicates"] == 0
         assert result["total_records"] == len(sample_dataframe)
@@ -311,7 +307,7 @@ class TestENAHOUtilsValidateKeys:
         """Test validation at persona level with valid keys."""
         result = ENAHOUtils.validate_enaho_keys(sample_dataframe, level="persona")
 
-        assert result["is_valid"] == True
+        assert result["is_valid"] is True
         assert result["level"] == "persona"
         assert result["duplicates"] == 0
 
@@ -319,7 +315,7 @@ class TestENAHOUtilsValidateKeys:
         """Test validation at vivienda level with valid keys."""
         result = ENAHOUtils.validate_enaho_keys(sample_dataframe, level="vivienda")
 
-        assert result["is_valid"] == True
+        assert result["is_valid"] is True
         assert result["level"] == "vivienda"
 
     def test_validate_keys_missing_columns(self, sample_dataframe):
@@ -340,7 +336,7 @@ class TestENAHOUtilsValidateKeys:
 
         result = ENAHOUtils.validate_enaho_keys(df, level="hogar")
 
-        assert result["is_valid"] == False
+        assert result["is_valid"] is False
         assert result["duplicates"] > 0
 
     def test_validate_keys_invalid_level(self, sample_dataframe):
@@ -472,7 +468,7 @@ class TestEdgeCases:
 
         result = ENAHOUtils.validate_enaho_keys(df, level="hogar")
 
-        assert result["is_valid"] == True
+        assert result["is_valid"] is True
         assert result["total_records"] == 1
 
 

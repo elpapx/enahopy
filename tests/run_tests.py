@@ -12,7 +12,7 @@ import time
 import unittest
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict
 
 # Para reportes más avanzados
 try:
@@ -175,7 +175,7 @@ class ENAHOTestRunner:
         print("RESUMEN GLOBAL DE TESTS")
         print("=" * 70)
 
-        print(f"\nEstadísticas Generales:")
+        print("\nEstadísticas Generales:")
         print(f"  - Módulos testeados: {summary['modules_tested']}")
         print(f"  - Tests ejecutados: {summary['total_tests']}")
         print(f"  - Éxitos: {summary['total_successes']} ✅")
@@ -185,7 +185,7 @@ class ENAHOTestRunner:
         print(f"  - Tasa de éxito: {summary['overall_success_rate']}%")
         print(f"  - Tiempo total: {summary['total_execution_time']}s")
 
-        print(f"\nResultados por Módulo:")
+        print("\nResultados por Módulo:")
         for module in summary["module_results"]:
             status = "✅" if module["failures"] == 0 and module["errors"] == 0 else "❌"
             print(

@@ -8,18 +8,15 @@ with comprehensive quality assessment and validation.
 """
 
 import logging
-import warnings
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.impute import IterativeImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 try:
@@ -246,7 +243,7 @@ class MICEImputer:
         self, X: pd.DataFrame, y: pd.Series, sample_weights: Optional[pd.Series] = None
     ):
         """Fit model for continuous variables"""
-        if self.config.method.lower() == "rf":
+        if self.config.method.lower() == "r":
             model = RandomForestRegressor(
                 n_estimators=self.config.n_estimators,
                 random_state=self.config.random_state,
@@ -270,7 +267,7 @@ class MICEImputer:
         self, X: pd.DataFrame, y: pd.Series, sample_weights: Optional[pd.Series] = None
     ):
         """Fit model for categorical variables"""
-        if self.config.method.lower() == "rf":
+        if self.config.method.lower() == "r":
             model = RandomForestClassifier(
                 n_estimators=self.config.n_estimators,
                 random_state=self.config.random_state,
@@ -377,7 +374,7 @@ class MICEImputer:
                     metrics[f"{col}_category_coverage"] = coverage
                 else:
                     # For continuous: statistical comparisons
-                    metrics[f"{col}_mean_diff"] = abs(imputed_vals.mean() - observed_vals.mean())
+                    metrics[f"{col}_mean_dif"] = abs(imputed_vals.mean() - observed_vals.mean())
                     metrics[f"{col}_std_ratio"] = imputed_vals.std() / (observed_vals.std() + 1e-8)
 
                     # Distribution comparison (simplified Kolmogorov-Smirnov)
@@ -385,7 +382,7 @@ class MICEImputer:
                         ks_stat, ks_pvalue = stats.ks_2samp(observed_vals, imputed_vals)
                         metrics[f"{col}_ks_statistic"] = ks_stat
                         metrics[f"{col}_ks_pvalue"] = ks_pvalue
-                    except:
+                    except Exception:
                         pass
 
         return metrics
@@ -625,7 +622,7 @@ class MissForestImputer:
                         )
                         metrics[f"{col}_category_coverage"] = coverage
                 else:
-                    metrics[f"{col}_mean_diff"] = abs(imputed_vals.mean() - observed_vals.mean())
+                    metrics[f"{col}_mean_dif"] = abs(imputed_vals.mean() - observed_vals.mean())
                     metrics[f"{col}_std_ratio"] = imputed_vals.std() / (observed_vals.std() + 1e-8)
 
         return metrics
@@ -869,7 +866,7 @@ class AutoencoderImputer:
                 else:
                     # For continuous: distribution similarity
                     observed_vals = original_df.loc[observed_mask, col]
-                    metrics[f"{col}_mean_diff"] = abs(imputed_vals.mean() - observed_vals.mean())
+                    metrics[f"{col}_mean_dif"] = abs(imputed_vals.mean() - observed_vals.mean())
                     metrics[f"{col}_std_ratio"] = imputed_vals.std() / (observed_vals.std() + 1e-8)
 
         return metrics

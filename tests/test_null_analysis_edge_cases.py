@@ -13,8 +13,6 @@ Author: MLOps-Engineer (MO-1 Phase 3-4)
 Date: 2025-10-10
 """
 
-import tempfile
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -22,8 +20,6 @@ import pytest
 
 from enahopy.null_analysis import (
     ENAHONullAnalyzer,
-    NullAnalysisConfig,
-    analyze_null_patterns,
     calculate_null_percentage,
     find_columns_with_nulls,
     get_null_summary,
@@ -185,7 +181,6 @@ class TestPatternDetectionEdgeCases:
 
     def test_block_missing_pattern(self):
         """Test block/chunk missing pattern."""
-        n = 100
         df = pd.DataFrame({"block_missing": [np.nan] * 30 + list(range(40)) + [np.nan] * 30})
 
         analyzer = ENAHONullAnalyzer()

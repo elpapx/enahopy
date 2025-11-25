@@ -373,7 +373,7 @@ class GeoMergeConfiguration:
         prefijo_columnas: Prefix to add to geographic column names in result
             (e.g., "geo_" produces "geo_departamento"). Defaults to "" (no prefix).
         sufijo_columnas: Suffix to add to geographic column names in result
-            (e.g., "_ref" produces "departamento_ref"). Defaults to "" (no suffix).
+            (e.g., "_re" produces "departamento_re"). Defaults to "" (no suffix).
 
     Examples:
         Basic configuration with defaults:

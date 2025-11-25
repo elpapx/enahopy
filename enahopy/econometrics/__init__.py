@@ -4,7 +4,7 @@ ENAHO Advanced Econometrics Package - ANALYZE Phase
 
 Comprehensive econometric analysis toolkit for ENAHO policy research including:
 - Advanced poverty and inequality analysis
-- Causal inference methods  
+- Causal inference methods
 - Policy impact evaluation
 - Microsimulation models
 - Regression analysis with survey weights

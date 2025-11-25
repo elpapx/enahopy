@@ -32,9 +32,8 @@ Correcciones aplicadas:
 
 import logging
 import warnings
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -44,12 +43,9 @@ from .config import (
     ModuleMergeConfig,
     ModuleMergeLevel,
     ModuleMergeStrategy,
-    NivelTerritorial,
     TipoManejoDuplicados,
     TipoManejoErrores,
-    TipoValidacionUbigeo,
 )
-from .exceptions import ConfigurationError, DataQualityError, ValidationThresholdError
 
 # Import seguro para evitar circularidad
 
@@ -653,7 +649,7 @@ def _detect_optimal_merge_strategy(modules_dict: Dict[str, pd.DataFrame]) -> str
                     if unique1 > 1 or unique2 > 1:
                         total_conflicts += 0.5
 
-                except:
+                except Exception:
                     pass
 
     if total_comparisons == 0:
@@ -995,7 +991,7 @@ def analyze_merge_quality(
     analysis["quality_grade"] = _get_quality_grade(analysis["quality_score"])
 
     if verbose:
-        print(f"\n📊 ANÁLISIS DE CALIDAD DEL MERGE")
+        print("\n📊 ANÁLISIS DE CALIDAD DEL MERGE")
 
         print(f"{'=' * 40}")
 
@@ -1010,7 +1006,7 @@ def analyze_merge_quality(
         )
 
         if analysis["warnings"]:
-            print(f"\n⚠️ Advertencias:")
+            print("\n⚠️ Advertencias:")
 
             for warning in analysis["warnings"][:5]:
                 print(f"  • {warning}")
@@ -1107,7 +1103,7 @@ def migrate_legacy_config(old_config: Dict[str, Any], version: str = "1.0") -> D
                     try:
                         value = TipoManejoDuplicados(value)
 
-                    except:
+                    except Exception:
                         value = TipoManejoDuplicados.FIRST
 
                 geo_params[new_field] = value
@@ -1123,14 +1119,14 @@ def migrate_legacy_config(old_config: Dict[str, Any], version: str = "1.0") -> D
             try:
                 module_params["merge_level"] = ModuleMergeLevel(old_config["merge_level"])
 
-            except:
+            except Exception:
                 module_params["merge_level"] = ModuleMergeLevel.HOGAR
 
         if "merge_strategy" in old_config:
             try:
                 module_params["merge_strategy"] = ModuleMergeStrategy(old_config["merge_strategy"])
 
-            except:
+            except Exception:
                 module_params["merge_strategy"] = ModuleMergeStrategy.COALESCE
 
         new_config["module_config"] = ModuleMergeConfig(**module_params)
@@ -1248,7 +1244,7 @@ def validate_legacy_data(
                                 f"Columna '{col}' convertida a string"
                             )
 
-                        except:
+                        except Exception:
                             validation["issues"].append(f"No se pudo convertir '{col}' a string")
 
     elif expected_structure == "geographic":
@@ -1568,7 +1564,7 @@ def debug_merge_issues(
         diagnosis["problems"].append(f"Tipos incompatibles: {type1} vs {type2}")
 
         diagnosis["recommendations"].append(
-            f"Convertir ambas columnas al mismo tipo con ensure_compatible_types()"
+            "Convertir ambas columnas al mismo tipo con ensure_compatible_types()"
         )
 
     # Analizar valores únicos y overlap
@@ -1604,7 +1600,7 @@ def debug_merge_issues(
     elif diagnosis["statistics"]["overlap_percentage"] < 50:
         diagnosis["problems"].append(
             f"Bajo overlap: solo {diagnosis['statistics']['overlap_percentage']:.1f}% "
-            f"de valores coinciden"
+            "de valores coinciden"
         )
 
     # Analizar NaN

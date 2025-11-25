@@ -15,7 +15,7 @@ import string
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from .cache import CacheManager
 
