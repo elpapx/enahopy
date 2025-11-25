@@ -164,52 +164,24 @@ La librería soporta **todos los módulos ENAHO** (01-100) a través de los año
 
 ---
 
-## 💡 Ejemplos del Mundo Real
+## 💡 Ejemplos
 
-### Avanzado: Análisis de Pobreza y Mercado Laboral
+Encuentra notebooks y scripts completos en el directorio [`examples/`](examples/):
 
-Pipeline completo que une 6 módulos para analizar la relación entre pobreza monetaria y condiciones del mercado laboral.
+### 📁 Investigación
+- **[Análisis de Pobreza Monetaria y Mercado Laboral](examples/investigacion/)** - Pipeline completo uniendo 6 módulos ENAHO
+  - [`analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) - Notebook interactivo
+  - [`analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py) - Script reutilizable
+  - Uso apropiado de factores de expansión (factor07)
+  - Análisis de informalidad laboral y pobreza
 
-**Archivos:**
-- 📓 [`examples/investigacion/analisis_pob_mon_lab.ipynb`](examples/investigacion/analisis_pob_mon_lab.ipynb) - Notebook interactivo
-- 🐍 [`examples/investigacion/analisis_pob_mon_lab.py`](examples/investigacion/analisis_pob_mon_lab.py) - Módulo Python reutilizable
+### 📁 Medium
+- **[Características del Hogar](examples/medium/caracteristicas_del_hogar.ipynb)** - Dashboard de calidad de vivienda
+  - Visualizaciones interactivas
+  - Análisis NBI (Necesidades Básicas Insatisfechas)
+  - Disparidades geográficas
 
-Características demostradas:
-- Descargas paralelas de múltiples módulos (01, 02, 03, 04, 05, 34)
-- Unión inteligente de módulos a nivel de hogar y persona
-- Uso apropiado de factores de expansión (factor07)
-- Indicadores de informalidad laboral
-- Análisis geográfico ponderado
-
-**[🎓 Lee el tutorial completo en Medium →](https://medium.com/@pcamacho447)**
-
----
-
-## 📚 Más Ejemplos
-
-### Casos de Uso Adicionales
-
-1. **[Análisis de Desigualdad Geográfica](examples/02_geographic_inequality_analysis.py)**
-   - Unión con datos UBIGEO
-   - Comparaciones regionales de pobreza
-   - Estadísticas ponderadas por departamento
-
-2. **[Análisis Multi-módulo de Hogares](examples/03_multimodule_analysis.py)**
-   - Combinar datos de vivienda + educación + salud
-   - Crear indicadores compuestos
-   - Análisis de panel a través de años
-
-3. **[Imputación de Datos Faltantes Potenciada por ML](examples/04_advanced_ml_imputation_demo.py)**
-   - Detectar patrones de datos faltantes (MCAR, MAR, MNAR)
-   - Imputación KNN y Random Forest
-   - Métricas de evaluación de calidad
-
-4. **[Dashboard de Calidad de Vivienda](examples/medium/caracteristicas_del_hogar.ipynb)**
-   - Visualizaciones interactivas
-   - Análisis NBI (Necesidades Básicas Insatisfechas)
-   - Disparidades geográficas
-
-**[📓 Explorar todos los ejemplos →](examples/)**
+**[🎓 Lee más tutoriales en Medium →](https://medium.com/@pcamacho447)**
 
 ---
 
