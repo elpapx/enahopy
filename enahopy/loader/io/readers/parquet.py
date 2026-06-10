@@ -91,7 +91,10 @@ class ParquetReader(BaseReader):
         # Use memory mapping for large files if pyarrow available
         if PYARROW_AVAILABLE and use_memory_map:
             return pd.read_parquet(
-                str(self.file_path), columns=columns, use_nullable_dtypes=True, engine="pyarrow"
+                str(self.file_path),
+                columns=columns,
+                dtype_backend="numpy_nullable",
+                engine="pyarrow",
             )
         else:
             return pd.read_parquet(str(self.file_path), columns=columns)
